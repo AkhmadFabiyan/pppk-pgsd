@@ -47,6 +47,10 @@ Jangan commit `.env.local`, database SQLite, token bootstrap, kata sandi, atau h
 
 IP digunakan hanya untuk rate limit dalam bentuk hash. Sistem tidak mengklaim memakai fingerprint biometrik/perangkat sebagai identitas pemilih.
 
+## Pengalaman visual publik
+
+Beranda memakai scene hutan CSS/Motion dengan progress scroll, horizon berlapis, reveal section, ticker dekoratif, daun animatif, dan respons pointer desktop. Kartu kandidat menambahkan spotlight serta tilt ringan tanpa mengubah atau men-crop poster sumber. Efek ini berada di `/` saja; `/vote`, receipt, dan panel admin tidak memakai dekorasi yang dapat mengganggu proses. Semua efek dimatikan atau disederhanakan oleh `prefers-reduced-motion` dan tidak menyimpan input pointer.
+
 ## Operasi admin
 
 | Tindakan | Pengaman implementasi |

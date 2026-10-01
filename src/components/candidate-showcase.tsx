@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { ChevronDown, X } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { useRef, useState } from "react";
+import { useRef, useState, type PointerEvent } from "react";
 import { formatBallotNumber, type Candidate } from "@/lib/site";
 
 export function CandidateShowcase({ candidates }: { candidates: Candidate[] }) {
@@ -16,6 +16,24 @@ export function CandidateShowcase({ candidates }: { candidates: Candidate[] }) {
     window.setTimeout(() => detailRef.current?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "nearest" }), 0);
   }
 
+  function moveCard(event: PointerEvent<HTMLElement>) {
+    if (reduceMotion || event.pointerType === "touch") return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = (event.clientX - rect.left) / rect.width;
+    const y = (event.clientY - rect.top) / rect.height;
+    event.currentTarget.style.setProperty("--spot-x", `${x * 100}%`);
+    event.currentTarget.style.setProperty("--spot-y", `${y * 100}%`);
+    event.currentTarget.style.setProperty("--tilt-x", `${(0.5 - y) * 5}deg`);
+    event.currentTarget.style.setProperty("--tilt-y", `${(x - 0.5) * 5}deg`);
+  }
+
+  function resetCard(event: PointerEvent<HTMLElement>) {
+    event.currentTarget.style.setProperty("--spot-x", "50%");
+    event.currentTarget.style.setProperty("--spot-y", "50%");
+    event.currentTarget.style.setProperty("--tilt-x", "0deg");
+    event.currentTarget.style.setProperty("--tilt-y", "0deg");
+  }
+
   return (
     <div className="candidate-showcase">
       <div className="candidate-grid">
@@ -26,7 +44,9 @@ export function CandidateShowcase({ candidates }: { candidates: Candidate[] }) {
             initial={reduceMotion ? false : { opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.2 }}
-            transition={{ duration: reduceMotion ? 0 : 0.22, delay: reduceMotion ? 0 : index * 0.025 }}
+            transition={{ duration: reduceMotion ? 0 : 0.42, delay: reduceMotion ? 0 : index * 0.045, ease: [0.16, 1, 0.3, 1] }}
+            onPointerMove={moveCard}
+            onPointerLeave={resetCard}
           >
             <div className="candidate-media">
               <Image src={candidate.poster} alt={`Poster ${candidate.name}`} width={4000} height={2250} sizes="(max-width: 639px) 100vw, (max-width: 1023px) 50vw, 33vw" />

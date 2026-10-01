@@ -104,7 +104,7 @@ Seluruh rute wajib lolos keyboard-only, zoom 200%, screen reader dasar, orientas
 
 ## Kontrak motion
 
-Motion dipakai untuk memberi rasa responsif, bukan pertunjukan visual. Default implementasi adalah CSS transition dan Motion. GSAP, Lenis, Three.js, React Three Fiber, canvas, particle engine, dan autoplay audio **tidak masuk rilis pertama**.
+Halaman publik boleh terasa sinematik dan eksploratif, tetapi bilik suara tetap tenang. Default implementasi adalah CSS transition dan Motion; semua layer dekoratif memakai transform/opacity, tidak mengirim sinyal pointer ke server, dan tidak menunda CTA atau konten penting. GSAP, Lenis, Three.js, React Three Fiber, canvas, particle engine, dan autoplay audio **tetap tidak masuk rilis ini**.
 
 | ID | Kejadian | Durasi | Aturan |
 | --- | --- | --- | --- |
@@ -114,8 +114,10 @@ Motion dipakai untuk memberi rasa responsif, bukan pertunjukan visual. Default i
 | `MOT-04` | Pilihan radio dan dialog konfirmasi | 160–220 ms | Focus dan state semantik aktif sebelum animasi selesai. |
 | `MOT-05` | Angka hasil berubah dari data server | 250–400 ms | Transisi dari nilai snapshot nyata; teks numerik langsung tersedia. |
 | `MOT-06` | Receipt sukses | maksimal 500 ms | Ikon cek sederhana; kode receipt tetap muncul sejak awal. |
+| `MOT-07` | Landing page discroll | transform berbasis posisi scroll | Progress tipis, kedalaman layer hutan, dan reveal section; tidak dipakai pada `/vote`. |
+| `MOT-08` | Pointer melintasi landing/kartu calon | 100–280 ms | Spotlight, tilt ringan, dan CTA shimmer; touch device tidak membutuhkan pointer untuk memperoleh informasi. |
 
-Pada `prefers-reduced-motion`, semua motion non-fungsional dihapus; perubahan state esensial memakai transisi opacity singkat atau langsung. Tidak ada autoplay scroll, inertia scroll, animasi loop, atau dekorasi bergerak di bilik suara.
+Pada `prefers-reduced-motion`, semua motion non-fungsional dihapus; perubahan state esensial memakai transisi opacity singkat atau langsung. Loop dekoratif hanya boleh berada pada landing page dan harus berhenti pada reduced motion. Tidak ada autoplay scroll, inertia scroll, atau dekorasi bergerak di bilik suara.
 
 ## Acceptance sebelum implementasi dianggap selesai
 

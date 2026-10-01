@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { ScrollProgress } from "@/components/scroll-progress";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
 
@@ -33,6 +34,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="id">
       <body>
         <a className="skip-link" href="#main-content">Langsung ke isi</a>
+        <ScrollProgress />
         <SiteHeader />
         <main id="main-content">{children}</main>
         <SiteFooter />

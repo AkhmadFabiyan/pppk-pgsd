@@ -27,6 +27,7 @@ File ini adalah register kerja aktif. Setiap proses material wajib memiliki entr
 | EXE-20261001-10 | T7/T9 | Sederhanakan workflow voting | Done | Pelaksana teknis | Panitia (review UX dan integritas) | 2026-10-01 | Satu route voting memakai tiga tahap linear dan tetap fail-closed hingga backend disahkan. |
 | EXE-20261001-11 | T5/T9 | Hapus route legacy tidak terpakai | Done | Pelaksana teknis | Panitia (review UX) | 2026-10-01 | Route inti saja yang tersisa; URL legacy memberi 404. |
 | EXE-20261001-12 | T5–T10 | Lengkapi aplikasi voting operasional | Done | Pelaksana teknis | Admin panitia (setup/review) | 2026-10-01 | Setup local tersedia; panitia wajib menjalankan UAT dan konfigurasi production sebelum membuka event. |
+| EXE-20261002-13 | T9 | Perkaya interaksi editorial landing page | Done | Pelaksana teknis | Panitia (review visual) | 2026-10-02 | Landing publik interaktif selesai; voting tetap dipisahkan dari scene dekoratif. |
 
 ## Detail entry aktif
 
@@ -229,6 +230,23 @@ File ini adalah register kerja aktif. Setiap proses material wajib memiliki entr
 | Exit condition | Alur operasional dapat disiapkan oleh admin pada local runtime; kondisi production yang membutuhkan provider tetap tercatat jelas. |
 | Keputusan | `Done` untuk baseline aplikasi. Panitia belum boleh membuka event production sebelum menjalankan setup, import, UAT, backup/HTTPS, dan keputusan eligibilitas/jadwal. |
 | Waktu | Mulai dan selesai 2026-10-01 WIB. |
+
+### EXE-20261002-13 — Perkaya interaksi editorial landing page
+
+| Field | Catatan |
+| --- | --- |
+| Status | `Done`. |
+| Tahap runbook | T9 / visual, motion, dan aksesibilitas. |
+| Tujuan | Membuat halaman publik terasa lebih sinematik dan responsif terhadap scroll/pointer, dengan referensi ritme interaktif dari URL yang diberikan user tanpa menyalin aset, konten, atau source referensi. |
+| Scope | Hero berbasis scene, scroll progress, layer hutan CSS, reveal section/card, pointer spotlight/tilt kandidat, ticker informatif, dan transisi visual antar-section. |
+| Out of scope | Mengubah proses vote, NIM, database, admin, receipt, hasil, poster sumber, serta mengirim data pointer ke server. |
+| Dokumen wajib dibaca | `04-ui-ux-dan-visual.md`, `14-design-system.md`, `ui/landing-page.md`, `ui/vote.md`, `engineering/11-accessibility-motion.md`, dan `19-operasional-aplikasi.md`. |
+| Risiko dan mitigasi | Motion berlebihan dapat mengganggu performa atau bilik suara; semua efek dibatasi pada halaman publik, berbasis transform/opacity, tidak menggeser layout, dipadamkan oleh `prefers-reduced-motion`, dan tidak memakai data pengunjung. |
+| Aksi yang dilakukan | Mengganti hero statis dengan scene hutan berlapis: scroll progress, horizon parallax transform, cahaya pointer desktop, daun/ticker dekoratif, entrance title, CTA shimmer, dan panel status yang responsif. Menambahkan reveal section, hover depth, pointer spotlight/tilt pada kartu kandidat, serta respons hover pada informasi publik. |
+| Bukti | `npm run typecheck`, `npm run lint`, dan `npm run build` lulus. Smoke test HTTP: `/` memberi `200` dan memuat `forest-hero` serta `scroll-progress`; `/vote` memberi `200` dan tidak memuat scene dekoratif landing page. Review visual browser tetap diperlukan dari panitia pada perangkat target. |
+| Exit condition | Halaman publik lebih interaktif namun tetap cepat, terbaca, responsif, serta halaman voting tetap tenang dan fungsional. |
+| Keputusan | `Done`; tidak ada perubahan workflow vote, API, database, poster, atau data pemilih. |
+| Waktu | Mulai dan selesai 2026-10-02 WIB. |
 
 ### Template untuk entry baru
 

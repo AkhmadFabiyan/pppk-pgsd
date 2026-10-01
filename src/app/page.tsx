@@ -1,8 +1,8 @@
-import Link from "next/link";
-import { ArrowRight, BarChart3, CheckCircle2, CircleHelp, ShieldCheck, UsersRound } from "lucide-react";
+import { BarChart3, CheckCircle2, CircleHelp, ShieldCheck, UsersRound } from "lucide-react";
 import { CandidateShowcase } from "@/components/candidate-showcase";
+import { ForestHero } from "@/components/forest-hero";
 import { PageTransition } from "@/components/page-transition";
-import { StatusBadge } from "@/components/status-badge";
+import { SectionReveal } from "@/components/section-reveal";
 import { getElectionSnapshot } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -12,38 +12,17 @@ export default function HomePage() {
   const resultsByCandidate = new Map(election.result?.candidates.map((item) => [item.candidateId, item]) ?? []);
   return (
     <PageTransition>
-      <section className="hero">
-        <div className="hero-contour" aria-hidden="true" />
-        <div className="container hero-grid">
-          <div className="hero-copy">
-            <StatusBadge label={election.statusLabel} />
-            <p className="eyebrow">Pemilihan Ketua Angkatan</p>
-            <h1>PGSD <span>2026</span></h1>
-            <p className="hero-lead">Ruang resmi untuk mengenal calon, memahami proses pemilihan, dan menggunakan suara saat periode voting dibuka.</p>
-            <div className="hero-actions">
-              <Link className="button button-light" href={election.status === "open" ? "/vote" : "#kandidat"}>{election.status === "open" ? "Gunakan suara" : "Lihat kandidat"} <ArrowRight aria-hidden="true" size={18} /></Link>
-              <Link className="button button-ghost-light" href="#panduan">Panduan voting</Link>
-            </div>
-          </div>
-          <aside className="event-panel" aria-label="Status pemilihan">
-            <p className="panel-label">Status pemilihan</p>
-            <strong>{election.statusLabel}</strong>
-            <p>{election.scheduleLabel}</p>
-            <div className="event-panel-rule" />
-            <span>Verifikasi NIM dan voting akan aktif setelah periode resmi dibuka.</span>
-          </aside>
-        </div>
-      </section>
+      <ForestHero statusLabel={election.statusLabel} scheduleLabel={election.scheduleLabel} isOpen={election.status === "open"} />
 
       <section className="section section-soft" aria-labelledby="overview-heading">
-        <div className="container split-heading">
+        <SectionReveal className="container split-heading">
           <div>
             <p className="eyebrow eyebrow-green">Informasi pemilihan</p>
             <h2 id="overview-heading">Satu ruang untuk seluruh proses.</h2>
           </div>
           <p>Website ini menyajikan informasi yang diperlukan pemilih tanpa memuat data peserta, pilihan pribadi, maupun angka hasil sebelum kebijakan publikasi mengizinkannya.</p>
-        </div>
-        <div className="container principle-grid">
+        </SectionReveal>
+        <SectionReveal className="container principle-grid" delay={0.08}>
           <article>
             <ShieldCheck aria-hidden="true" />
             <h3>Terjaga</h3>
@@ -59,24 +38,24 @@ export default function HomePage() {
             <h3>Terukur</h3>
             <p>Status event dan hasil agregat mengikuti kebijakan serta data resmi panitia.</p>
           </article>
-        </div>
+        </SectionReveal>
       </section>
 
       <section className="section" id="kandidat" aria-labelledby="candidate-heading">
-        <div className="container section-heading">
+        <SectionReveal className="container section-heading">
           <div>
             <p className="eyebrow eyebrow-red">Calon ketua angkatan</p>
             <h2 id="candidate-heading">Kenali pilihanmu.</h2>
           </div>
           <p className="section-note">Pilih satu nama untuk membaca visi dan misi tanpa meninggalkan halaman ini.</p>
-        </div>
+        </SectionReveal>
         <div className="container">
           <CandidateShowcase candidates={election.candidates} />
         </div>
       </section>
 
       <section className="section process-section" id="panduan" aria-labelledby="process-heading">
-        <div className="container process-grid">
+        <SectionReveal className="container process-grid">
           <div>
             <p className="eyebrow eyebrow-green">Cara menggunakan suara</p>
             <h2 id="process-heading">Jelas sejak awal.</h2>
@@ -89,30 +68,30 @@ export default function HomePage() {
             <li><span>03</span><div><strong>Konfirmasi</strong><p>Periksa kembali pilihan sebelum suara dikirim.</p></div></li>
             <li><span>04</span><div><strong>Simpan bukti</strong><p>Catat receipt sebagai bukti penerimaan suara.</p></div></li>
           </ol>
-        </div>
+        </SectionReveal>
       </section>
 
       <section className="section results-section" id="hasil" aria-labelledby="results-heading">
-        <div className="container results-panel">
+        <SectionReveal className="container results-panel">
           <BarChart3 aria-hidden="true" />
           <div>
             <p className="eyebrow eyebrow-green">Rekap pemilihan</p>
             <h2 id="results-heading">{election.result ? "Rekap suara saat ini." : "Hasil belum dipublikasikan."}</h2>
             {election.result ? <div className="result-summary"><p><strong>{election.result.totalCast}</strong> suara diterima dari {election.result.totalEligible} pemilih eligible ({election.result.turnoutPercent}%).</p><ul>{election.candidates.map((candidate) => { const item = resultsByCandidate.get(candidate.id ?? ""); return <li key={candidate.id}><span>{String(candidate.number).padStart(2, "0")} · {candidate.name}</span><strong>{item?.voteCount ?? 0} suara · {item?.votePercent ?? 0}%</strong></li>; })}</ul><p className="results-updated">Diperbarui {new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Jakarta" }).format(new Date(election.result.updatedAt))}</p></div> : <p>Rekap hanya tampil ketika kebijakan hasil dan status event mengizinkannya. Tidak ada angka contoh atau simulasi.</p>}
           </div>
-        </div>
+        </SectionReveal>
       </section>
 
       <section className="section section-callout" id="bantuan" aria-labelledby="support-heading">
-        <div className="container callout-content">
+        <SectionReveal className="container callout-content">
           <CircleHelp aria-hidden="true" />
           <div>
             <h2 id="support-heading">Butuh bantuan sebelum voting dibuka?</h2>
             <p>Jadwal dan kanal bantuan resmi akan diumumkan panitia. Jangan mengirim NIM, pilihan calon, atau receipt ke kanal publik.</p>
           </div>
           <a className="button" href="#panduan">Baca panduan</a>
-        </div>
-        <div className="container privacy-strip" id="privasi"><ShieldCheck aria-hidden="true" /><p><strong>Privasi:</strong> NIM, pilihan suara, sinyal perangkat, dan data audit tidak dipublikasikan pada website ini.</p></div>
+        </SectionReveal>
+        <SectionReveal className="container privacy-strip" id="privasi" delay={0.08}><ShieldCheck aria-hidden="true" /><p><strong>Privasi:</strong> NIM, pilihan suara, sinyal perangkat, dan data audit tidak dipublikasikan pada website ini.</p></SectionReveal>
       </section>
     </PageTransition>
   );
