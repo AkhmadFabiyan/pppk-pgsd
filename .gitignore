@@ -1,0 +1,9 @@
+node_modules/
+.next/
+out/
+.env*
+!.env.example
+*.tsbuildinfo
+data/
+docs/data/
+ABSENSI PPPK PGSD 2026.xlsx
