@@ -4,7 +4,7 @@ Dokumen ini menjelaskan perilaku aplikasi **saat ini**, bukan rancangan target. 
 
 ## Batas implementasi
 
-- Aplikasi memakai Next.js, SQLite lokal/persistent, dan dua role: `visitor` serta `admin`.
+- Aplikasi memakai Next.js di Vercel, PostgreSQL serverless, dan dua role: `visitor` serta `admin`.
 - Satu event `pgsd-2026` tersedia dengan state `scheduled`, `open`, dan `closed`; keadaan awal selalu `scheduled` dan hasil tersembunyi.
 - Sembilan calon diambil dari katalog `src/lib/site.ts` dan poster pada `public/paslon/`. Poster ditampilkan pada rasio asli tanpa crop.
 - Master peserta masuk melalui unggahan XLSX oleh admin; spreadsheet sumber tidak pernah dibaca langsung oleh visitor dan tidak diubah oleh aplikasi.
@@ -15,25 +15,26 @@ Dokumen ini menjelaskan perilaku aplikasi **saat ini**, bukan rancangan target. 
 
 | Kebutuhan | Ketentuan |
 | --- | --- |
-| Node.js | Versi `22.13.0` atau lebih baru; dibutuhkan untuk `node:sqlite`. |
-| Storage | Direktori aplikasi harus dapat ditulis untuk local. Di server, atur `VOTING_DB_PATH` ke path absolut pada volume persistent. |
+| Node.js | Versi `24.x`, sama dengan engine yang dipin pada `package.json` dan runtime Vercel. |
+| Database | PostgreSQL serverless dengan URL `DATABASE_URL` (atau `POSTGRES_URL`) yang dapat dijangkau Vercel. Gunakan database berbeda untuk development/preview dan production. |
 | HTTPS | Wajib untuk deployment publik agar cookie admin dikirim sebagai `Secure`. |
 | `VOTING_TOKEN_SECRET` | Minimal 32 karakter; dipakai untuk membungkus hash token voting dan merupakan syarat membuka event. |
 | `ADMIN_BOOTSTRAP_TOKEN` | Minimal 16 karakter; hanya digunakan untuk membuat akun admin pertama. |
 
-Jangan commit `.env.local`, database SQLite, token bootstrap, kata sandi, atau hasil ekspor. File ini hanya menyimpan instruksi tanpa rahasia.
+Jangan commit `.env.local`, URL database, token bootstrap, kata sandi, atau hasil ekspor. File ini hanya menyimpan instruksi tanpa rahasia.
 
 ## Setup pertama kali (local)
 
 1. Jalankan `npm install`.
-2. Jalankan `npm run setup:local` sekali. Script membuat `.env.local` dengan dua secret acak dan **menolak menimpa** file yang sudah ada.
-3. Jalankan `npm run dev`.
-4. Buka `/panitia/login`, lalu buat username admin, kata sandi minimal 12 karakter, dan masukkan nilai `ADMIN_BOOTSTRAP_TOKEN` dari `.env.local`.
-5. Masuk ke `/panitia`, sinkronkan materi calon bila katalog diubah, lalu cek status publikasi setiap calon.
-6. Unggah spreadsheet XLSX peserta. Parser mencari header `NIM`, `NAMA`, `KELAS`, dan opsional `TTD` pada setiap sheet; NIM dinormalisasi sebagai digit dan duplikasi/format salah menggagalkan seluruh import.
-7. Cek jumlah peserta dan daftar internal. Keputusan siapa yang eligible harus disahkan panitia sebelum event dibuka; implementasi saat ini menganggap seluruh baris valid dari spreadsheet sebagai eligible.
-8. Tetapkan kebijakan hasil: sembunyikan, tampilkan langsung, atau tampilkan setelah event ditutup.
-9. Klik **Buka voting** hanya setelah UAT panitia selesai. Server menolak pembukaan jika secret tidak ada, peserta belum diimpor, atau calon published kurang dari dua.
+2. Jalankan `npm run setup:local` sekali. Script membuat `.env.local` dengan dua secret acak, placeholder `DATABASE_URL`, dan **menolak menimpa** file yang sudah ada.
+3. Isi `DATABASE_URL` dengan database development PostgreSQL serverless. Jangan gunakan database production untuk development.
+4. Jalankan `npm run dev`.
+5. Buka `/panitia/login`, lalu buat username admin, kata sandi minimal 12 karakter, dan masukkan nilai `ADMIN_BOOTSTRAP_TOKEN` dari `.env.local`.
+6. Masuk ke `/panitia`, sinkronkan materi calon bila katalog diubah, lalu cek status publikasi setiap calon.
+7. Unggah spreadsheet XLSX peserta. Parser mencari header `NIM`, `NAMA`, `KELAS`, dan opsional `TTD` pada setiap sheet; NIM dinormalisasi sebagai digit dan duplikasi/format salah menggagalkan seluruh import.
+8. Cek jumlah peserta dan daftar internal. Keputusan siapa yang eligible harus disahkan panitia sebelum event dibuka; implementasi saat ini menganggap seluruh baris valid dari spreadsheet sebagai eligible.
+9. Tetapkan kebijakan hasil: sembunyikan, tampilkan langsung, atau tampilkan setelah event ditutup.
+10. Klik **Buka voting** hanya setelah UAT panitia selesai. Server menolak pembukaan jika secret tidak ada, peserta belum diimpor, atau calon published kurang dari dua.
 
 ## Alur visitor yang berjalan
 
@@ -41,7 +42,7 @@ Jangan commit `.env.local`, database SQLite, token bootstrap, kata sandi, atau h
 2. Visitor memasukkan NIM. API menerapkan batas lima percobaan per alamat jaringan dalam sepuluh menit dan selalu memberi pesan gagal yang generik.
 3. Jika NIM eligible dan belum memiliki vote, server mengeluarkan token sesi opaque yang berlaku sepuluh menit.
 4. Visitor memilih satu calon, memeriksa ringkasan, kemudian mengirim.
-5. Server memvalidasi ulang state event, token, calon published, dan menjalankan transaksi SQLite dengan constraint `UNIQUE(election_id, voter_id)`.
+5. Server memvalidasi ulang state event, token, calon published, dan menjalankan transaksi PostgreSQL serverless dengan constraint `UNIQUE(election_id, voter_id)`.
 6. Hanya commit pertama per NIM yang dapat diterima. Idempotency key mengembalikan receipt sama untuk retry request yang identik; browser tidak menyimpan NIM, token, ataupun pilihan sebagai sumber data permanen.
 7. Receipt menampilkan hanya kode acak dan waktu penerimaan, tanpa NIM atau calon terpilih.
 
@@ -49,7 +50,7 @@ IP digunakan hanya untuk rate limit dalam bentuk hash. Sistem tidak mengklaim me
 
 ## Pengalaman visual publik
 
-Beranda memakai scene hutan CSS/Motion dengan progress scroll, horizon berlapis, reveal section, ticker dekoratif, daun animatif, dan respons pointer desktop. Kartu kandidat menambahkan spotlight serta tilt ringan tanpa mengubah atau men-crop poster sumber. Efek ini berada di `/` saja; `/vote`, receipt, dan panel admin tidak memakai dekorasi yang dapat mengganggu proses. Semua efek dimatikan atau disederhanakan oleh `prefers-reduced-motion` dan tidak menyimpan input pointer.
+Beranda memakai satu scene hutan CSS/Motion yang ringan: progress scroll, horizon berlapis, glow pointer desktop, tujuh daun animatif, reveal section, dan tilt ringan pada kartu kandidat. Elemen dekoratif yang tidak mendukung orientasi (ticker, grain, dan orbit) dihilangkan. Efek ini berada di `/` saja; `/vote`, receipt, dan panel admin tidak memakai dekorasi yang dapat mengganggu proses. Semua efek dimatikan atau disederhanakan oleh `prefers-reduced-motion` dan tidak menyimpan input pointer.
 
 ## Operasi admin
 

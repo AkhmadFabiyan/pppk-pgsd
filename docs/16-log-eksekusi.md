@@ -28,6 +28,7 @@ File ini adalah register kerja aktif. Setiap proses material wajib memiliki entr
 | EXE-20261001-11 | T5/T9 | Hapus route legacy tidak terpakai | Done | Pelaksana teknis | Panitia (review UX) | 2026-10-01 | Route inti saja yang tersisa; URL legacy memberi 404. |
 | EXE-20261001-12 | T5–T10 | Lengkapi aplikasi voting operasional | Done | Pelaksana teknis | Admin panitia (setup/review) | 2026-10-01 | Setup local tersedia; panitia wajib menjalankan UAT dan konfigurasi production sebelum membuka event. |
 | EXE-20261002-13 | T9 | Perkaya interaksi editorial landing page | Done | Pelaksana teknis | Panitia (review visual) | 2026-10-02 | Landing publik interaktif selesai; voting tetap dipisahkan dari scene dekoratif. |
+| EXE-20261002-14 | T5/T9 | Siapkan deployment Vercel dan sederhanakan pengalaman publik | In review | Pelaksana teknis | Panitia (review UX dan deployment) | 2026-10-02 | Panitia memasang database/secret Vercel, menjalankan UAT Preview tanpa PII production, lalu menyetujui release. |
 
 ## Detail entry aktif
 
@@ -247,6 +248,24 @@ File ini adalah register kerja aktif. Setiap proses material wajib memiliki entr
 | Exit condition | Halaman publik lebih interaktif namun tetap cepat, terbaca, responsif, serta halaman voting tetap tenang dan fungsional. |
 | Keputusan | `Done`; tidak ada perubahan workflow vote, API, database, poster, atau data pemilih. |
 | Waktu | Mulai dan selesai 2026-10-02 WIB. |
+
+### EXE-20261002-14 — Siapkan deployment Vercel dan sederhanakan pengalaman publik
+
+| Field | Catatan |
+| --- | --- |
+| Status | `In review` — implementasi repository dan quality gate lokal selesai; konfigurasi database/secret serta UAT Preview tetap harus dilakukan panitia. |
+| Tahap runbook | T5/T7/T9 / deployment, integrity, dan UX. |
+| Tujuan | Menghapus ketergantungan pada disk SQLite lokal agar aplikasi dapat di-host di Vercel serta mengganti pengalaman publik yang terlalu dekoratif menjadi lebih sederhana, fun, dan terarah. |
+| Scope | Driver PostgreSQL serverless, migrasi schema/constraint, konfigurasi environment Vercel, penyederhanaan route/komponen tak terpakai, dan UI landing interaktif berbasis React Motion. |
+| Out of scope | Membuat atau mengakses database cloud panitia, mengimpor spreadsheet production, membuka event, mengubah vote sah, atau mendaftarkan domain. |
+| Dokumen wajib dibaca | `03-data-dan-keamanan.md`, `06-arsitektur-teknis.md`, `07-kontrak-data.md`, `08-kontrak-api-dan-realtime.md`, `10-quality-gate-dan-pengujian.md`, `12-rute-dan-seo.md`, `19-operasional-aplikasi.md`, dan `engineering/10-deployment.md`. |
+| Risiko dan mitigasi | Vercel tidak menyediakan disk database persisten; gunakan PostgreSQL serverless dengan URL environment. Build tetap tidak membaca secret; aplikasi fail-closed bila database belum dikonfigurasi. Visual tidak mengubah form/vote maupun data server. |
+| Dokumen yang terdampak | `README.md`, `.env.example`, `19-operasional-aplikasi.md`, `engineering/10-deployment.md`, `04-ui-ux-dan-visual.md`, `05-rencana-implementasi.md`, `ui/landing-page.md`, dan entry ini; seluruhnya menyelaraskan Vercel/PostgreSQL, UX, dan proses rilis. |
+| Aksi yang dilakukan | Mengganti `node:sqlite` serta path disk dengan `@neondatabase/serverless` dan PostgreSQL; membangun schema idempoten, foreign key, transaksi, hash token, rate limit bersama, idempotency, dan constraint unik server untuk tetap menolak suara ganda di banyak instance Vercel. Mengubah seluruh caller menjadi async/await sehingga action admin baru menyegarkan halaman setelah commit. Menetapkan Node `24.x`, `DATABASE_URL`, serta runbook Vercel/Neon. Audit route build hanya menunjukkan `/`, `/vote`, receipt, admin, tiga API internal, robots, dan sitemap; route informasi legacy tidak dibuat. Menyederhanakan landing menjadi satu scene hutan Motion berorientasi: dua horizon parallax, pointer glow, maksimal tujuh daun, reveal/tilt kandidat; ticker, noise, dan orbit dihapus. |
+| Bukti | `npm run typecheck` lulus; `npm run lint` lulus tanpa warning; `npm run build` lulus dengan route inti saja; `git diff --check` tidak menemukan whitespace error. Tidak ada URL database atau data peserta diubah/dibaca. |
+| Exit condition | Panitia memasang variable pada Preview/Production, membuat admin Preview, menjalankan UAT database dengan data aman, memverifikasi domain/robots/sitemap, lalu mencatat sign-off sebelum entry dapat `Done`. |
+| Keputusan | Siap direview. Tidak boleh membuka voting sampai konfigurasi Vercel/PostgreSQL, import sah, dan gate operasional disetujui. |
+| Waktu | Mulai 2026-10-02 WIB; implementasi dan quality gate lokal selesai 2026-10-02 WIB. |
 
 ### Template untuk entry baru
 

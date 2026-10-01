@@ -5,24 +5,24 @@
 | Teknologi | Peran |
 | --- | --- |
 | Next.js + TypeScript | Framework utama dengan App Router untuk halaman publik, panel panitia, route handler, dan optimasi delivery. |
-| Tailwind CSS | Sistem styling, token visual, responsivitas, dark/light utility bila diperlukan, serta konsistensi antarkomponen. |
+| CSS proyek + token desain | Sistem styling, responsivitas, dan konsistensi antarkomponen. |
 | Motion (Framer Motion) | Micro-interaction, modal, feedback pilihan/submit, perubahan hasil nyata, dan transisi halaman singkat. |
 | CSS transition | Default untuk hover/focus sederhana; menjaga bundle kecil dan perilaku UI mudah diaudit. |
-| GSAP, Lenis, Three.js, React Three Fiber | Tidak dipasang pada rilis pertama. Efek sinematik, smooth-scroll, dan canvas tidak dibutuhkan untuk UX voting profesional. |
+| GSAP, Lenis, Three.js, React Three Fiber | Tidak dipasang. Efek sinematik berat, smooth-scroll, dan canvas tidak dibutuhkan untuk UX voting profesional. |
 | shadcn/ui | Primitive komponen bila diperlukan: dialog, sheet, dropdown, toast, button, input, dan form pattern. Komponen ditheme melalui token desain proyek. |
 | Lucide React | Ikon UI yang konsisten, aksesibel, dan mudah dikustomisasi. |
-| PostgreSQL atau MySQL + ORM | Database transaksional dengan migrasi, constraint unik, dan transaksi vote. |
-| Layanan auth + realtime + object storage | Login/MFA role `admin`, kanal hasil agregat live, dan penyimpanan foto calon tervalidasi. |
+| PostgreSQL serverless + `@neondatabase/serverless` | Source of truth transaksional pada Vercel dengan schema idempoten, constraint unik, dan transaksi vote. |
+| Vercel | Hosting Next.js, Preview, Production, serta konfigurasi environment variable yang terpisah. |
 
 ## Aturan penggunaan motion
 
 - Gunakan Motion hanya untuk feedback yang bermakna; CSS transition adalah default untuk state sederhana.
-- Tidak ada GSAP, Lenis, canvas, parallax, particle, atau 3D pada rilis pertama. Penambahan di masa depan memerlukan ADR, review aksesibilitas, dan bukti tidak menurunkan UX voting.
+- Tidak ada GSAP, Lenis, canvas, particle engine, smooth-scroll, atau 3D. Beranda boleh memakai parallax transform CSS/Motion yang ringan; bilik suara tidak boleh memakainya. Penambahan lain memerlukan ADR, review aksesibilitas, dan bukti tidak menurunkan UX voting.
 - Pada mobile, perangkat low-end, koneksi lambat, atau `prefers-reduced-motion`, semua motion non-fungsional harus hilang tanpa menyembunyikan state.
 - Native scroll, `Tab`, anchor link, screen reader, serta input form tidak boleh diintervensi library animasi.
 - Anggaran performa wajib diuji sebelum rilis: tidak ada animasi yang menurunkan respons form atau membuat perangkat panas saat voting.
 
-Pemilihan layanan hosting, database, autentikasi, dan realtime belum dikunci karena berpengaruh pada biaya, data pribadi, dan akses admin. Jangan mengirim data pemilih ke layanan analitik pihak ketiga tanpa persetujuan dan pemberitahuan privasi.
+Hosting Vercel dan PostgreSQL serverless telah dikunci untuk build saat ini. MFA/SSO, OTP, realtime provider, dan object storage belum diaktifkan; jangan mengklaim fitur tersebut ada. Jangan mengirim data pemilih ke layanan analitik pihak ketiga tanpa persetujuan dan pemberitahuan privasi.
 
 ## Tahap pengerjaan
 

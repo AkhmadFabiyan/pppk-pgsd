@@ -31,8 +31,8 @@ const steps = [
 
 export const dynamic = "force-dynamic";
 
-export default function VotePage() {
-  const election = getElectionSnapshot();
+export default async function VotePage() {
+  const election = await getElectionSnapshot();
   return (
     <PageTransition>
       <section className="vote-page">

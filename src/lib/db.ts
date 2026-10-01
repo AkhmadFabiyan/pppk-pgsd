@@ -1,34 +1,8 @@
 import { randomUUID } from "node:crypto";
-import { mkdirSync } from "node:fs";
-import { dirname, isAbsolute, join } from "node:path";
-import { DatabaseSync } from "node:sqlite";
+import { neon } from "@neondatabase/serverless";
 import { candidates, type Candidate, type ElectionStatus, type ResultVisibility } from "@/lib/site";
 
 const ELECTION_ID = "pgsd-2026";
-const DEFAULT_DB_PATH = join(process.cwd(), "data", "voting.sqlite");
-
-type ElectionRow = {
-  id: string;
-  title: string;
-  status: ElectionStatus;
-  result_visibility: ResultVisibility;
-  updated_at: string;
-};
-
-type CandidateRow = {
-  id: string;
-  ballot_number: number;
-  slug: string;
-  display_name: string;
-  class_name: string;
-  poster: string;
-  vision: string;
-  missions_json: string;
-  is_published: number;
-};
-
-type ResultRow = { candidate_id: string; vote_count: number };
-type CountRow = { count: number };
 
 export type ElectionSnapshot = {
   id: string;
@@ -76,42 +50,53 @@ export type VoteSubmitResult =
   | { status: "accepted"; receiptCode: string; castAt: string }
   | { status: "already_voted" | "invalid_session" | "candidate_unavailable" | "election_not_open" };
 
+type ElectionRow = { id: string; title: string; status: ElectionStatus; result_visibility: ResultVisibility; updated_at: string };
+type CandidateRow = { id: string; ballot_number: number; slug: string; display_name: string; class_name: string; poster: string; vision: string; missions_json: string; is_published: boolean };
+type CountRow = { count: number | string };
+
 declare global {
-  var __pgsdVotingDb: DatabaseSync | undefined;
+  var __pgsdSchemaReady: Promise<void> | undefined;
 }
 
 function now() {
   return new Date().toISOString();
 }
 
-function databasePath() {
-  const configured = process.env.VOTING_DB_PATH;
-  if (!configured) return DEFAULT_DB_PATH;
-  if (!isAbsolute(configured)) throw new Error("VOTING_DB_PATH harus menggunakan path absolut.");
-  return configured;
+function databaseUrl() {
+  const url = process.env.DATABASE_URL ?? process.env.POSTGRES_URL;
+  if (!url) throw new Error("DATABASE_URL atau POSTGRES_URL wajib diatur untuk menjalankan aplikasi.");
+  return url;
 }
 
-function getDatabase() {
-  if (globalThis.__pgsdVotingDb) return globalThis.__pgsdVotingDb;
-  const path = databasePath();
-  mkdirSync(dirname(path), { recursive: true });
-  const db = new DatabaseSync(path);
-  db.exec("PRAGMA foreign_keys = ON; PRAGMA journal_mode = WAL; PRAGMA busy_timeout = 5000;");
-  migrate(db);
-  globalThis.__pgsdVotingDb = db;
-  return db;
+function sqlClient() {
+  return neon(databaseUrl());
 }
 
-function migrate(db: DatabaseSync) {
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS elections (
+async function query<T>(strings: TemplateStringsArray, ...values: unknown[]): Promise<T[]> {
+  return (await sqlClient()(strings, ...values)) as T[];
+}
+
+async function ensureSchema() {
+  if (!globalThis.__pgsdSchemaReady) {
+    globalThis.__pgsdSchemaReady = migrate().catch((error) => {
+      globalThis.__pgsdSchemaReady = undefined;
+      throw error;
+    });
+  }
+  await globalThis.__pgsdSchemaReady;
+}
+
+async function migrate() {
+  const sql = sqlClient();
+  await sql.transaction([
+    sql`CREATE TABLE IF NOT EXISTS elections (
       id TEXT PRIMARY KEY,
       title TEXT NOT NULL,
       status TEXT NOT NULL CHECK (status IN ('scheduled', 'open', 'closed')),
       result_visibility TEXT NOT NULL CHECK (result_visibility IN ('hidden', 'full_live', 'final_only')),
-      updated_at TEXT NOT NULL
-    );
-    CREATE TABLE IF NOT EXISTS candidates (
+      updated_at TIMESTAMPTZ NOT NULL
+    )`,
+    sql`CREATE TABLE IF NOT EXISTS candidates (
       id TEXT PRIMARY KEY,
       election_id TEXT NOT NULL REFERENCES elections(id) ON DELETE RESTRICT,
       ballot_number INTEGER NOT NULL,
@@ -121,102 +106,80 @@ function migrate(db: DatabaseSync) {
       poster TEXT NOT NULL,
       vision TEXT NOT NULL,
       missions_json TEXT NOT NULL,
-      is_published INTEGER NOT NULL DEFAULT 1 CHECK (is_published IN (0, 1)),
+      is_published BOOLEAN NOT NULL DEFAULT TRUE,
       UNIQUE (election_id, ballot_number),
       UNIQUE (election_id, slug)
-    );
-    CREATE TABLE IF NOT EXISTS voters (
+    )`,
+    sql`CREATE TABLE IF NOT EXISTS voters (
       id TEXT PRIMARY KEY,
       election_id TEXT NOT NULL REFERENCES elections(id) ON DELETE RESTRICT,
       nim TEXT NOT NULL,
       name TEXT NOT NULL,
       class_name TEXT NOT NULL,
-      attendance_marked INTEGER NOT NULL DEFAULT 0 CHECK (attendance_marked IN (0, 1)),
-      is_eligible INTEGER NOT NULL DEFAULT 1 CHECK (is_eligible IN (0, 1)),
-      imported_at TEXT NOT NULL,
+      attendance_marked BOOLEAN NOT NULL DEFAULT FALSE,
+      is_eligible BOOLEAN NOT NULL DEFAULT TRUE,
+      imported_at TIMESTAMPTZ NOT NULL,
       UNIQUE (election_id, nim)
-    );
-    CREATE TABLE IF NOT EXISTS admin_users (
+    )`,
+    sql`CREATE TABLE IF NOT EXISTS admin_users (
       id TEXT PRIMARY KEY,
       username TEXT NOT NULL UNIQUE,
       password_hash TEXT NOT NULL,
-      is_active INTEGER NOT NULL DEFAULT 1 CHECK (is_active IN (0, 1)),
-      created_at TEXT NOT NULL
-    );
-    CREATE TABLE IF NOT EXISTS admin_sessions (
+      is_active BOOLEAN NOT NULL DEFAULT TRUE,
+      created_at TIMESTAMPTZ NOT NULL
+    )`,
+    sql`CREATE TABLE IF NOT EXISTS admin_sessions (
       id TEXT PRIMARY KEY,
       admin_id TEXT NOT NULL REFERENCES admin_users(id) ON DELETE CASCADE,
       token_hash TEXT NOT NULL UNIQUE,
-      expires_at TEXT NOT NULL,
-      created_at TEXT NOT NULL
-    );
-    CREATE TABLE IF NOT EXISTS voting_sessions (
+      expires_at TIMESTAMPTZ NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL
+    )`,
+    sql`CREATE TABLE IF NOT EXISTS voting_sessions (
       id TEXT PRIMARY KEY,
       election_id TEXT NOT NULL REFERENCES elections(id) ON DELETE RESTRICT,
       voter_id TEXT NOT NULL REFERENCES voters(id) ON DELETE RESTRICT,
       token_hash TEXT NOT NULL UNIQUE,
       status TEXT NOT NULL CHECK (status IN ('issued', 'submitted', 'expired')),
-      expires_at TEXT NOT NULL,
-      created_at TEXT NOT NULL
-    );
-    CREATE TABLE IF NOT EXISTS votes (
+      expires_at TIMESTAMPTZ NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL
+    )`,
+    sql`CREATE TABLE IF NOT EXISTS votes (
       id TEXT PRIMARY KEY,
       election_id TEXT NOT NULL REFERENCES elections(id) ON DELETE RESTRICT,
       voter_id TEXT NOT NULL REFERENCES voters(id) ON DELETE RESTRICT,
       candidate_id TEXT NOT NULL REFERENCES candidates(id) ON DELETE RESTRICT,
       idempotency_hash TEXT NOT NULL,
       receipt_code TEXT NOT NULL UNIQUE,
-      cast_at TEXT NOT NULL,
+      cast_at TIMESTAMPTZ NOT NULL,
       UNIQUE (election_id, voter_id),
       UNIQUE (election_id, voter_id, idempotency_hash)
-    );
-    CREATE TABLE IF NOT EXISTS rate_limits (
+    )`,
+    sql`CREATE TABLE IF NOT EXISTS rate_limits (
       scope TEXT NOT NULL,
       key_hash TEXT NOT NULL,
-      window_started INTEGER NOT NULL,
+      window_started BIGINT NOT NULL,
       count INTEGER NOT NULL,
       PRIMARY KEY (scope, key_hash)
-    );
-    CREATE TABLE IF NOT EXISTS audit_logs (
+    )`,
+    sql`CREATE TABLE IF NOT EXISTS audit_logs (
       id TEXT PRIMARY KEY,
       admin_id TEXT REFERENCES admin_users(id) ON DELETE SET NULL,
       action TEXT NOT NULL,
       detail TEXT NOT NULL,
-      created_at TEXT NOT NULL
-    );
-  `);
+      created_at TIMESTAMPTZ NOT NULL
+    )`,
+    sql`CREATE INDEX IF NOT EXISTS voters_event_nim_idx ON voters (election_id, nim)`,
+    sql`CREATE INDEX IF NOT EXISTS votes_event_candidate_idx ON votes (election_id, candidate_id)`,
+    sql`CREATE INDEX IF NOT EXISTS voting_sessions_token_idx ON voting_sessions (token_hash)`,
+    sql`INSERT INTO elections (id, title, status, result_visibility, updated_at)
+      VALUES (${ELECTION_ID}, 'Pemilihan Ketua Angkatan PGSD 2026', 'scheduled', 'hidden', ${now()})
+      ON CONFLICT (id) DO NOTHING`
+  ]);
 
-  const election = db.prepare("SELECT id FROM elections WHERE id = ?").get(ELECTION_ID) as { id: string } | undefined;
-  if (!election) {
-    db.prepare("INSERT INTO elections (id, title, status, result_visibility, updated_at) VALUES (?, ?, ?, ?, ?)")
-      .run(ELECTION_ID, "Pemilihan Ketua Angkatan PGSD 2026", "scheduled", "hidden", now());
-  }
-
-  const candidateCount = db.prepare("SELECT COUNT(*) AS count FROM candidates WHERE election_id = ?").get(ELECTION_ID) as CountRow;
-  if (candidateCount.count === 0) {
-    const insert = db.prepare(`INSERT INTO candidates (id, election_id, ballot_number, slug, display_name, class_name, poster, vision, missions_json, is_published)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`);
-    for (const candidate of candidates) {
-      insert.run(`candidate-${candidate.number}`, ELECTION_ID, candidate.number, candidate.slug, candidate.name, candidate.className, candidate.poster, candidate.vision, JSON.stringify(candidate.missions));
-    }
-  }
-}
-
-function mapCandidate(row: CandidateRow): Candidate {
-  let missions: string[] = [];
-  try {
-    const parsed: unknown = JSON.parse(row.missions_json);
-    missions = Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : [];
-  } catch {
-    missions = [];
-  }
-  return { id: row.id, number: row.ballot_number, slug: row.slug, name: row.display_name, className: row.class_name, poster: row.poster, vision: row.vision, missions };
-}
-
-function eventRow() {
-  const row = getDatabase().prepare("SELECT * FROM elections WHERE id = ?").get(ELECTION_ID) as ElectionRow | undefined;
-  if (!row) throw new Error("Konfigurasi pemilihan tidak tersedia.");
-  return row;
+  await sql.transaction(candidates.map((candidate) => sql`INSERT INTO candidates (id, election_id, ballot_number, slug, display_name, class_name, poster, vision, missions_json, is_published)
+    VALUES (${`candidate-${candidate.number}`}, ${ELECTION_ID}, ${candidate.number}, ${candidate.slug}, ${candidate.name}, ${candidate.className}, ${candidate.poster}, ${candidate.vision}, ${JSON.stringify(candidate.missions)}, TRUE)
+    ON CONFLICT (id) DO NOTHING`));
 }
 
 function statusLabel(status: ElectionStatus) {
@@ -231,38 +194,67 @@ function scheduleLabel(status: ElectionStatus) {
   return "Jadwal voting akan diumumkan oleh panitia.";
 }
 
-export function getPublicResult(): PublicResult {
-  const db = getDatabase();
-  const totalEligible = (db.prepare("SELECT COUNT(*) AS count FROM voters WHERE election_id = ? AND is_eligible = 1").get(ELECTION_ID) as CountRow).count;
-  const totalCast = (db.prepare("SELECT COUNT(*) AS count FROM votes WHERE election_id = ?").get(ELECTION_ID) as CountRow).count;
-  const rows = db.prepare("SELECT candidate_id, COUNT(*) AS vote_count FROM votes WHERE election_id = ? GROUP BY candidate_id").all(ELECTION_ID) as ResultRow[];
-  const counts = new Map(rows.map((row) => [row.candidate_id, row.vote_count]));
-  const updatedAt = eventRow().updated_at;
+function numberValue(value: number | string) {
+  return typeof value === "number" ? value : Number(value);
+}
+
+function mapCandidate(row: CandidateRow): Candidate {
+  let missions: string[] = [];
+  try {
+    const parsed: unknown = JSON.parse(row.missions_json);
+    missions = Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : [];
+  } catch { /* an invalid stored mission list should not break public rendering */ }
+  return { id: row.id, number: Number(row.ballot_number), slug: row.slug, name: row.display_name, className: row.class_name, poster: row.poster, vision: row.vision, missions };
+}
+
+async function eventRow() {
+  await ensureSchema();
+  const rows = await query<ElectionRow>`SELECT * FROM elections WHERE id = ${ELECTION_ID}`;
+  const row = rows[0];
+  if (!row) throw new Error("Konfigurasi pemilihan tidak tersedia.");
+  return row;
+}
+
+export async function getPublishedCandidates() {
+  await ensureSchema();
+  const rows = await query<CandidateRow>`SELECT * FROM candidates WHERE election_id = ${ELECTION_ID} AND is_published = TRUE ORDER BY ballot_number`;
+  return rows.map(mapCandidate);
+}
+
+export async function getAllCandidates() {
+  await ensureSchema();
+  const rows = await query<CandidateRow>`SELECT * FROM candidates WHERE election_id = ${ELECTION_ID} ORDER BY ballot_number`;
+  return rows.map((row) => ({ ...mapCandidate(row), isPublished: row.is_published === true }));
+}
+
+export async function getPublicResult(): Promise<PublicResult> {
+  await ensureSchema();
+  const [eligibleRows, castRows, voteRows, event, published] = await Promise.all([
+    query<CountRow>`SELECT COUNT(*)::int AS count FROM voters WHERE election_id = ${ELECTION_ID} AND is_eligible = TRUE`,
+    query<CountRow>`SELECT COUNT(*)::int AS count FROM votes WHERE election_id = ${ELECTION_ID}`,
+    query<{ candidate_id: string; vote_count: number | string }>`SELECT candidate_id, COUNT(*)::int AS vote_count FROM votes WHERE election_id = ${ELECTION_ID} GROUP BY candidate_id`,
+    eventRow(),
+    getPublishedCandidates()
+  ]);
+  const totalEligible = numberValue(eligibleRows[0]?.count ?? 0);
+  const totalCast = numberValue(castRows[0]?.count ?? 0);
+  const counts = new Map(voteRows.map((row) => [row.candidate_id, numberValue(row.vote_count)]));
   return {
     totalEligible,
     totalCast,
     turnoutPercent: totalEligible === 0 ? 0 : Number(((totalCast / totalEligible) * 100).toFixed(2)),
-    candidates: getPublishedCandidates().map((candidate) => {
+    candidates: published.map((candidate) => {
       const voteCount = counts.get(candidate.id ?? "") ?? 0;
       return { candidateId: candidate.id ?? "", voteCount, votePercent: totalCast === 0 ? 0 : Number(((voteCount / totalCast) * 100).toFixed(2)) };
     }),
-    updatedAt
+    updatedAt: event.updated_at
   };
 }
 
-export function getPublishedCandidates() {
-  const rows = getDatabase().prepare("SELECT * FROM candidates WHERE election_id = ? AND is_published = 1 ORDER BY ballot_number").all(ELECTION_ID) as CandidateRow[];
-  return rows.map(mapCandidate);
-}
-
-export function getAllCandidates() {
-  const rows = getDatabase().prepare("SELECT * FROM candidates WHERE election_id = ? ORDER BY ballot_number").all(ELECTION_ID) as CandidateRow[];
-  return rows.map((row) => ({ ...mapCandidate(row), isPublished: row.is_published === 1 }));
-}
-
-export function getElectionSnapshot(): ElectionSnapshot {
-  const event = eventRow();
+export async function getElectionSnapshot(): Promise<ElectionSnapshot> {
+  const event = await eventRow();
   const canShowResult = event.result_visibility === "full_live" || (event.result_visibility === "final_only" && event.status === "closed");
+  const [published, result] = await Promise.all([getPublishedCandidates(), canShowResult ? getPublicResult() : Promise.resolve(null)]);
   return {
     id: event.id,
     title: event.title,
@@ -270,237 +262,245 @@ export function getElectionSnapshot(): ElectionSnapshot {
     statusLabel: statusLabel(event.status),
     scheduleLabel: scheduleLabel(event.status),
     resultVisibility: event.result_visibility,
-    candidates: getPublishedCandidates(),
-    result: canShowResult ? getPublicResult() : null
+    candidates: published,
+    result
   };
 }
 
-export function hasAdminUsers() {
-  return (getDatabase().prepare("SELECT COUNT(*) AS count FROM admin_users").get() as CountRow).count > 0;
+export async function hasAdminUsers() {
+  await ensureSchema();
+  const rows = await query<CountRow>`SELECT COUNT(*)::int AS count FROM admin_users`;
+  return numberValue(rows[0]?.count ?? 0) > 0;
 }
 
-export function createAdmin(username: string, passwordHash: string) {
+export async function createAdmin(username: string, passwordHash: string) {
+  await ensureSchema();
+  const sql = sqlClient();
   const id = randomUUID();
-  getDatabase().prepare("INSERT INTO admin_users (id, username, password_hash, created_at) VALUES (?, ?, ?, ?)").run(id, username, passwordHash, now());
-  audit(null, "admin.bootstrap", "Akun admin awal dibuat.");
+  await sql.transaction([
+    sql`INSERT INTO admin_users (id, username, password_hash, created_at) VALUES (${id}, ${username}, ${passwordHash}, ${now()})`,
+    sql`INSERT INTO audit_logs (id, admin_id, action, detail, created_at) VALUES (${randomUUID()}, NULL, 'admin.bootstrap', 'Akun admin awal dibuat.', ${now()})`
+  ]);
   return id;
 }
 
-export function findAdminByUsername(username: string) {
-  return getDatabase().prepare("SELECT id, username, password_hash, is_active FROM admin_users WHERE username = ?").get(username) as { id: string; username: string; password_hash: string; is_active: number } | undefined;
+export async function findAdminByUsername(username: string) {
+  await ensureSchema();
+  const rows = await query<{ id: string; username: string; password_hash: string; is_active: boolean }>`SELECT id, username, password_hash, is_active FROM admin_users WHERE username = ${username}`;
+  return rows[0];
 }
 
-export function createAdminSession(adminId: string, tokenHash: string, expiresAt: string) {
-  const id = randomUUID();
-  getDatabase().prepare("INSERT INTO admin_sessions (id, admin_id, token_hash, expires_at, created_at) VALUES (?, ?, ?, ?, ?)").run(id, adminId, tokenHash, expiresAt, now());
+export async function createAdminSession(adminId: string, tokenHash: string, expiresAt: string) {
+  await ensureSchema();
+  await sqlClient()`INSERT INTO admin_sessions (id, admin_id, token_hash, expires_at, created_at) VALUES (${randomUUID()}, ${adminId}, ${tokenHash}, ${expiresAt}, ${now()})`;
 }
 
-export function findAdminSession(tokenHash: string) {
-  return getDatabase().prepare(`SELECT admin_users.id, admin_users.username FROM admin_sessions
+export async function findAdminSession(tokenHash: string) {
+  await ensureSchema();
+  const rows = await query<{ id: string; username: string }>`SELECT admin_users.id, admin_users.username FROM admin_sessions
     JOIN admin_users ON admin_users.id = admin_sessions.admin_id
-    WHERE admin_sessions.token_hash = ? AND admin_sessions.expires_at > ? AND admin_users.is_active = 1`).get(tokenHash, now()) as { id: string; username: string } | undefined;
+    WHERE admin_sessions.token_hash = ${tokenHash} AND admin_sessions.expires_at > ${now()} AND admin_users.is_active = TRUE`;
+  return rows[0];
 }
 
-export function deleteAdminSession(tokenHash: string) {
-  getDatabase().prepare("DELETE FROM admin_sessions WHERE token_hash = ?").run(tokenHash);
+export async function deleteAdminSession(tokenHash: string) {
+  await ensureSchema();
+  await sqlClient()`DELETE FROM admin_sessions WHERE token_hash = ${tokenHash}`;
 }
 
-export function audit(adminId: string | null, action: string, detail: string) {
-  getDatabase().prepare("INSERT INTO audit_logs (id, admin_id, action, detail, created_at) VALUES (?, ?, ?, ?, ?)").run(randomUUID(), adminId, action, detail, now());
+export async function audit(adminId: string | null, action: string, detail: string) {
+  await ensureSchema();
+  await sqlClient()`INSERT INTO audit_logs (id, admin_id, action, detail, created_at) VALUES (${randomUUID()}, ${adminId}, ${action}, ${detail}, ${now()})`;
 }
 
-export function getAdminSummary(): AdminSummary {
-  const snapshot = getElectionSnapshot();
-  const db = getDatabase();
-  const recentAudit = db.prepare("SELECT action, detail, created_at FROM audit_logs ORDER BY created_at DESC LIMIT 10").all() as Array<{ action: string; detail: string; created_at: string }>;
+export async function getAdminSummary(): Promise<AdminSummary> {
+  await ensureSchema();
+  const [snapshot, voterRows, voteRows, adminRows, auditRows] = await Promise.all([
+    getElectionSnapshot(),
+    query<CountRow>`SELECT COUNT(*)::int AS count FROM voters WHERE election_id = ${ELECTION_ID}`,
+    query<CountRow>`SELECT COUNT(*)::int AS count FROM votes WHERE election_id = ${ELECTION_ID}`,
+    query<CountRow>`SELECT COUNT(*)::int AS count FROM admin_users WHERE is_active = TRUE`,
+    query<{ action: string; detail: string; created_at: string }>`SELECT action, detail, created_at FROM audit_logs ORDER BY created_at DESC LIMIT 10`
+  ]);
   return {
     ...snapshot,
-    voterCount: (db.prepare("SELECT COUNT(*) AS count FROM voters WHERE election_id = ?").get(ELECTION_ID) as CountRow).count,
-    voteCount: (db.prepare("SELECT COUNT(*) AS count FROM votes WHERE election_id = ?").get(ELECTION_ID) as CountRow).count,
-    adminCount: (db.prepare("SELECT COUNT(*) AS count FROM admin_users WHERE is_active = 1").get() as CountRow).count,
-    recentAudit: recentAudit.map((row) => ({ action: row.action, detail: row.detail, createdAt: row.created_at }))
+    voterCount: numberValue(voterRows[0]?.count ?? 0),
+    voteCount: numberValue(voteRows[0]?.count ?? 0),
+    adminCount: numberValue(adminRows[0]?.count ?? 0),
+    recentAudit: auditRows.map((row) => ({ action: row.action, detail: row.detail, createdAt: row.created_at }))
   };
 }
 
-export function getAdminVoters(query = ""): AdminVoter[] {
-  const db = getDatabase();
-  const term = query.trim().slice(0, 80);
+export async function getAdminVoters(searchQuery = ""): Promise<AdminVoter[]> {
+  await ensureSchema();
+  const term = searchQuery.trim().slice(0, 80);
+  const pattern = `%${term}%`;
   const rows = term
-    ? db.prepare(`SELECT voters.nim, voters.name, voters.class_name, voters.attendance_marked, voters.is_eligible,
-        EXISTS(SELECT 1 FROM votes WHERE votes.election_id = voters.election_id AND votes.voter_id = voters.id) AS has_voted
-        FROM voters WHERE voters.election_id = ? AND (voters.nim LIKE ? OR voters.name LIKE ? OR voters.class_name LIKE ?)
-        ORDER BY voters.class_name, voters.name LIMIT 500`).all(ELECTION_ID, `%${term}%`, `%${term}%`, `%${term}%`)
-    : db.prepare(`SELECT voters.nim, voters.name, voters.class_name, voters.attendance_marked, voters.is_eligible,
-        EXISTS(SELECT 1 FROM votes WHERE votes.election_id = voters.election_id AND votes.voter_id = voters.id) AS has_voted
-        FROM voters WHERE voters.election_id = ? ORDER BY voters.class_name, voters.name LIMIT 500`).all(ELECTION_ID);
-  return (rows as Array<{ nim: string; name: string; class_name: string; attendance_marked: number; is_eligible: number; has_voted: number }>).map((row) => ({
-    nim: row.nim,
-    name: row.name,
-    className: row.class_name,
-    attendanceMarked: row.attendance_marked === 1,
-    isEligible: row.is_eligible === 1,
-    hasVoted: row.has_voted === 1
-  }));
+    ? await query<{ nim: string; name: string; class_name: string; attendance_marked: boolean; is_eligible: boolean; has_voted: boolean }>`SELECT voters.nim, voters.name, voters.class_name, voters.attendance_marked, voters.is_eligible,
+      EXISTS(SELECT 1 FROM votes WHERE votes.election_id = voters.election_id AND votes.voter_id = voters.id) AS has_voted
+      FROM voters WHERE voters.election_id = ${ELECTION_ID} AND (voters.nim ILIKE ${pattern} OR voters.name ILIKE ${pattern} OR voters.class_name ILIKE ${pattern})
+      ORDER BY voters.class_name, voters.name LIMIT 500`
+    : await query<{ nim: string; name: string; class_name: string; attendance_marked: boolean; is_eligible: boolean; has_voted: boolean }>`SELECT voters.nim, voters.name, voters.class_name, voters.attendance_marked, voters.is_eligible,
+      EXISTS(SELECT 1 FROM votes WHERE votes.election_id = voters.election_id AND votes.voter_id = voters.id) AS has_voted
+      FROM voters WHERE voters.election_id = ${ELECTION_ID} ORDER BY voters.class_name, voters.name LIMIT 500`;
+  return rows.map((row) => ({ nim: row.nim, name: row.name, className: row.class_name, attendanceMarked: row.attendance_marked, isEligible: row.is_eligible, hasVoted: row.has_voted }));
 }
 
-export function setElectionStatus(adminId: string, status: ElectionStatus) {
-  const db = getDatabase();
-  const votes = (db.prepare("SELECT COUNT(*) AS count FROM votes WHERE election_id = ?").get(ELECTION_ID) as CountRow).count;
+export async function setElectionStatus(adminId: string, status: ElectionStatus) {
+  await ensureSchema();
+  const sql = sqlClient();
+  const [voteRows, eligibleRows, candidateRows] = await Promise.all([
+    query<CountRow>`SELECT COUNT(*)::int AS count FROM votes WHERE election_id = ${ELECTION_ID}`,
+    query<CountRow>`SELECT COUNT(*)::int AS count FROM voters WHERE election_id = ${ELECTION_ID} AND is_eligible = TRUE`,
+    query<CountRow>`SELECT COUNT(*)::int AS count FROM candidates WHERE election_id = ${ELECTION_ID} AND is_published = TRUE`
+  ]);
+  const voteCount = numberValue(voteRows[0]?.count ?? 0);
   if (status === "open") {
-    const eligible = (db.prepare("SELECT COUNT(*) AS count FROM voters WHERE election_id = ? AND is_eligible = 1").get(ELECTION_ID) as CountRow).count;
-    const published = (db.prepare("SELECT COUNT(*) AS count FROM candidates WHERE election_id = ? AND is_published = 1").get(ELECTION_ID) as CountRow).count;
     if (!process.env.VOTING_TOKEN_SECRET || process.env.VOTING_TOKEN_SECRET.length < 32) throw new Error("VOTING_TOKEN_SECRET minimal 32 karakter diperlukan sebelum voting dibuka.");
-    if (eligible === 0 || published < 2) throw new Error("Voting membutuhkan peserta eligible dan minimal dua calon published.");
+    if (numberValue(eligibleRows[0]?.count ?? 0) === 0 || numberValue(candidateRows[0]?.count ?? 0) < 2) throw new Error("Voting membutuhkan peserta eligible dan minimal dua calon published.");
   }
-  if (status === "scheduled" && votes > 0) throw new Error("Voting dengan suara sah tidak dapat dikembalikan ke terjadwal.");
-  db.prepare("UPDATE elections SET status = ?, updated_at = ? WHERE id = ?").run(status, now(), ELECTION_ID);
-  audit(adminId, `election.${status}`, `Status pemilihan diubah menjadi ${status}.`);
+  if (status === "scheduled" && voteCount > 0) throw new Error("Voting dengan suara sah tidak dapat dikembalikan ke terjadwal.");
+  await sql.transaction([
+    sql`UPDATE elections SET status = ${status}, updated_at = ${now()} WHERE id = ${ELECTION_ID}`,
+    sql`INSERT INTO audit_logs (id, admin_id, action, detail, created_at) VALUES (${randomUUID()}, ${adminId}, ${`election.${status}`}, ${`Status pemilihan diubah menjadi ${status}.`}, ${now()})`
+  ]);
 }
 
-export function setResultVisibility(adminId: string, visibility: ResultVisibility) {
-  getDatabase().prepare("UPDATE elections SET result_visibility = ?, updated_at = ? WHERE id = ?").run(visibility, now(), ELECTION_ID);
-  audit(adminId, "election.result_visibility", `Kebijakan hasil diubah menjadi ${visibility}.`);
+export async function setResultVisibility(adminId: string, visibility: ResultVisibility) {
+  await ensureSchema();
+  const sql = sqlClient();
+  await sql.transaction([
+    sql`UPDATE elections SET result_visibility = ${visibility}, updated_at = ${now()} WHERE id = ${ELECTION_ID}`,
+    sql`INSERT INTO audit_logs (id, admin_id, action, detail, created_at) VALUES (${randomUUID()}, ${adminId}, 'election.result_visibility', ${`Kebijakan hasil diubah menjadi ${visibility}.`}, ${now()})`
+  ]);
 }
 
-export function setCandidatePublished(adminId: string, candidateId: string, published: boolean) {
-  const event = eventRow();
+export async function setCandidatePublished(adminId: string, candidateId: string, published: boolean) {
+  const event = await eventRow();
   if (event.status === "open") throw new Error("Calon tidak dapat diubah ketika voting dibuka.");
-  const changed = getDatabase().prepare("UPDATE candidates SET is_published = ? WHERE id = ? AND election_id = ?").run(published ? 1 : 0, candidateId, ELECTION_ID);
-  if (changed.changes !== 1) throw new Error("Calon tidak ditemukan.");
-  audit(adminId, "candidate.publish", `Status publikasi calon diperbarui.`);
+  const changed = await query<{ id: string }>`UPDATE candidates SET is_published = ${published} WHERE id = ${candidateId} AND election_id = ${ELECTION_ID} RETURNING id`;
+  if (changed.length !== 1) throw new Error("Calon tidak ditemukan.");
+  await audit(adminId, "candidate.publish", "Status publikasi calon diperbarui.");
 }
 
-export function syncCandidateCatalog(adminId: string) {
-  const db = getDatabase();
-  const event = eventRow();
-  const voteCount = (db.prepare("SELECT COUNT(*) AS count FROM votes WHERE election_id = ?").get(ELECTION_ID) as CountRow).count;
-  if (event.status === "open" || voteCount > 0) throw new Error("Materi calon tidak dapat disinkronkan setelah voting dibuka atau suara tersimpan.");
-  db.exec("BEGIN IMMEDIATE");
-  try {
-    const upsert = db.prepare(`INSERT INTO candidates (id, election_id, ballot_number, slug, display_name, class_name, poster, vision, missions_json, is_published)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
-      ON CONFLICT(id) DO UPDATE SET ballot_number = excluded.ballot_number, slug = excluded.slug, display_name = excluded.display_name,
-      class_name = excluded.class_name, poster = excluded.poster, vision = excluded.vision, missions_json = excluded.missions_json`);
-    for (const candidate of candidates) {
-      upsert.run(`candidate-${candidate.number}`, ELECTION_ID, candidate.number, candidate.slug, candidate.name, candidate.className, candidate.poster, candidate.vision, JSON.stringify(candidate.missions));
-    }
-    db.prepare("UPDATE elections SET updated_at = ? WHERE id = ?").run(now(), ELECTION_ID);
-    audit(adminId, "candidates.sync_catalog", `${candidates.length} materi calon disinkronkan dari katalog proyek.`);
-    db.exec("COMMIT");
-    return candidates.length;
-  } catch (error) {
-    db.exec("ROLLBACK");
-    throw error;
-  }
+export async function syncCandidateCatalog(adminId: string) {
+  const event = await eventRow();
+  const sql = sqlClient();
+  const voteRows = await query<CountRow>`SELECT COUNT(*)::int AS count FROM votes WHERE election_id = ${ELECTION_ID}`;
+  if (event.status === "open" || numberValue(voteRows[0]?.count ?? 0) > 0) throw new Error("Materi calon tidak dapat disinkronkan setelah voting dibuka atau suara tersimpan.");
+  await sql.transaction([
+    ...candidates.map((candidate) => sql`INSERT INTO candidates (id, election_id, ballot_number, slug, display_name, class_name, poster, vision, missions_json, is_published)
+      VALUES (${`candidate-${candidate.number}`}, ${ELECTION_ID}, ${candidate.number}, ${candidate.slug}, ${candidate.name}, ${candidate.className}, ${candidate.poster}, ${candidate.vision}, ${JSON.stringify(candidate.missions)}, TRUE)
+      ON CONFLICT (id) DO UPDATE SET ballot_number = EXCLUDED.ballot_number, slug = EXCLUDED.slug, display_name = EXCLUDED.display_name,
+      class_name = EXCLUDED.class_name, poster = EXCLUDED.poster, vision = EXCLUDED.vision, missions_json = EXCLUDED.missions_json`),
+    sql`UPDATE elections SET updated_at = ${now()} WHERE id = ${ELECTION_ID}`,
+    sql`INSERT INTO audit_logs (id, admin_id, action, detail, created_at) VALUES (${randomUUID()}, ${adminId}, 'candidates.sync_catalog', ${`${candidates.length} materi calon disinkronkan dari katalog proyek.`}, ${now()})`
+  ]);
+  return candidates.length;
 }
 
-export function replaceVoters(adminId: string, voters: ImportedVoter[]) {
-  const db = getDatabase();
-  const event = eventRow();
-  const voteCount = (db.prepare("SELECT COUNT(*) AS count FROM votes WHERE election_id = ?").get(ELECTION_ID) as CountRow).count;
-  if (event.status === "open" || voteCount > 0) throw new Error("Daftar peserta tidak dapat diimpor ulang setelah voting dibuka atau suara tersimpan.");
+export async function replaceVoters(adminId: string, voters: ImportedVoter[]) {
+  const event = await eventRow();
+  const sql = sqlClient();
+  const voteRows = await query<CountRow>`SELECT COUNT(*)::int AS count FROM votes WHERE election_id = ${ELECTION_ID}`;
+  if (event.status === "open" || numberValue(voteRows[0]?.count ?? 0) > 0) throw new Error("Daftar peserta tidak dapat diimpor ulang setelah voting dibuka atau suara tersimpan.");
   if (voters.length === 0) throw new Error("Tidak ada peserta valid untuk diimpor.");
-
-  db.exec("BEGIN IMMEDIATE");
-  try {
-    db.prepare("DELETE FROM voting_sessions WHERE election_id = ?").run(ELECTION_ID);
-    db.prepare("DELETE FROM voters WHERE election_id = ?").run(ELECTION_ID);
-    const insert = db.prepare(`INSERT INTO voters (id, election_id, nim, name, class_name, attendance_marked, is_eligible, imported_at)
-      VALUES (?, ?, ?, ?, ?, ?, 1, ?)`);
-    const importedAt = now();
-    for (const voter of voters) insert.run(randomUUID(), ELECTION_ID, voter.nim, voter.name, voter.className, voter.attendanceMarked ? 1 : 0, importedAt);
-    db.prepare("UPDATE elections SET updated_at = ? WHERE id = ?").run(now(), ELECTION_ID);
-    audit(adminId, "voters.import", `${voters.length} peserta diimpor.`);
-    db.exec("COMMIT");
-  } catch (error) {
-    db.exec("ROLLBACK");
-    throw error;
-  }
+  const payload = voters.map((voter) => ({
+    id: randomUUID(),
+    nim: voter.nim,
+    name: voter.name,
+    class_name: voter.className,
+    attendance_marked: voter.attendanceMarked
+  }));
+  const importedAt = now();
+  await sql.transaction([
+    sql`DELETE FROM voting_sessions WHERE election_id = ${ELECTION_ID}`,
+    sql`DELETE FROM voters WHERE election_id = ${ELECTION_ID}`,
+    sql`INSERT INTO voters (id, election_id, nim, name, class_name, attendance_marked, is_eligible, imported_at)
+      SELECT record.id, ${ELECTION_ID}, record.nim, record.name, record.class_name, record.attendance_marked, TRUE, ${importedAt}
+      FROM jsonb_to_recordset(${JSON.stringify(payload)}::jsonb) AS record(id TEXT, nim TEXT, name TEXT, class_name TEXT, attendance_marked BOOLEAN)`,
+    sql`UPDATE elections SET updated_at = ${now()} WHERE id = ${ELECTION_ID}`,
+    sql`INSERT INTO audit_logs (id, admin_id, action, detail, created_at) VALUES (${randomUUID()}, ${adminId}, 'voters.import', ${`${voters.length} peserta diimpor.`}, ${now()})`
+  ]);
 }
 
-export function resetBeforeVoting(adminId: string, reason: string) {
-  const db = getDatabase();
-  const event = eventRow();
-  const voteCount = (db.prepare("SELECT COUNT(*) AS count FROM votes WHERE election_id = ?").get(ELECTION_ID) as CountRow).count;
-  if (event.status === "open" || voteCount > 0) throw new Error("Reset ditolak: voting terbuka atau sudah memiliki suara sah.");
-  db.exec("BEGIN IMMEDIATE");
-  try {
-    db.prepare("DELETE FROM voting_sessions WHERE election_id = ?").run(ELECTION_ID);
-    db.prepare("DELETE FROM voters WHERE election_id = ?").run(ELECTION_ID);
-    db.prepare("UPDATE elections SET status = 'scheduled', result_visibility = 'hidden', updated_at = ? WHERE id = ?").run(now(), ELECTION_ID);
-    audit(adminId, "election.reset_before_vote", `Reset pra-voting: ${reason.slice(0, 160)}`);
-    db.exec("COMMIT");
-  } catch (error) {
-    db.exec("ROLLBACK");
-    throw error;
-  }
+export async function resetBeforeVoting(adminId: string, reason: string) {
+  const event = await eventRow();
+  const sql = sqlClient();
+  const voteRows = await query<CountRow>`SELECT COUNT(*)::int AS count FROM votes WHERE election_id = ${ELECTION_ID}`;
+  if (event.status === "open" || numberValue(voteRows[0]?.count ?? 0) > 0) throw new Error("Reset ditolak: voting terbuka atau sudah memiliki suara sah.");
+  await sql.transaction([
+    sql`DELETE FROM voting_sessions WHERE election_id = ${ELECTION_ID}`,
+    sql`DELETE FROM voters WHERE election_id = ${ELECTION_ID}`,
+    sql`UPDATE elections SET status = 'scheduled', result_visibility = 'hidden', updated_at = ${now()} WHERE id = ${ELECTION_ID}`,
+    sql`INSERT INTO audit_logs (id, admin_id, action, detail, created_at) VALUES (${randomUUID()}, ${adminId}, 'election.reset_before_vote', ${`Reset pra-voting: ${reason.slice(0, 160)}`}, ${now()})`
+  ]);
 }
 
-export function consumeRateLimit(scope: string, keyHash: string, limit: number, windowMs: number) {
-  const db = getDatabase();
-  const nowMs = Date.now();
-  const current = db.prepare("SELECT window_started, count FROM rate_limits WHERE scope = ? AND key_hash = ?").get(scope, keyHash) as { window_started: number; count: number } | undefined;
-  if (!current || nowMs - current.window_started >= windowMs) {
-    db.prepare("INSERT OR REPLACE INTO rate_limits (scope, key_hash, window_started, count) VALUES (?, ?, ?, 1)").run(scope, keyHash, nowMs);
-    return true;
-  }
-  if (current.count >= limit) return false;
-  db.prepare("UPDATE rate_limits SET count = count + 1 WHERE scope = ? AND key_hash = ?").run(scope, keyHash);
-  return true;
+export async function consumeRateLimit(scope: string, keyHash: string, limit: number, windowMs: number) {
+  await ensureSchema();
+  const windowStarted = Date.now();
+  const rows = await query<{ count: number }>`INSERT INTO rate_limits (scope, key_hash, window_started, count)
+    VALUES (${scope}, ${keyHash}, ${windowStarted}, 1)
+    ON CONFLICT (scope, key_hash) DO UPDATE SET
+      window_started = CASE WHEN ${windowStarted} - rate_limits.window_started >= ${windowMs} THEN ${windowStarted} ELSE rate_limits.window_started END,
+      count = CASE WHEN ${windowStarted} - rate_limits.window_started >= ${windowMs} THEN 1 ELSE rate_limits.count + 1 END
+    WHERE rate_limits.count < ${limit} OR ${windowStarted} - rate_limits.window_started >= ${windowMs}
+    RETURNING count`;
+  return rows.length === 1;
 }
 
-export function issueVotingSession(nim: string, tokenHash: string, expiresAt: string) {
-  const db = getDatabase();
-  const event = eventRow();
-  if (event.status !== "open") return false;
-  const voter = db.prepare("SELECT id FROM voters WHERE election_id = ? AND nim = ? AND is_eligible = 1").get(ELECTION_ID, nim) as { id: string } | undefined;
-  if (!voter) return false;
-  const existing = db.prepare("SELECT id FROM votes WHERE election_id = ? AND voter_id = ?").get(ELECTION_ID, voter.id) as { id: string } | undefined;
-  if (existing) return false;
-  db.prepare("DELETE FROM voting_sessions WHERE voter_id = ? AND expires_at <= ?").run(voter.id, now());
-  db.prepare("INSERT INTO voting_sessions (id, election_id, voter_id, token_hash, status, expires_at, created_at) VALUES (?, ?, ?, ?, 'issued', ?, ?)")
-    .run(randomUUID(), ELECTION_ID, voter.id, tokenHash, expiresAt, now());
-  return true;
+export async function issueVotingSession(nim: string, tokenHash: string, expiresAt: string) {
+  await ensureSchema();
+  const rows = await query<{ id: string }>`WITH eligible_voter AS (
+      SELECT voters.id FROM voters JOIN elections ON elections.id = voters.election_id
+      WHERE voters.election_id = ${ELECTION_ID} AND voters.nim = ${nim} AND voters.is_eligible = TRUE AND elections.status = 'open'
+    )
+    INSERT INTO voting_sessions (id, election_id, voter_id, token_hash, status, expires_at, created_at)
+    SELECT ${randomUUID()}, ${ELECTION_ID}, eligible_voter.id, ${tokenHash}, 'issued', ${expiresAt}, ${now()}
+    FROM eligible_voter
+    WHERE NOT EXISTS (SELECT 1 FROM votes WHERE votes.election_id = ${ELECTION_ID} AND votes.voter_id = eligible_voter.id)
+    ON CONFLICT (token_hash) DO NOTHING
+    RETURNING id`;
+  return rows.length === 1;
 }
 
-export function submitVote(tokenHash: string, candidateId: string, idempotencyHash: string, receiptCode: string): VoteSubmitResult {
-  const db = getDatabase();
-  db.exec("BEGIN IMMEDIATE");
-  try {
-    const event = eventRow();
-    if (event.status !== "open") {
-      db.exec("ROLLBACK");
-      return { status: "election_not_open" };
-    }
-    const session = db.prepare("SELECT voter_id, status, expires_at FROM voting_sessions WHERE token_hash = ?").get(tokenHash) as { voter_id: string; status: string; expires_at: string } | undefined;
-    if (!session || session.expires_at <= now()) {
-      db.exec("ROLLBACK");
-      return { status: "invalid_session" };
-    }
-    const candidate = db.prepare("SELECT id FROM candidates WHERE id = ? AND election_id = ? AND is_published = 1").get(candidateId, ELECTION_ID) as { id: string } | undefined;
-    if (!candidate) {
-      db.exec("ROLLBACK");
-      return { status: "candidate_unavailable" };
-    }
-    const previous = db.prepare("SELECT receipt_code, cast_at, idempotency_hash FROM votes WHERE election_id = ? AND voter_id = ?").get(ELECTION_ID, session.voter_id) as { receipt_code: string; cast_at: string; idempotency_hash: string } | undefined;
-    if (previous) {
-      db.exec("ROLLBACK");
-      if (previous.idempotency_hash === idempotencyHash) return { status: "accepted", receiptCode: previous.receipt_code, castAt: previous.cast_at };
-      return { status: "already_voted" };
-    }
-    const castAt = now();
-    db.prepare("INSERT INTO votes (id, election_id, voter_id, candidate_id, idempotency_hash, receipt_code, cast_at) VALUES (?, ?, ?, ?, ?, ?, ?)")
-      .run(randomUUID(), ELECTION_ID, session.voter_id, candidate.id, idempotencyHash, receiptCode, castAt);
-    db.prepare("UPDATE voting_sessions SET status = 'submitted' WHERE token_hash = ?").run(tokenHash);
-    db.prepare("UPDATE elections SET updated_at = ? WHERE id = ?").run(castAt, ELECTION_ID);
-    db.exec("COMMIT");
-    return { status: "accepted", receiptCode, castAt };
-  } catch (error) {
-    try { db.exec("ROLLBACK"); } catch { /* transaction already closed */ }
-    throw error;
-  }
+export async function submitVote(tokenHash: string, candidateId: string, idempotencyHash: string, receiptCode: string): Promise<VoteSubmitResult> {
+  await ensureSchema();
+  const castAt = now();
+  const inserted = await query<{ receipt_code: string; cast_at: string }>`WITH active_session AS (
+      SELECT voting_sessions.voter_id FROM voting_sessions JOIN elections ON elections.id = voting_sessions.election_id
+      WHERE voting_sessions.token_hash = ${tokenHash} AND voting_sessions.status = 'issued' AND voting_sessions.expires_at > ${castAt} AND elections.status = 'open'
+    ), valid_candidate AS (
+      SELECT id FROM candidates WHERE id = ${candidateId} AND election_id = ${ELECTION_ID} AND is_published = TRUE
+    ), inserted AS (
+      INSERT INTO votes (id, election_id, voter_id, candidate_id, idempotency_hash, receipt_code, cast_at)
+      SELECT ${randomUUID()}, ${ELECTION_ID}, active_session.voter_id, valid_candidate.id, ${idempotencyHash}, ${receiptCode}, ${castAt}
+      FROM active_session CROSS JOIN valid_candidate
+      ON CONFLICT (election_id, voter_id) DO NOTHING
+      RETURNING receipt_code, cast_at
+    ), session_updated AS (
+      UPDATE voting_sessions SET status = 'submitted' WHERE token_hash = ${tokenHash} AND EXISTS (SELECT 1 FROM inserted)
+    ), event_updated AS (
+      UPDATE elections SET updated_at = ${castAt} WHERE id = ${ELECTION_ID} AND EXISTS (SELECT 1 FROM inserted)
+    ) SELECT receipt_code, cast_at FROM inserted`;
+  if (inserted[0]) return { status: "accepted", receiptCode: inserted[0].receipt_code, castAt: inserted[0].cast_at };
+
+  const previous = await query<{ receipt_code: string; cast_at: string; idempotency_hash: string }>`SELECT votes.receipt_code, votes.cast_at, votes.idempotency_hash FROM votes
+    JOIN voting_sessions ON voting_sessions.voter_id = votes.voter_id AND voting_sessions.election_id = votes.election_id
+    WHERE voting_sessions.token_hash = ${tokenHash} AND votes.election_id = ${ELECTION_ID}`;
+  if (previous[0]) return previous[0].idempotency_hash === idempotencyHash
+    ? { status: "accepted", receiptCode: previous[0].receipt_code, castAt: previous[0].cast_at }
+    : { status: "already_voted" };
+
+  const event = await eventRow();
+  if (event.status !== "open") return { status: "election_not_open" };
+  const candidate = await query<{ id: string }>`SELECT id FROM candidates WHERE id = ${candidateId} AND election_id = ${ELECTION_ID} AND is_published = TRUE`;
+  return candidate[0] ? { status: "invalid_session" } : { status: "candidate_unavailable" };
 }
 
-export function getReceipt(receiptCode: string) {
-  return getDatabase().prepare("SELECT receipt_code, cast_at FROM votes WHERE receipt_code = ?").get(receiptCode) as { receipt_code: string; cast_at: string } | undefined;
+export async function getReceipt(receiptCode: string) {
+  await ensureSchema();
+  const rows = await query<{ receipt_code: string; cast_at: string }>`SELECT receipt_code, cast_at FROM votes WHERE receipt_code = ${receiptCode}`;
+  return rows[0];
 }

@@ -39,8 +39,8 @@ Dokumentasi ini adalah sumber acuan sebelum implementasi website voting. Ruang l
 | Calon individu | Siap review panitia | Sembilan poster calon dan visi-misi tersedia pada folder sumber `paslon/`; mapping NIM sudah dibuat secara internal dan masih memerlukan review dua admin serta pengesahan posisi. |
 | Jadwal voting | Menunggu panitia | Tanggal agenda proposal telah berlalu. |
 | Faktor identitas kedua | Menunggu panitia | SSO kampus atau OTP direkomendasikan bila NIM saja dinilai tidak cukup. |
-| Stack | Rancangan | Next.js + TypeScript; layanan pendukung dipilih setelah kebutuhan hosting/biaya disetujui. |
-| Source aplikasi | Siap operasi lokal | Next.js, database SQLite, import peserta, admin, voting, receipt, hasil agregat, dan reset pra-voting tersedia. Setup dan batasnya ada pada `19-operasional-aplikasi.md`. |
+| Stack | Siap deploy | Next.js + TypeScript di Vercel dan PostgreSQL serverless yang dikonfigurasi melalui environment variable. |
+| Source aplikasi | Siap konfigurasi | Next.js, PostgreSQL serverless, import peserta, admin, voting, receipt, hasil agregat, dan reset pra-voting tersedia. Setup dan batasnya ada pada `19-operasional-aplikasi.md`. |
 | Ekspansi dokumentasi | Selesai | Struktur voting dipecah menjadi katalog, fase, engineering, database, UI, workflow, dan aset setara kedalaman `v12`; dokumen operasional aplikasi melengkapi status implementasi. |
 
 ## Sumber referensi

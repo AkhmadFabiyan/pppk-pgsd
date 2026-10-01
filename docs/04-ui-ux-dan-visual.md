@@ -14,12 +14,12 @@ Lingkungan local/staging tetap boleh memakai data uji untuk pengujian internal, 
 
 ## Arah visual
 
-Tema adalah **hutan institusional**: hijau tua memberi rasa tenang dan kredibel, merah bata memberi penekanan pada keputusan penting. Hutan hadir melalui tekstur garis kontur, siluet kanopi sangat halus, dan pola daun statis—bukan sebagai layar sinematik atau dekorasi yang mengalahkan konten.
+Tema adalah **hutan institusional yang fun**: hijau tua memberi rasa tenang dan kredibel, merah bata memberi penekanan pada keputusan penting. Hutan hadir sebagai satu scene orientasi di beranda—siluet kanopi, kedalaman scroll ringan, glow responsif pointer desktop, dan sedikit daun—bukan kumpulan efek atau dekorasi yang mengalahkan konten.
 
 | Hindari | Wajib digunakan |
 | --- | --- |
 | Hero generik, slogan metaforis panjang, atau copy pemasaran kosong. | Nama event, periode WIB, status resmi, dan CTA yang jelas. |
-| Glassmorphism berlapis, glow berlebihan, 3D berat, mouse-tracking, daun jatuh, atau confetti. | Surface padat, grid rapi, garis batas tipis, kontras tinggi, dan gambar calon asli. |
+| Glassmorphism berlapis, glow berlebihan, 3D berat, confetti, ticker tanpa informasi, noise/grain, atau efek cursor yang menghambat navigasi. | Surface padat, grid rapi, garis batas tipis, kontras tinggi, gambar calon asli, serta satu motion cue yang membantu orientasi. |
 | Gradient pelangi, warna acak, atau banyak aksen dalam satu layar. | Hijau sebagai identitas; merah hanya untuk fokus/aksi destruktif; warna status semantik. |
 | Kartu dengan tinggi tidak konsisten atau poster dipotong sembarang. | Grid dengan rasio media konsisten, nomor urut, nama, dan CTA tetap. |
 | Transisi layar penuh, scroll yang dimanipulasi, atau efek yang memperlambat form. | Native scroll, navigasi langsung, dan transisi singkat berbasis opacity/transform. |
@@ -114,8 +114,8 @@ Halaman publik boleh terasa sinematik dan eksploratif, tetapi bilik suara tetap 
 | `MOT-04` | Pilihan radio dan dialog konfirmasi | 160–220 ms | Focus dan state semantik aktif sebelum animasi selesai. |
 | `MOT-05` | Angka hasil berubah dari data server | 250–400 ms | Transisi dari nilai snapshot nyata; teks numerik langsung tersedia. |
 | `MOT-06` | Receipt sukses | maksimal 500 ms | Ikon cek sederhana; kode receipt tetap muncul sejak awal. |
-| `MOT-07` | Landing page discroll | transform berbasis posisi scroll | Progress tipis, kedalaman layer hutan, dan reveal section; tidak dipakai pada `/vote`. |
-| `MOT-08` | Pointer melintasi landing/kartu calon | 100–280 ms | Spotlight, tilt ringan, dan CTA shimmer; touch device tidak membutuhkan pointer untuk memperoleh informasi. |
+| `MOT-07` | Landing page discroll | transform berbasis posisi scroll | Progress tipis, dua layer horizon, dan reveal section; tidak dipakai pada `/vote`. |
+| `MOT-08` | Pointer melintasi landing/kartu calon | 100–280 ms | Glow lokal dan tilt ringan; touch device tidak membutuhkan pointer untuk memperoleh informasi. |
 
 Pada `prefers-reduced-motion`, semua motion non-fungsional dihapus; perubahan state esensial memakai transisi opacity singkat atau langsung. Loop dekoratif hanya boleh berada pada landing page dan harus berhenti pada reduced motion. Tidak ada autoplay scroll, inertia scroll, atau dekorasi bergerak di bilik suara.
 

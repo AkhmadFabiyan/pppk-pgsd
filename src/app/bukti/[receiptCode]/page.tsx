@@ -11,7 +11,7 @@ type ReceiptParams = Promise<{ receiptCode: string }>;
 
 export default async function ReceiptPage({ params }: { params: ReceiptParams }) {
   const { receiptCode } = await params;
-  const receipt = /^PGSD-[A-F0-9]{10}$/.test(receiptCode) ? getReceipt(receiptCode) : undefined;
+  const receipt = /^PGSD-[A-F0-9]{10}$/.test(receiptCode) ? await getReceipt(receiptCode) : undefined;
   const castAt = receipt ? new Intl.DateTimeFormat("id-ID", { dateStyle: "full", timeStyle: "short", timeZone: "Asia/Jakarta" }).format(new Date(receipt.cast_at)) : null;
   return (
     <PageTransition>

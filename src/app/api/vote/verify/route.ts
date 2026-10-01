@@ -23,10 +23,10 @@ export async function POST(request: Request) {
   if (!/^\d{8,20}$/.test(nim)) return NextResponse.json({ error: { code: "verification_failed", message: "NIM tidak dapat diverifikasi." } }, { status: 400 });
 
   const throttleKey = sha256(`${secret}:verify:${clientAddress(request)}`);
-  if (!consumeRateLimit("vote.verify", throttleKey, 5, 10 * 60 * 1000)) return NextResponse.json({ error: { code: "rate_limited", message: "Terlalu banyak percobaan. Coba lagi beberapa menit." } }, { status: 429 });
+  if (!(await consumeRateLimit("vote.verify", throttleKey, 5, 10 * 60 * 1000))) return NextResponse.json({ error: { code: "rate_limited", message: "Terlalu banyak percobaan. Coba lagi beberapa menit." } }, { status: 429 });
 
   const sessionToken = randomToken();
-  const accepted = issueVotingSession(nim, sha256(`${secret}:session:${sessionToken}`), new Date(Date.now() + 10 * 60 * 1000).toISOString());
+  const accepted = await issueVotingSession(nim, sha256(`${secret}:session:${sessionToken}`), new Date(Date.now() + 10 * 60 * 1000).toISOString());
   if (!accepted) return NextResponse.json({ error: { code: "verification_failed", message: "NIM tidak dapat diverifikasi." } }, { status: 403 });
   return NextResponse.json({ data: { sessionToken, expiresInSeconds: 600 } }, { headers: { "Cache-Control": "no-store" } });
 }

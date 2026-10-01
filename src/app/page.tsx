@@ -7,8 +7,8 @@ import { getElectionSnapshot } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
-export default function HomePage() {
-  const election = getElectionSnapshot();
+export default async function HomePage() {
+  const election = await getElectionSnapshot();
   const resultsByCandidate = new Map(election.result?.candidates.map((item) => [item.candidateId, item]) ?? []);
   return (
     <PageTransition>

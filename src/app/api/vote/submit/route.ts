@@ -23,9 +23,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: { code: "invalid_request", message: "Data suara tidak valid." } }, { status: 400 });
   }
   const sessionHash = sha256(`${secret}:session:${sessionToken}`);
-  if (!consumeRateLimit("vote.submit", sessionHash, 8, 10 * 60 * 1000)) return NextResponse.json({ error: { code: "rate_limited", message: "Terlalu banyak percobaan. Coba lagi nanti." } }, { status: 429 });
+  if (!(await consumeRateLimit("vote.submit", sessionHash, 8, 10 * 60 * 1000))) return NextResponse.json({ error: { code: "rate_limited", message: "Terlalu banyak percobaan. Coba lagi nanti." } }, { status: 429 });
 
-  const result = submitVote(sessionHash, candidateId, sha256(`${secret}:idempotency:${idempotencyKey}`), randomReceiptCode());
+  const result = await submitVote(sessionHash, candidateId, sha256(`${secret}:idempotency:${idempotencyKey}`), randomReceiptCode());
   if (result.status === "accepted") return NextResponse.json({ data: { receiptCode: result.receiptCode, castAt: result.castAt } }, { headers: { "Cache-Control": "no-store" } });
   const message = result.status === "already_voted" ? "Suara untuk NIM ini sudah tercatat." : "Sesi voting tidak berlaku. Silakan kembali ke tahap verifikasi.";
   return NextResponse.json({ error: { code: result.status, message } }, { status: result.status === "election_not_open" ? 409 : 403 });

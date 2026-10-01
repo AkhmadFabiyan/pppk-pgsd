@@ -44,7 +44,7 @@ export function isValidBootstrapToken(token: string) {
 export async function establishAdminSession(adminId: string) {
   const token = randomToken();
   const expiresAt = new Date(Date.now() + SESSION_MAX_AGE_SECONDS * 1000);
-  createAdminSession(adminId, sha256(token), expiresAt.toISOString());
+  await createAdminSession(adminId, sha256(token), expiresAt.toISOString());
   const jar = await cookies();
   jar.set(ADMIN_COOKIE, token, {
     httpOnly: true,
@@ -57,7 +57,7 @@ export async function establishAdminSession(adminId: string) {
 
 export async function currentAdmin() {
   const token = (await cookies()).get(ADMIN_COOKIE)?.value;
-  return token ? findAdminSession(sha256(token)) : undefined;
+  return token ? await findAdminSession(sha256(token)) : undefined;
 }
 
 export async function requireAdmin() {
@@ -69,6 +69,6 @@ export async function requireAdmin() {
 export async function endAdminSession() {
   const jar = await cookies();
   const token = jar.get(ADMIN_COOKIE)?.value;
-  if (token) deleteAdminSession(sha256(token));
+  if (token) await deleteAdminSession(sha256(token));
   jar.delete(ADMIN_COOKIE);
 }

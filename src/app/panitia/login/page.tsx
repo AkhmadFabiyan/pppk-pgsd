@@ -13,7 +13,7 @@ type SearchParams = Promise<{ error?: string }>;
 
 export default async function AdminLoginPage({ searchParams }: { searchParams: SearchParams }) {
   const [admin, params] = await Promise.all([currentAdmin(), searchParams]);
-  const setupRequired = !hasAdminUsers();
+  const setupRequired = !(await hasAdminUsers());
 
   return (
     <PageTransition>
