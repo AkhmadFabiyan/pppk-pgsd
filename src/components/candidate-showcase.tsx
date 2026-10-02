@@ -56,7 +56,7 @@ export function CandidateShowcase({ candidates }: { candidates: Candidate[] }) {
               <p>{candidate.className}</p>
               <h3>{candidate.name}</h3>
               <button className="candidate-detail-trigger" type="button" aria-expanded={selected?.slug === candidate.slug} onClick={() => selectCandidate(candidate)}>
-                Lihat visi dan misi <ChevronDown aria-hidden="true" size={17} />
+                Buka visi dan misi <ChevronDown aria-hidden="true" size={17} />
               </button>
             </div>
           </motion.article>

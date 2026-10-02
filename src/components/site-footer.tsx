@@ -6,11 +6,11 @@ export function SiteFooter() {
       <div className="container footer-grid">
         <div>
           <p className="eyebrow">PGSD 2026</p>
-          <h2>Ruang pemilihan yang jelas dan bertanggung jawab.</h2>
+          <h2>Pilih dengan jelas. Jaga suara dengan baik.</h2>
         </div>
         <div className="footer-links">
           <Link href="/#kandidat">Kandidat</Link>
-          <Link href="/#panduan">Panduan voting</Link>
+          <Link href="/#panduan">Cara memilih</Link>
           <Link href="/#bantuan">Bantuan</Link>
           <Link href="/#privasi">Kebijakan privasi</Link>
         </div>

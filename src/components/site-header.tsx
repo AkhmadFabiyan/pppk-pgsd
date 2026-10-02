@@ -6,7 +6,7 @@ import { useState } from "react";
 
 const navigation = [
   { href: "/#kandidat", label: "Kandidat" },
-  { href: "/#panduan", label: "Panduan" },
+  { href: "/#panduan", label: "Cara memilih" },
   { href: "/#hasil", label: "Hasil" },
   { href: "/#bantuan", label: "Bantuan" }
 ];
@@ -21,7 +21,7 @@ export function SiteHeader() {
           <span className="brand-mark" aria-hidden="true">P</span>
           <span>
             <strong>PGSD 2026</strong>
-            <small>Ruang Pemilihan</small>
+            <small>Pemilihan Ketua Angkatan</small>
           </span>
         </Link>
         <nav className={menuOpen ? "nav-links nav-open" : "nav-links"} aria-label="Navigasi utama">
@@ -31,7 +31,7 @@ export function SiteHeader() {
             </Link>
           ))}
           <Link className="button button-small" href="/vote" onClick={() => setMenuOpen(false)}>
-            Voting
+            Ke bilik suara
           </Link>
         </nav>
         <button

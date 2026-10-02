@@ -14,7 +14,7 @@ Lingkungan local/staging tetap boleh memakai data uji untuk pengujian internal, 
 
 ## Arah visual
 
-Tema adalah **hutan institusional yang fun**: hijau tua memberi rasa tenang dan kredibel, merah bata memberi penekanan pada keputusan penting. Hutan hadir sebagai satu scene orientasi di beranda—siluet kanopi, kedalaman scroll ringan, glow responsif pointer desktop, dan sedikit daun—bukan kumpulan efek atau dekorasi yang mengalahkan konten.
+Tema adalah **hutan institusional yang fun**: hijau tua memberi rasa tenang dan kredibel, merah bata memberi penekanan pada keputusan penting. Hutan hadir sebagai scene editorial yang playful di beranda—siluet kanopi, kedalaman scroll ringan, glow responsif pointer desktop, daun, typewriter pendek, serta card yang merespons interaksi—bukan kumpulan efek acak yang mengalahkan konten.
 
 | Hindari | Wajib digunakan |
 | --- | --- |
@@ -117,8 +117,10 @@ Halaman publik boleh terasa sinematik dan eksploratif, tetapi bilik suara tetap 
 | `MOT-06` | Receipt sukses | maksimal 500 ms | Ikon cek sederhana; kode receipt tetap muncul sejak awal. |
 | `MOT-07` | Landing page discroll | transform berbasis posisi scroll | Progress tipis, dua layer horizon, dan reveal section; tidak dipakai pada `/vote`. |
 | `MOT-08` | Pointer melintasi landing/kartu calon | 100–280 ms | Glow lokal dan tilt ringan; touch device tidak membutuhkan pointer untuk memperoleh informasi. |
+| `MOT-09` | Pesan typewriter pada hero | 1.8–3.6 detik per pesan | Hanya teks pendukung; `h1`, status, dan CTA sudah langsung terbaca. Layar pembaca menerima satu teks utuh, bukan huruf yang berubah-ubah. |
+| `MOT-10` | Tile informasi/langkah/hint hasil masuk atau diaktifkan | 180–320 ms | Stagger ringan berbasis opacity/transform; hover/tap hanya memberi affordance, tidak mengubah urutan atau menyembunyikan fakta. |
 
-Pada `prefers-reduced-motion`, semua motion non-fungsional dihapus; perubahan state esensial memakai transisi opacity singkat atau langsung. Loop dekoratif hanya boleh berada pada landing page dan harus berhenti pada reduced motion. Tidak ada autoplay scroll, inertia scroll, atau dekorasi bergerak di bilik suara.
+Pada `prefers-reduced-motion`, semua motion non-fungsional dihapus; typewriter menampilkan teks lengkap langsung, dan perubahan state esensial memakai transisi opacity singkat atau langsung. Loop dekoratif hanya boleh berada pada landing page dan harus berhenti pada reduced motion. Tidak ada autoplay scroll, inertia scroll, atau dekorasi bergerak di bilik suara.
 
 ## Acceptance sebelum implementasi dianggap selesai
 

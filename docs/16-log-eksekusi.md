@@ -32,6 +32,7 @@ File ini adalah register kerja aktif. Setiap proses material wajib memiliki entr
 | EXE-20261002-15 | T9 | Rancang layar hasil live satu viewport | Done | Pelaksana teknis | Panitia (review UX dan kebijakan hasil) | 2026-10-02 | Menunggu persetujuan untuk mengimplementasikan route `/live` pada build berikutnya. |
 | EXE-20261002-16 | T5/T9 | Implementasi layar hasil live satu viewport | In review | Pelaksana teknis | Panitia (review UX dan kebijakan hasil) | 2026-10-02 | Panitia meninjau `/live` dengan database Preview dan menyetujui layar operasional sebelum memakainya pada event. |
 | EXE-20261002-17 | T5/T7 | Sederhanakan inisialisasi akun admin | In review | Pelaksana teknis | Panitia (keamanan dan setup) | 2026-10-02 | Pasang environment Preview, uji login awal dengan secret baru, lalu setujui konfigurasi Production. |
+| EXE-20261002-18 | T9 | Rancang ulang motion beranda publik | In review | Pelaksana teknis | Panitia (review visual dan aksesibilitas) | 2026-10-02 | Review landing pada Preview dengan database aman dan cek mobile/reduced-motion sebelum menyetujui rilis. |
 
 ## Detail entry aktif
 
@@ -333,6 +334,49 @@ File ini adalah register kerja aktif. Setiap proses material wajib memiliki entr
 | Dampak | Commit akan memuat source login, template environment, dan dokumentasi tanpa `.env.local` atau secret. |
 | Persetujuan | User. |
 | Keputusan | Lanjutkan commit dan push ke branch `main` setelah pemeriksaan status/diff bersih. |
+
+### EXE-20261002-18 — Rancang ulang motion beranda publik
+
+| Field | Catatan |
+| --- | --- |
+| Status | `In review` — implementasi dan quality gate kode selesai; preview visual lokal menunggu `DATABASE_URL` development yang valid. |
+| Tahap runbook | T9 / visual, motion, aksesibilitas, dan performa. |
+| Tujuan | Mengganti kesan landing yang statis/generik menjadi pengalaman visual yang lebih fun, friendly, dan terasa hidup melalui React/Motion tanpa mengorbankan kejelasan informasi pemilihan. |
+| Scope | Hero/typewriter, section reveal bertahap, kartu informasi, kandidat, langkah voting, hasil, bantuan, token warna/permukaan, serta reduced-motion dan breakpoint beranda. |
+| Out of scope | Mengubah poster, data calon, rute, API, hasil, form `/vote`, admin, database, dependency berat, Three.js/canvas/GSAP/Lenis, atau scroll hijacking. |
+| Dokumen wajib dibaca | `04-ui-ux-dan-visual.md`, `ui/landing-page.md`, `engineering/11-accessibility-motion.md`, `10-quality-gate-dan-pengujian.md`, dan panduan Next.js Server/Client Components serta lazy loading. |
+| Dokumen yang terdampak | `04-ui-ux-dan-visual.md`, `ui/landing-page.md`, `16-log-eksekusi.md`, komponen landing, dan CSS global. |
+| Entry condition | User meminta desain lebih fun, interaktif, kaya animasi React, serta typewriter; kontrak reduced-motion dan bilik suara tenang harus tetap dipenuhi. |
+| Owner | Pelaksana teknis. |
+| Reviewer/approver | Panitia untuk review visual; reviewer aksesibilitas/performa sebelum rilis. |
+| Risiko dan mitigasi | Motion berlebihan dapat terasa seperti AI slop, membuat halaman berat, atau mengganggu vote. Setiap motion punya hierarki informasi, dibatasi pada transform/opacity, memakai client island kecil, dimatikan/disederhanakan untuk reduced-motion/touch, dan tidak masuk `/vote`. |
+| Aksi yang dilakukan | Menambahkan typewriter hero, tile informasi dengan stagger/hover/tap, journey voting dengan reveal bertahap, count-up hasil dari nilai server nyata, serta surface/ornamen CSS ringan untuk beranda. Semua interaksi browser berada pada client island kecil; page tetap Server Component. Poster calon, data server, dan bilik `/vote` tidak diubah. |
+| Bukti | `npm run typecheck`, `npm run lint`, dan `npm run build` lulus; audit build memuat rute inti yang sama. `git diff --check` lulus. Percobaan preview `http://localhost:3000/` berhenti pada error fail-closed karena `DATABASE_URL`/`POSTGRES_URL` tidak diset; tidak ada fallback data atau perubahan database dilakukan. |
+| Exit condition | Landing terasa lebih hidup pada perangkat biasa, tetap dapat dibaca tanpa JavaScript/motion, CTA tidak tertunda, poster utuh, quality gate lulus, dan panitia meninjau Preview desktop/mobile/reduced-motion dengan database aman. |
+| Keputusan | Siap direview. Gunakan Motion yang telah tersedia; tidak ada library animasi atau aset gambar baru. |
+| Waktu | Mulai 2026-10-02 WIB; implementasi dan quality gate lokal selesai 2026-10-02 WIB. |
+
+#### Amendment A1 — Copy publik dan baseline UI/UX internasional
+
+| Field | Catatan |
+| --- | --- |
+| Tanggal/WIB | 2026-10-02 WIB |
+| Alasan perubahan | User meminta teks publik dirancang ulang dengan panduan UI/UX internasional. |
+| Dampak | Copy header, hero, beranda, kandidat, langkah, hasil, bantuan, dan footer akan diperjelas; design system mendokumentasikan baseline WCAG 2.2, direct-action copy, target sentuh, focus, serta motion yang dapat dikurangi. |
+| Persetujuan | User. |
+| Aksi yang dilakukan | Mengganti copy publik menjadi lebih pendek, aktif, dan menjelaskan hasil tindakan; mendokumentasikan baseline W3C WCAG 2.2, Material interaction states, serta content patterns GOV.UK; CTA utama dinaikkan menjadi minimum 48 CSS px. |
+| Bukti | `npm run typecheck`, `npm run lint`, `npm run build`, dan `git diff --check` lulus setelah perubahan. Rujukan eksternal dibaca dari sumber resmi dan dicantumkan pada `14-design-system.md`. |
+| Keputusan | Lanjutkan perubahan copy dan dokumentasi; tidak mengubah aturan vote, status event, pilihan calon, hasil server, atau data peserta. |
+
+#### Amendment A2 — Commit dan push redesign
+
+| Field | Catatan |
+| --- | --- |
+| Tanggal/WIB | 2026-10-02 WIB |
+| Alasan perubahan | User meminta redesign landing, copy, dan pedoman UI/UX didorong ke GitHub. |
+| Dampak | Commit mencakup komponen motion, CSS, copy, dan dokumen visual; tidak mencakup poster, PII, `.env.local`, atau secret. |
+| Persetujuan | User. |
+| Keputusan | Lanjutkan commit dan push branch `main` setelah staged diff diperiksa. |
 
 ### Template untuk entry baru
 
