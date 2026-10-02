@@ -40,6 +40,7 @@ File ini adalah register kerja aktif. Setiap proses material wajib memiliki entr
 | EXE-20261002-23 | T9 | Sederhanakan galeri kandidat menjadi poster-only | In review | Pelaksana teknis | User | 2026-10-02 | Review galeri desktop/mobile setelah build lulus; keputusan user menentukan release. |
 | EXE-20261003-24 | T3/T7 | Implementasi integritas perangkat tanpa memblokir Wi-Fi bersama | In review | Pelaksana teknis | User + reviewer teknis | 2026-10-03 | Source, migration kompatibel, API, reset, dan quality check selesai; UAT database non-production masih wajib. |
 | EXE-20261003-25 | T7/T9 | Perjelas status verifikasi NIM untuk pemilih | In review | Pelaksana teknis | User | 2026-10-03 | Kode/pesan dan bantuan UI selesai; user meninjau copy pada halaman voting. |
+| EXE-20261003-26 | T5/T9 | Perbarui grafik hasil secara otomatis | In review | Pelaksana teknis | User | 2026-10-03 | Polling React, animasi angka, status koneksi, dan quality check selesai; UAT database masih wajib. |
 
 ## Detail entry aktif
 
@@ -676,6 +677,18 @@ File ini adalah register kerja aktif. Setiap proses material wajib memiliki entr
 | Aksi yang dilakukan | `issueVotingSession` kini membedakan status event, NIM tidak terdaftar, tidak eligible, sudah memilih, dan claim browser yang telah dipakai. Route verify memetakan status ke pesan Bahasa Indonesia; form voting menambahkan bantuan ringkas sebelum input NIM. |
 | Bukti | `npm run typecheck`, `npm run lint`, `npm run build`, dan `git diff --check` lulus pada 2026-10-03 WIB. Database tidak tersedia pada lingkungan kerja ini, sehingga respons status perlu UAT pada fixture staging. |
 | Exit condition | User meninjau copy pada halaman voting; UAT staging memeriksa seluruh status sebelum event dibuka. |
+
+### EXE-20261003-26 — Perbarui grafik hasil secara otomatis
+
+| Field | Catatan |
+| --- | --- |
+| Status | `In review` — source, kontrak, dan quality check selesai; UAT terhadap database belum dilakukan. |
+| Tujuan | Angka dan grafik agregat hasil berubah otomatis tanpa reload browser pada `/live` dan ringkasan hasil beranda. |
+| Keputusan teknis | Gunakan polling `GET /api/results` setiap 5 detik saat tab terlihat, refresh langsung saat tab kembali aktif, dan backoff sampai 60 detik bila jaringan gagal. WebSocket tidak digunakan karena hosting Vercel serverless tidak menyediakan koneksi persisten aplikasi ini. |
+| Pengaman | Endpoint hanya memberi agregat yang sudah diizinkan kebijakan hasil; polling berhenti saat tab tersembunyi atau rekap final tidak perlu lagi diperbarui. Tidak ada NIM, pilihan individual, atau receipt pada payload. |
+| Aksi yang dilakukan | Menambahkan hook React bersama untuk memuat `/api/results`, menghentikan polling saat tab tersembunyi, refresh saat tab aktif, serta backoff jaringan. `/live` dan ringkasan beranda memakai hook tersebut; angka beranimasi dari nilai lama ke nilai baru dan layar live menandai kandidat yang berubah. |
+| Bukti | Typecheck, lint, build, dan pemeriksaan diff dijalankan; endpoint telah memakai `Cache-Control: no-store`. Database tidak tersedia di lingkungan kerja ini sehingga UAT satu vote belum dilakukan. |
+| Exit condition | UAT satu vote pada database staging membuktikan kedua layar berubah tanpa reload dalam maksimal satu interval polling dan tanpa data personal pada respons. |
 
 ### Template untuk entry baru
 

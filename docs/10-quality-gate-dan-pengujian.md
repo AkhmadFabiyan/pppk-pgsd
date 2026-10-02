@@ -17,6 +17,7 @@ Implementasi hanya dimulai setelah panitia memberikan daftar calon individu, keb
 | DEV-01 | Device A sudah vote dengan NIM A lalu mencoba NIM B | Vote kedua ditolak secara generik oleh device binding; tidak ada PII bocor. |
 | DEV-02 | Dua HP berbeda memakai Wi-Fi/IP publik yang sama | Kedua vote sah bila NIM dan faktor lain valid; IP tidak menjadi unique constraint. |
 | DEV-03 | Reset suara voting pada event device-integrity | Vote/receipt/dua claim browser/sesi/rate limit `vote.*` terhapus bersama, audit reset tetap ada. |
+| RES-02 | Suara baru masuk saat `/live` dan beranda terbuka | Angka agregat berubah tanpa reload dalam maksimal satu interval polling; tidak ada PII pada respons. |
 | RES-01 | Visibility `turnout_only` | Endpoint dan realtime publik tidak memuat total per calon. |
 | ADM-01 | Visitor membuka rute admin | Ditolak/diarahkan ke login tanpa data admin terbuka. |
 | ADM-02 | Admin mencoba edit calon saat open | Ditolak dan tercatat audit. |

@@ -1,9 +1,9 @@
 import { BarChart3, CircleHelp, ShieldCheck } from "lucide-react";
-import { AnimatedResultSummary } from "@/components/animated-result-summary";
 import { CandidateShowcase } from "@/components/candidate-showcase";
 import { FeatureHighlights } from "@/components/feature-highlights";
 import { ForestHero } from "@/components/forest-hero";
 import { PageTransition } from "@/components/page-transition";
+import { LiveResultSummary } from "@/components/live-result-summary";
 import { SectionReveal } from "@/components/section-reveal";
 import { VotingJourney } from "@/components/voting-journey";
 import { getElectionSnapshot } from "@/lib/db";
@@ -58,8 +58,7 @@ export default async function HomePage() {
           <BarChart3 aria-hidden="true" />
           <div>
             <p className="eyebrow eyebrow-green">Rekap pemilihan</p>
-            <h2 id="results-heading">{election.result ? "Suara yang sudah masuk." : "Hasil belum bisa ditampilkan."}</h2>
-            {election.result ? <AnimatedResultSummary result={election.result} candidates={resultCandidates} /> : <p>Panitia akan membuka rekap sesuai kebijakan hasil dan status pemilihan. Tidak ada angka contoh atau simulasi.</p>}
+            <LiveResultSummary candidates={resultCandidates} initialResult={election.result} initialStatus={election.status} headingId="results-heading" />
           </div>
         </SectionReveal>
       </section>

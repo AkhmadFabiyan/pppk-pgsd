@@ -6,16 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import type { CandidateSummary, ElectionStatus } from "@/lib/site";
 import type { PublicResult } from "@/lib/db";
 import { formatBallotNumber } from "@/lib/site";
-
-type ConnectionState = "connected" | "stale";
-
-type ResultsApiPayload = {
-  data?: {
-    status?: ElectionStatus;
-    visible?: boolean;
-    result?: PublicResult;
-  };
-};
+import { usePublicResults } from "@/components/use-public-results";
 
 function formatNumber(value: number) {
   return new Intl.NumberFormat("id-ID").format(value);
@@ -30,10 +21,6 @@ function formatUpdatedAt(value: string) {
   }).format(new Date(value));
 }
 
-function isVisibleResult(payload: ResultsApiPayload): payload is { data: { status: ElectionStatus; visible: true; result: PublicResult } } {
-  return payload.data?.visible === true && Boolean(payload.data.result) && Boolean(payload.data.status);
-}
-
 export function LiveResultsBoard({
   candidates,
   initialResult,
@@ -44,68 +31,30 @@ export function LiveResultsBoard({
   initialStatus: ElectionStatus;
 }) {
   const reduceMotion = useReducedMotion();
-  const [result, setResult] = useState(initialResult);
-  const [status, setStatus] = useState(initialStatus);
-  const [connection, setConnection] = useState<ConnectionState>("connected");
+  const { result, status, connection } = usePublicResults(initialResult, initialStatus);
   const [changedCandidateIds, setChangedCandidateIds] = useState<Set<string>>(() => new Set());
   const clearChangeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const latestResult = useRef<PublicResult | null>(initialResult);
+  const previousResult = useRef<PublicResult | null>(initialResult);
 
   useEffect(() => {
-    if (!initialResult || initialStatus !== "open") return;
-
-    let cancelled = false;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    let retryDelay = 10_000;
-
-    const schedule = (delay: number) => {
-      timer = setTimeout(refresh, delay);
-    };
-
-    const refresh = async () => {
-      try {
-        const response = await fetch("/api/results", { cache: "no-store" });
-        const payload = await response.json() as ResultsApiPayload;
-        if (cancelled) return;
-
-        if (!isVisibleResult(payload)) {
-          latestResult.current = null;
-          setResult(null);
-          setStatus(payload.data?.status ?? "scheduled");
-          setConnection("connected");
-          return;
-        }
-
-        const previousCounts = new Map(latestResult.current?.candidates.map((item) => [item.candidateId, item.voteCount]));
-        const changed = payload.data.result.candidates
+    if (!result) {
+      previousResult.current = null;
+      return;
+    }
+    const previousCounts = new Map(previousResult.current?.candidates.map((item) => [item.candidateId, item.voteCount]));
+    const changed = result.candidates
           .filter((item) => previousCounts.get(item.candidateId) !== item.voteCount)
           .map((item) => item.candidateId);
-        if (changed.length > 0 && !reduceMotion) {
-          setChangedCandidateIds(new Set(changed));
-          if (clearChangeTimer.current) clearTimeout(clearChangeTimer.current);
-          clearChangeTimer.current = setTimeout(() => setChangedCandidateIds(new Set()), 320);
-        }
-        latestResult.current = payload.data.result;
-        setResult(payload.data.result);
-        setStatus(payload.data.status);
-        setConnection("connected");
-        retryDelay = 10_000;
-        if (payload.data.status === "open") schedule(retryDelay);
-      } catch {
-        if (cancelled) return;
-        setConnection("stale");
-        retryDelay = Math.min(retryDelay * 2, 60_000);
-        schedule(retryDelay);
-      }
-    };
-
-    schedule(retryDelay);
+    if (previousResult.current && changed.length > 0 && !reduceMotion) {
+      setChangedCandidateIds(new Set(changed));
+      if (clearChangeTimer.current) clearTimeout(clearChangeTimer.current);
+      clearChangeTimer.current = setTimeout(() => setChangedCandidateIds(new Set()), 320);
+    }
+    previousResult.current = result;
     return () => {
-      cancelled = true;
-      if (timer) clearTimeout(timer);
       if (clearChangeTimer.current) clearTimeout(clearChangeTimer.current);
     };
-  }, [initialResult, initialStatus, reduceMotion]);
+  }, [reduceMotion, result]);
 
   if (!result) {
     return (

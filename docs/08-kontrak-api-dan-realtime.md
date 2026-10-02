@@ -16,6 +16,7 @@ API di bawah adalah kontrak konseptual. Implementasi dapat memakai Route Handler
 | --- | --- | --- | --- |
 | `GET /api/v1/elections/{slug}` | slug | judul, status, jadwal, visibility, calon publik | Cache pendek saat tidak open. |
 | `GET /api/v1/elections/{slug}/results` | slug | agregat sesuai visibility | Tidak ada PII. |
+| `GET /api/results` | tidak ada | status event, flag visibility, serta rekap agregat bila diizinkan | Implementasi aktif untuk polling React; `Cache-Control: no-store`. |
 | `POST /api/vote/verify` | NIM, token instalasi acak browser | `sessionToken`, expiry atau error generik | Menerbitkan cookie device `HttpOnly`; rate limit NIM/IP/browser; tidak mengirim OTP. |
 | `POST /api/vote/submit` | session token, candidate ID, idempotency key | receipt atau status submit sama | Cookie same-origin harus cocok dengan session; dua claim browser disimpan atomik pada vote. |
 | `GET /api/v1/elections/{slug}/receipts/{code}` | receipt | status receipt tanpa calon/NIM | Opsional; rate limit. |
@@ -60,7 +61,9 @@ Setiap endpoint admin mewajibkan auth, admin-only policy, CSRF, audit event, dan
 
 ## Event realtime
 
-Channel publik: `election:{slug}:public`. Pesan memuat agregat hasil live: total suara sah, partisipasi, serta total dan persentase suara setiap calon. Tidak ada PII atau data suara individual.
+Implementasi aktif memakai polling browser ke `GET /api/results`, bukan WebSocket/SSE. Saat tab terlihat, `/live` meminta data setiap 5 detik ketika event `open`, setiap 10 detik saat `scheduled` agar layar yang sudah terbuka dapat mengikuti pembukaan event, dan berhenti pada rekap final. Ketika tab kembali terlihat, client mengambil snapshot baru segera. Error jaringan memakai backoff hingga 60 detik dan UI mempertahankan snapshot agregat terakhir.
+
+Jika provider realtime ditambahkan pada keputusan terpisah, channel publik yang direncanakan adalah `election:{slug}:public`. Pesan hanya boleh memuat agregat hasil live: total suara sah, partisipasi, serta total dan persentase suara setiap calon. Tidak ada PII atau data suara individual.
 
 ```json
 {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import type { CandidateSummary } from "@/lib/site";
 
@@ -14,18 +14,25 @@ type PublicResult = {
 
 function AnimatedNumber({ value }: { value: number }) {
   const reduceMotion = useReducedMotion();
-  const [number, setNumber] = useState(reduceMotion ? value : 0);
+  const [number, setNumber] = useState(value);
+  const previousValue = useRef(value);
 
   useEffect(() => {
-    if (reduceMotion) return;
+    if (reduceMotion) {
+      previousValue.current = value;
+      return;
+    }
 
+    const startValue = previousValue.current;
+    previousValue.current = value;
+    if (startValue === value) return;
     const start = performance.now();
     const duration = 620;
     let frameId = 0;
     const update = (now: number) => {
       const progress = Math.min((now - start) / duration, 1);
       const eased = 1 - (1 - progress) ** 4;
-      setNumber(Math.round(value * eased));
+      setNumber(Math.round(startValue + (value - startValue) * eased));
       if (progress < 1) frameId = requestAnimationFrame(update);
     };
     frameId = requestAnimationFrame(update);

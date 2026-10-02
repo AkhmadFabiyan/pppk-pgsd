@@ -54,7 +54,7 @@ Saat verifikasi tidak dapat dilanjutkan, UI membedakan event belum dibuka/ditutu
 
 ## Pengalaman visual publik
 
-Beranda memakai satu scene hutan CSS/Motion yang ringan: progress scroll, horizon berlapis, glow pointer desktop, tujuh daun animatif, reveal section, dan tilt ringan pada kartu kandidat. Elemen dekoratif yang tidak mendukung orientasi (ticker, grain, dan orbit) dihilangkan. Efek ini berada di `/` saja; `/vote`, receipt, dan panel admin tidak memakai dekorasi yang dapat mengganggu proses. Route `/live` adalah layar TV/proyektor khusus tanpa header/footer: ia menampilkan grid jumlah suara semua calon published, polling agregat tiap 10 detik saat event open, serta snapshot final ketika diizinkan. Semua efek dimatikan atau disederhanakan oleh `prefers-reduced-motion` dan tidak menyimpan input pointer.
+Beranda memakai satu scene hutan CSS/Motion yang ringan: progress scroll, horizon berlapis, glow pointer desktop, tujuh daun animatif, reveal section, dan tilt ringan pada kartu kandidat. Elemen dekoratif yang tidak mendukung orientasi (ticker, grain, dan orbit) dihilangkan. Efek ini berada di `/` saja; `/vote`, receipt, dan panel admin tidak memakai dekorasi yang dapat mengganggu proses. Route `/live` adalah layar TV/proyektor khusus tanpa header/footer: ia menampilkan grid jumlah suara semua calon published dan polling agregat tiap 5 detik ketika event open. Ringkasan hasil pada beranda memakai sumber polling yang sama; kedua layar mengambil snapshot segera ketika tab kembali aktif, menghentikan polling saat tab tersembunyi/final, dan memakai backoff hingga 60 detik bila jaringan gagal. Semua efek dimatikan atau disederhanakan oleh `prefers-reduced-motion` dan tidak menyimpan input pointer.
 
 ## Operasi admin
 
