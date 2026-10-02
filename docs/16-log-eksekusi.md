@@ -29,6 +29,8 @@ File ini adalah register kerja aktif. Setiap proses material wajib memiliki entr
 | EXE-20261001-12 | T5–T10 | Lengkapi aplikasi voting operasional | Done | Pelaksana teknis | Admin panitia (setup/review) | 2026-10-01 | Setup local tersedia; panitia wajib menjalankan UAT dan konfigurasi production sebelum membuka event. |
 | EXE-20261002-13 | T9 | Perkaya interaksi editorial landing page | Done | Pelaksana teknis | Panitia (review visual) | 2026-10-02 | Landing publik interaktif selesai; voting tetap dipisahkan dari scene dekoratif. |
 | EXE-20261002-14 | T5/T9 | Siapkan deployment Vercel dan sederhanakan pengalaman publik | In review | Pelaksana teknis | Panitia (review UX dan deployment) | 2026-10-02 | Panitia memasang database/secret Vercel, menjalankan UAT Preview tanpa PII production, lalu menyetujui release. |
+| EXE-20261002-15 | T9 | Rancang layar hasil live satu viewport | Done | Pelaksana teknis | Panitia (review UX dan kebijakan hasil) | 2026-10-02 | Menunggu persetujuan untuk mengimplementasikan route `/live` pada build berikutnya. |
+| EXE-20261002-16 | T5/T9 | Implementasi layar hasil live satu viewport | In review | Pelaksana teknis | Panitia (review UX dan kebijakan hasil) | 2026-10-02 | Panitia meninjau `/live` dengan database Preview dan menyetujui layar operasional sebelum memakainya pada event. |
 
 ## Detail entry aktif
 
@@ -266,6 +268,39 @@ File ini adalah register kerja aktif. Setiap proses material wajib memiliki entr
 | Exit condition | Panitia memasang variable pada Preview/Production, membuat admin Preview, menjalankan UAT database dengan data aman, memverifikasi domain/robots/sitemap, lalu mencatat sign-off sebelum entry dapat `Done`. |
 | Keputusan | Siap direview. Tidak boleh membuka voting sampai konfigurasi Vercel/PostgreSQL, import sah, dan gate operasional disetujui. |
 | Waktu | Mulai 2026-10-02 WIB; implementasi dan quality gate lokal selesai 2026-10-02 WIB. |
+
+### EXE-20261002-15 — Rancang layar hasil live satu viewport
+
+| Field | Catatan |
+| --- | --- |
+| Status | `Done` untuk rancangan; implementasi code belum dimulai. |
+| Tahap runbook | T9 / layar presentasi hasil. |
+| Tujuan | Menentukan layar TV/proyektor yang memperlihatkan jumlah suara seluruh calon dalam satu viewport normal tanpa menjadikan beranda panjang atau menambah dekorasi ke bilik suara. |
+| Scope | Kontrak route `/live`, layout 3 × 3, state visibility, polling, motion, aksesibilitas, responsive fallback, SEO, dan acceptance. |
+| Out of scope | Membuka hasil, mengubah kebijakan visibility, menambah provider realtime, mempublikasikan NIM/pilihan individual, atau membuat route code sebelum user menyetujui rancangan. |
+| Dokumen yang terdampak | `04-ui-ux-dan-visual.md`, `12-rute-dan-seo.md`, `10-quality-gate-dan-pengujian.md`, `ui/README.md`, dan `ui/live-results-display.md`. |
+| Keputusan | Gunakan route presentasi `/live`, noindex, tanpa header/footer, dan hanya terhadap agregat yang sudah diizinkan endpoint hasil. Scroll dilarang pada viewport normal namun tersedia saat ukuran/zoom tidak memadai agar aksesibilitas tidak dikorbankan. |
+| Bukti | Rancangan tertulis memuat wireframe, kontrak data/state, polling 10 detik, fallback gangguan, responsive matrix, dan acceptance `LIV-01`; tidak ada source/data pemilih diubah. |
+| Exit condition | User menyetujui rancangan; entry implementasi baru kemudian menambahkan code, test, dan route audit. |
+| Waktu | Mulai dan selesai 2026-10-02 WIB. |
+
+### EXE-20261002-16 — Implementasi layar hasil live satu viewport
+
+| Field | Catatan |
+| --- | --- |
+| Status | `In review` — implementasi dan quality gate kode selesai; visual/live-data belum dapat diuji karena `DATABASE_URL` lokal belum dikonfigurasi. |
+| Tahap runbook | T5/T9 / route hasil presentasi dan UI. |
+| Tujuan | Menerapkan rancangan `ui/live-results-display.md` menjadi route `/live` yang menampilkan count semua calon dalam satu viewport normal serta memperbarui snapshot hasil secara aman. |
+| Scope | Route/page `noindex`, shell tanpa header/footer, grid 3 × 3, polling API agregat, state visibility/gangguan, motion perubahan angka, responsive fallback, robots, dan test build. |
+| Out of scope | Mengubah database, endpoint vote, kebijakan hasil, membuka event, mengubah count, menambah provider realtime, atau memuat data pemilih. |
+| Dokumen wajib dibaca | `04-ui-ux-dan-visual.md`, `08-kontrak-api-dan-realtime.md`, `10-quality-gate-dan-pengujian.md`, `12-rute-dan-seo.md`, `ui/live-results-display.md`, dan `engineering/11-accessibility-motion.md`. |
+| Risiko dan mitigasi | Layar dapat menampilkan hasil ketika tak diizinkan atau menjadi terlalu padat. Page mengandalkan `election.result`/API yang sudah mematuhi visibility, tidak membuat fallback angka, memakai grid tetap, dan mengizinkan scroll hanya saat ruang/zoom tidak aman. |
+| Aksi yang dilakukan | Menambah `/live`, client board hasil, dan shell route-aware agar layar presentasi tidak membawa header/footer situs. Board merender hanya calon published dari snapshot server, memakai grid 3 × 3, count tabular, status koneksi, timestamp WIB, animasi Motion pada tile yang berubah saja, dan fallback hasil belum dipublikasikan. Polling `/api/results` berlangsung setiap 10 detik ketika event awal `open`, memakai backoff 15/30/60 detik saat error, dan berhenti pada snapshot final. `robots.txt` serta metadata route menandai `/live` noindex. |
+| Dokumen yang terdampak | `19-operasional-aplikasi.md`, `16-log-eksekusi.md`, `04-ui-ux-dan-visual.md`, `10-quality-gate-dan-pengujian.md`, `12-rute-dan-seo.md`, `ui/README.md`, `ui/live-results-display.md`; source `app/live`, live board, site chrome, metadata, robots, dan CSS. |
+| Bukti | `npm run typecheck`, `npm run lint`, dan `npm run build` lulus. Build route audit menunjukkan `/live` dinamis di samping rute inti. `git diff --check` lulus. Pemeriksaan konfigurasi hanya memastikan `DATABASE_URL` belum terisi; nilai rahasia tidak dibaca dan tidak ada request database/vote dijalankan. |
+| Exit condition | Panitia memasang database Preview, mengatur visibility hasil pada data aman, lalu mereview 1024 × 768 dan mobile/zoom sebelum entry ini dapat `Done`. |
+| Keputusan | Siap direview; route tidak mengubah kebijakan hasil dan tetap fail-closed bila result tidak visible. |
+| Waktu | Mulai 2026-10-02 WIB; implementasi dan quality gate kode selesai 2026-10-02 WIB. |
 
 ### Template untuk entry baru
 

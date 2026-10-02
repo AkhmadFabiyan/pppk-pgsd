@@ -68,6 +68,7 @@ Staging tidak menerima spreadsheet peserta asli kecuali pemilik data menyetujui 
 | --- | --- | --- |
 | RES-02 | Mode `full_live` | REST, realtime, dan tabel aksesibel menampilkan count/percent yang sama untuk seluruh calon. |
 | RES-03 | Event realtime terlewat | Klien mendeteksi revision lompat lalu refetch snapshot tanpa menampilkan total salah. |
+| LIV-01 | Layar hasil live satu viewport | Sembilan calon published tampil dengan count aktual tanpa scroll pada 1024 × 768 dan zoom 100%; layar kecil tetap aksesibel dengan fallback scroll. |
 | API-01 | Idempotency key sama | Retry payload sama mengembalikan receipt awal; payload berbeda mendapat conflict. |
 | API-02 | Header/cache | Vote/verify/admin memakai `no-store`; public scoreboard tidak mengirim PII. |
 | DAT-01 | NIM leading zero | Nilai tidak berubah sepanjang parse/import/query/export. |

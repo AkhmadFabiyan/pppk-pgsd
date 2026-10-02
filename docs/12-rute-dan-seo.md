@@ -15,6 +15,7 @@ Website visitor memakai satu URL utama agar proses pemilihan mudah dipahami dan 
 | `/#bantuan` dan `/#privasi` | Section bantuan dan ringkasan privasi. | Bagian dari `/` | Tidak meminta atau menampilkan NIM. |
 | `/vote` | Verifikasi dan surat suara saat event `open`. | Tidak | Route transaksi; saat belum dibuka harus fail-closed. |
 | `/bukti/[receiptCode]` | Receipt individual setelah suara diterima. | Tidak | Tidak menampilkan pilihan/NIM. |
+| `/live` | Layar presentasi hasil live/final untuk TV atau proyektor panitia. | Tidak | Tanpa header/footer; hanya merender agregat saat kebijakan hasil mengizinkan. |
 | `/panitia/login` | Bootstrap akun admin pertama atau login admin. | Tidak | Username/password, cookie server-side, dan bootstrap token server untuk akun awal. |
 | `/panitia` | Operasi panitia: import/master peserta, kandidat, status, hasil, reset pra-voting, dan audit. | Tidak | Admin-only; route menampilkan layar akses bila sesi tidak ada. |
 | `/api/vote/verify`, `/api/vote/submit`, `/api/results` | API internal UI voting dan rekap publik yang diizinkan. | Tidak | Tidak masuk sitemap; respons voting selalu `no-store`. |
@@ -40,7 +41,7 @@ Halaman `/` memiliki satu `h1`, title dan deskripsi unik, landmark `<header>`, `
 
 ## `robots.txt` dan sitemap
 
-`robots.txt` mengizinkan crawler pada `/`, tetapi menolak `/vote`, `/bukti/`, `/panitia/`, `/api/`, dan `/auth/`. Ia bukan pengamanan data; route sensitif tetap wajib mempunyai auth/otorisasi.
+`robots.txt` mengizinkan crawler pada `/`, tetapi menolak `/vote`, `/bukti/`, `/live`, `/panitia/`, `/api/`, dan `/auth/`. Ia bukan pengamanan data; route sensitif tetap wajib mempunyai auth/otorisasi.
 
 `sitemap.xml` hanya memuat canonical `/`. Anchor tidak masuk sitemap karena bukan dokumen mandiri. Rute transaksi, receipt, admin, dataset, dan redirect tidak pernah masuk sitemap.
 
@@ -61,6 +62,6 @@ JSON-LD hanya boleh berisi fakta publik yang sudah disahkan: `WebSite`, dan `Org
 
 - [ ] `/` memberi status `200`, memiliki satu `h1`, canonical HTTPS, metadata unik, dan teks HTML bermakna.
 - [ ] Route legacy memberi `404` dan tidak muncul pada navigasi, sitemap, atau internal link.
-- [ ] `/vote`, `/bukti/*`, `/panitia/*`, `/auth/*`, dan `/api/*` memakai `noindex`/proteksi yang relevan serta tidak ada di sitemap.
+- [ ] `/vote`, `/bukti/*`, `/live`, `/panitia/*`, `/auth/*`, dan `/api/*` memakai `noindex`/proteksi yang relevan serta tidak ada di sitemap.
 - [ ] Sitemap hanya memuat canonical yang benar-benar ingin diindeks.
 - [ ] Tidak ada NIM, receipt, pilihan pemilih, token, atau data audit pada HTML, metadata, Open Graph, schema, maupun URL publik.

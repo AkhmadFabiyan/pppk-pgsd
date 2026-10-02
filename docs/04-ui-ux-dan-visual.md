@@ -60,6 +60,7 @@ Gunakan satu keluarga sans-serif yang cepat dimuat (system/Geist) dengan berat `
 | `/` | Satu beranda visitor: status, kandidat, visi-misi inline, panduan, hasil, bantuan, dan privasi ringkas. | Terjadwal, open, closed, maintenance, hasil disembunyikan. |
 | `/vote` | Verifikasi → pilih → konfirmasi → receipt. | Belum buka, validasi gagal, sudah memilih, koneksi gagal, sukses. |
 | `/bukti/[receiptCode]` | Menyimpan kode bukti dan arah bantuan. | Valid, kadaluwarsa/tidak valid tanpa membocorkan data. |
+| `/live` | Layar presentasi hasil untuk TV/proyektor; sembilan count calon dalam satu viewport normal. | Memuat, live, final, hasil disembunyikan, dan koneksi tertunda. |
 | `/panitia/*` | Operasi admin terlindungi. | Belum login, MFA, unauthorized, audit/reauth untuk aksi berisiko. |
 
 Tidak ada route informasi visitor lain selain `/`; kandidat, panduan, hasil, bantuan, dan privasi hanya berupa section beranda. URL legacy yang tidak terpakai sengaja tidak dipertahankan.

@@ -50,7 +50,7 @@ IP digunakan hanya untuk rate limit dalam bentuk hash. Sistem tidak mengklaim me
 
 ## Pengalaman visual publik
 
-Beranda memakai satu scene hutan CSS/Motion yang ringan: progress scroll, horizon berlapis, glow pointer desktop, tujuh daun animatif, reveal section, dan tilt ringan pada kartu kandidat. Elemen dekoratif yang tidak mendukung orientasi (ticker, grain, dan orbit) dihilangkan. Efek ini berada di `/` saja; `/vote`, receipt, dan panel admin tidak memakai dekorasi yang dapat mengganggu proses. Semua efek dimatikan atau disederhanakan oleh `prefers-reduced-motion` dan tidak menyimpan input pointer.
+Beranda memakai satu scene hutan CSS/Motion yang ringan: progress scroll, horizon berlapis, glow pointer desktop, tujuh daun animatif, reveal section, dan tilt ringan pada kartu kandidat. Elemen dekoratif yang tidak mendukung orientasi (ticker, grain, dan orbit) dihilangkan. Efek ini berada di `/` saja; `/vote`, receipt, dan panel admin tidak memakai dekorasi yang dapat mengganggu proses. Route `/live` adalah layar TV/proyektor khusus tanpa header/footer: ia menampilkan grid jumlah suara semua calon published, polling agregat tiap 10 detik saat event open, serta snapshot final ketika diizinkan. Semua efek dimatikan atau disederhanakan oleh `prefers-reduced-motion` dan tidak menyimpan input pointer.
 
 ## Operasi admin
 
@@ -61,7 +61,7 @@ Beranda memakai satu scene hutan CSS/Motion yang ringan: progress scroll, horizo
 | Lihat peserta | Halaman `/panitia` menampilkan NIM, nama, kelas, marker TTD, eligibility, dan status sudah/belum memilih. Ia tidak menampilkan pilihan calon. |
 | Kandidat | Sinkron katalog dan ubah published hanya sebelum event `open`; pembukaan event membutuhkan minimal dua calon published. |
 | Voting on/off | `open` hanya setelah seluruh prasyarat; `closed` langsung menolak verifikasi dan submit baru. |
-| Hasil | Rekap publik hanya agregat dan mengikuti visibility yang dipilih admin. |
+| Hasil | Rekap publik hanya agregat dan mengikuti visibility yang dipilih admin. Route `/live` memakai endpoint agregat yang sama dan tidak menampilkan apa pun saat visibility tertutup. |
 | Reset pra-voting | Memerlukan alasan minimal delapan karakter dan kata konfirmasi `RESET`; ditolak bila `open` atau sudah ada suara sah. |
 | Audit | Bootstrap admin, status event, visibility, import, kandidat, sinkron katalog, dan reset dicatat dengan waktu serta ringkasan aman. |
 
