@@ -8,7 +8,8 @@
 | CSS proyek + token desain | Sistem styling, responsivitas, dan konsistensi antarkomponen. |
 | Motion (Framer Motion) | Micro-interaction, modal, feedback pilihan/submit, perubahan hasil nyata, dan transisi halaman singkat. |
 | CSS transition | Default untuk hover/focus sederhana; menjaga bundle kecil dan perilaku UI mudah diaudit. |
-| GSAP, Lenis, Three.js, React Three Fiber | Tidak dipasang. Efek sinematik berat, smooth-scroll, dan canvas tidak dibutuhkan untuk UX voting profesional. |
+| GSAP | Entrance hero beranda Civic Forest yang terisolasi; diimpor dinamis dari komponen hero dan tidak dipakai pada vote/admin/live. |
+| Lenis, Three.js, React Three Fiber | Tidak dipasang. Smooth-scroll dan canvas tidak dibutuhkan untuk UX voting profesional. |
 | shadcn/ui | Primitive komponen bila diperlukan: dialog, sheet, dropdown, toast, button, input, dan form pattern. Komponen ditheme melalui token desain proyek. |
 | Lucide React | Ikon UI yang konsisten, aksesibel, dan mudah dikustomisasi. |
 | PostgreSQL serverless + `@neondatabase/serverless` | Source of truth transaksional pada Vercel dengan schema idempoten, constraint unik, dan transaksi vote. |
@@ -17,7 +18,7 @@
 ## Aturan penggunaan motion
 
 - Gunakan Motion hanya untuk feedback yang bermakna; CSS transition adalah default untuk state sederhana.
-- Tidak ada GSAP, Lenis, canvas, particle engine, smooth-scroll, atau 3D. Beranda boleh memakai parallax transform CSS/Motion yang ringan; bilik suara tidak boleh memakainya. Penambahan lain memerlukan ADR, review aksesibilitas, dan bukti tidak menurunkan UX voting.
+- GSAP hanya untuk timeline entrance hero di beranda; tidak ada GSAP scroll animation, Lenis, canvas, particle engine, smooth-scroll, atau 3D. Bilik suara, admin, receipt, dan layar live tidak boleh memakainya. Penambahan lain memerlukan ADR, review aksesibilitas, dan bukti tidak menurunkan UX voting.
 - Pada mobile, perangkat low-end, koneksi lambat, atau `prefers-reduced-motion`, semua motion non-fungsional harus hilang tanpa menyembunyikan state.
 - Native scroll, `Tab`, anchor link, screen reader, serta input form tidak boleh diintervensi library animasi.
 - Anggaran performa wajib diuji sebelum rilis: tidak ada animasi yang menurunkan respons form atau membuat perangkat panas saat voting.

@@ -21,7 +21,7 @@ Tema adalah **hutan institusional yang fun**: hijau tua memberi rasa tenang dan 
 | Hero generik, slogan metaforis panjang, atau copy pemasaran kosong. | Nama event, periode WIB, status resmi, dan CTA yang jelas. |
 | Glassmorphism berlapis, glow berlebihan, 3D berat, confetti, ticker tanpa informasi, noise/grain, atau efek cursor yang menghambat navigasi. | Surface padat, grid rapi, garis batas tipis, kontras tinggi, gambar calon asli, serta satu motion cue yang membantu orientasi. |
 | Gradient pelangi, warna acak, atau banyak aksen dalam satu layar. | Hijau sebagai identitas; merah hanya untuk fokus/aksi destruktif; warna status semantik. |
-| Kartu dengan tinggi tidak konsisten atau poster dipotong sembarang. | Grid dengan rasio media konsisten, nomor urut, nama, dan CTA tetap. |
+| Kartu dengan tinggi tidak konsisten atau poster dipotong sembarang. | Grid dengan poster rasio sumber utuh, nomor urut, nama, dan CTA tetap. |
 | Transisi layar penuh, scroll yang dimanipulasi, atau efek yang memperlambat form. | Native scroll, navigasi langsung, dan transisi singkat berbasis opacity/transform. |
 
 ## Sistem desain
@@ -51,7 +51,7 @@ Gunakan satu keluarga sans-serif yang cepat dimuat (system/Geist) dengan berat `
 - Card kandidat: poster asli dengan rasio sumber utuh, nomor urut, nama, dan kelas. Card bersifat informatif, bukan tombol; tidak membuka detail visi-misi maupun memulai vote.
 - Ballot option: radio native/aksesibel dengan border, label `Dipilih`, dan ringkasan calon. State terpilih dapat dipahami tanpa warna.
 - Dialog konfirmasi: ringkasan pilihan, tindakan `Kembali` dan `Kirim suara`, focus trap, Escape, serta focus return ke pemicu.
-- Hasil: tabel angka adalah sumber utama; bar hanya membantu membaca. Urutan calon mengikuti nomor ballot dan tidak bergeser ketika angka berubah.
+- Hasil: tabel angka adalah sumber utama; bar hanya membantu membaca. Pada layar live, urutan mengikuti jumlah suara menurun; suara sama memakai nomor ballot menaik supaya urutannya deterministik.
 
 ## Rute dan perilaku layar
 
@@ -105,7 +105,7 @@ Seluruh rute wajib lolos keyboard-only, zoom 200%, screen reader dasar, orientas
 
 ## Kontrak motion
 
-Halaman publik boleh terasa sinematik dan eksploratif, tetapi bilik suara tetap tenang. Default implementasi adalah CSS transition dan Motion; semua layer dekoratif memakai transform/opacity, tidak mengirim sinyal pointer ke server, dan tidak menunda CTA atau konten penting. GSAP, Lenis, Three.js, React Three Fiber, canvas, particle engine, dan autoplay audio **tetap tidak masuk rilis ini**.
+Halaman publik boleh terasa sinematik dan eksploratif, tetapi bilik suara tetap tenang. Default implementasi adalah CSS transition dan Motion; semua layer dekoratif memakai transform/opacity, tidak mengirim sinyal pointer ke server, dan tidak menunda CTA atau konten penting. GSAP boleh dipakai secara terbatas pada entrance hero beranda melalui lazy client component dan dibersihkan saat unmount. Lenis, Three.js, React Three Fiber, canvas, particle engine, autoplay audio, scroll hijacking, serta GSAP pada voting/admin/live **tetap tidak masuk rilis ini**. Rancangan pembatasannya ada di `21-redesign-civic-forest.md`.
 
 | ID | Kejadian | Durasi | Aturan |
 | --- | --- | --- | --- |

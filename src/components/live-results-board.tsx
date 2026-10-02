@@ -69,6 +69,10 @@ export function LiveResultsBoard({
   }
 
   const resultByCandidate = new Map(result.candidates.map((item) => [item.candidateId, item]));
+  const rankedCandidates = [...candidates].sort((left, right) => {
+    const voteDifference = (resultByCandidate.get(right.id ?? "")?.voteCount ?? 0) - (resultByCandidate.get(left.id ?? "")?.voteCount ?? 0);
+    return voteDifference || left.number - right.number;
+  });
   const isLive = status === "open";
 
   return (
@@ -89,11 +93,11 @@ export function LiveResultsBoard({
       </header>
 
       <div className="live-candidate-grid" aria-label="Jumlah suara setiap calon">
-        {candidates.map((candidate) => {
+        {rankedCandidates.map((candidate, index) => {
           const item = resultByCandidate.get(candidate.id ?? "");
           const changed = changedCandidateIds.has(candidate.id ?? "");
           return (
-            <article className="live-candidate-tile" key={candidate.id ?? candidate.number} aria-label={`${formatBallotNumber(candidate.number)} ${candidate.name}: ${item?.voteCount ?? 0} suara, ${item?.votePercent ?? 0} persen`}>
+            <motion.article className="live-candidate-tile" data-rank={index + 1} key={candidate.id ?? candidate.number} layout={!reduceMotion} transition={{ layout: { duration: reduceMotion ? 0 : 0.36, ease: "easeOut" } }} aria-label={`Peringkat ${index + 1}: ${formatBallotNumber(candidate.number)} ${candidate.name}: ${item?.voteCount ?? 0} suara, ${item?.votePercent ?? 0} persen`}>
               <div className="live-candidate-title">
                 <span>{formatBallotNumber(candidate.number)}</span>
                 <h2>{candidate.name}</h2>
@@ -105,7 +109,7 @@ export function LiveResultsBoard({
                 </motion.strong>
                 <span>suara · {item?.votePercent ?? 0}%</span>
               </div>
-            </article>
+            </motion.article>
           );
         })}
       </div>

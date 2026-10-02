@@ -8,5 +8,6 @@
 | DEC-04 | Mode tanpa OTP: NIM + dua claim browser, policy Wi-Fi bersama, retensi HMAC, dan jalur bantuan. | Disetujui user, 2026-10-03; source in review | User + admin event | Migration staging, test, UAT, notice privasi, threat-model, dan pernyataan batas impersonasi tanpa OTP. |
 | DEC-05 | Retensi, owner data, backup, dan kanal insiden. | Menunggu panitia | Panitia | SOP dan policy. |
 | DEC-06 | Domain canonical, hosting, DB, auth, storage, realtime. | Menunggu teknis | Admin + teknis | ADR T4. |
+| DEC-07 | Gunakan GSAP terbatas untuk entrance hero beranda Civic Forest; Motion tetap untuk state UI; tanpa GSAP pada vote/admin/live atau scroll hijacking. | Disetujui user, 2026-10-03; source in review | User + pelaksana teknis | Build, manifest route, reduced-motion review, dan review visual. |
 
 Hanya panitia/pemilik keputusan dapat mengubah `Menunggu` menjadi `Disetujui`; sertakan tanggal, alasan, dan entry log.

@@ -41,6 +41,8 @@ File ini adalah register kerja aktif. Setiap proses material wajib memiliki entr
 | EXE-20261003-24 | T3/T7 | Implementasi integritas perangkat tanpa memblokir Wi-Fi bersama | In review | Pelaksana teknis | User + reviewer teknis | 2026-10-03 | Source, migration kompatibel, API, reset, dan quality check selesai; UAT database non-production masih wajib. |
 | EXE-20261003-25 | T7/T9 | Perjelas status verifikasi NIM untuk pemilih | In review | Pelaksana teknis | User | 2026-10-03 | Kode/pesan dan bantuan UI selesai; user meninjau copy pada halaman voting. |
 | EXE-20261003-26 | T5/T9 | Perbarui grafik hasil secara otomatis | In review | Pelaksana teknis | User | 2026-10-03 | Polling React, animasi angka, status koneksi, dan quality check selesai; UAT database masih wajib. |
+| EXE-20261003-27 | T9 | Urutkan papan hasil live berdasarkan jumlah suara | In review | Pelaksana teknis | User | 2026-10-03 | Ranking, tie-break, motion layout, dan quality check selesai; UAT vote database masih wajib. |
+| EXE-20261003-28 | T9 | Redesign UI/UX Civic Forest yang ringan dan animatif | In review | Pelaksana teknis | User/panitia | 2026-10-03 | Build dan pemeriksaan bundle lulus; review visual memakai database sah masih diperlukan. |
 
 ## Detail entry aktif
 
@@ -689,6 +691,39 @@ File ini adalah register kerja aktif. Setiap proses material wajib memiliki entr
 | Aksi yang dilakukan | Menambahkan hook React bersama untuk memuat `/api/results`, menghentikan polling saat tab tersembunyi, refresh saat tab aktif, serta backoff jaringan. `/live` dan ringkasan beranda memakai hook tersebut; angka beranimasi dari nilai lama ke nilai baru dan layar live menandai kandidat yang berubah. |
 | Bukti | Typecheck, lint, build, dan pemeriksaan diff dijalankan; endpoint telah memakai `Cache-Control: no-store`. Database tidak tersedia di lingkungan kerja ini sehingga UAT satu vote belum dilakukan. |
 | Exit condition | UAT satu vote pada database staging membuktikan kedua layar berubah tanpa reload dalam maksimal satu interval polling dan tanpa data personal pada respons. |
+
+### EXE-20261003-27 — Urutkan papan hasil live berdasarkan jumlah suara
+
+| Field | Catatan |
+| --- | --- |
+| Status | `In review` — source, kontrak, typecheck, lint, dan build selesai. |
+| Tujuan | Papan `/live` otomatis menempatkan calon dengan suara terbanyak di posisi teratas setiap snapshot hasil berubah. |
+| Aturan | Urutkan `voteCount` menurun. Jika jumlah suara sama, gunakan `ballot_number` menaik sebagai tie-break deterministik agar urutan tidak bergetar pada polling berikutnya. |
+| UX | Perpindahan posisi memakai motion layout bila reduced motion tidak diminta; angka dan nomor urut tetap terbaca. |
+| Aksi yang dilakukan | Papan live menyortir kandidat dari `voteCount` tertinggi ke terendah pada setiap render snapshot. Tie menggunakan nomor urut menaik. Kartu memakai Motion layout untuk perpindahan posisi, dan reduced motion menonaktifkan perpindahan animatif. |
+| Bukti | `npm run typecheck`, `npm run lint`, `npm run build`, dan `git diff --check` lulus pada 2026-10-03 WIB. UAT perubahan suara pada database tidak dapat dijalankan karena database lingkungan kerja tidak tersedia. |
+| Exit condition | UAT staging menambah suara pada calon peringkat bawah hingga melampaui calon lain dan membuktikan urutan serta aksesibilitas berubah benar tanpa reload. |
+
+### EXE-20261003-28 — Redesign UI/UX Civic Forest yang ringan dan animatif
+
+| Field | Catatan |
+| --- | --- |
+| Status | `In review` — implementasi, build, pemeriksaan manifest, dan quality check selesai; review visual data aktual menunggu database staging/local yang sah. |
+| Tahap runbook | T9 / UI publik, responsivitas, motion, dan performa. |
+| Tujuan | Membuat pengalaman publik lebih khas, fun, responsif, dan profesional tanpa memperlambat bilik suara atau mengubah proses pemilihan. |
+| Scope | Beranda, hero, navigasi publik, kandidat, panduan, ringkasan hasil, layar hasil live, serta foundation responsive/motion. Tambah GSAP hanya untuk entrance hero. |
+| Out of scope | Kontrak vote/API/database, policy hasil, aset calon, rute, autentikasi admin, scroll hijacking, Lenis, Three.js, canvas, atau particle engine. |
+| Dokumen wajib dibaca | `04-ui-ux-dan-visual.md`, `05-rencana-implementasi.md`, `10-quality-gate-dan-pengujian.md`, `12-rute-dan-seo.md`, spesifikasi `ui/`, dan `21-redesign-civic-forest.md`. |
+| Dokumen terdampak | `04-ui-ux-dan-visual.md`, `05-rencana-implementasi.md`, `17-decision-register.md`, `21-redesign-civic-forest.md`, `README.md`, `CATALOG.md`, engineering/per-screen UI specs terkait, `10-quality-gate-dan-pengujian.md`, dan log ini. |
+| Entry condition | User meminta redesign yang lebih menarik, responsif, animatif, ringan, cepat, profesional, menggunakan Motion React dan GSAP secara terkendali. |
+| Risiko dan mitigasi | Animasi dapat menurunkan performa/aksesibilitas atau mengaburkan tindakan voting. GSAP diisolasi pada hero, Motion menghormati reduced motion, poster memakai rasio asli, dan quality gate build/bundle diperiksa. |
+| Aksi yang dilakukan | Menetapkan arah Civic Forest lalu memperbarui hero dengan import GSAP dinamis dan cleanup context, memakai Motion untuk galeri kandidat, transisi/fokus wizard vote, dan peringkat hasil live, serta menyelaraskan CSS responsif dan spesifikasi per layar. Poster tidak diubah maupun dicrop. |
+| Bukti | `npm run typecheck`, `npm run lint`, `npm run build`, dan `git diff --check` lulus pada 2026-10-03 WIB. Manifest client `/vote`, `/live`, dan `/panitia` tidak memuat referensi GSAP; chunk GSAP hanya terkait beranda. Preview data aktual lokal tidak dapat ditinjau karena `DATABASE_URL`/`POSTGRES_URL` belum diatur; tidak ada fixture atau data voting fiktif dibuat. |
+| Exit condition | Review visual user pada data event yang sah, termasuk lebar 320/768/1024/1440 px dan reduced motion. Setelah itu perubahan dapat ditutup/di-commit bila diminta. |
+| Keputusan | Lanjut implementasi dalam scope tercatat; tidak deploy atau mengubah data event. |
+| Owner | Pelaksana teknis. |
+| Reviewer/approver | User/panitia untuk review visual publik. |
+| Waktu | Mulai 2026-10-03 WIB. |
 
 ### Template untuk entry baru
 

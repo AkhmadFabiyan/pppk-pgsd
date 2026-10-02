@@ -18,6 +18,7 @@ Implementasi hanya dimulai setelah panitia memberikan daftar calon individu, keb
 | DEV-02 | Dua HP berbeda memakai Wi-Fi/IP publik yang sama | Kedua vote sah bila NIM dan faktor lain valid; IP tidak menjadi unique constraint. |
 | DEV-03 | Reset suara voting pada event device-integrity | Vote/receipt/dua claim browser/sesi/rate limit `vote.*` terhapus bersama, audit reset tetap ada. |
 | RES-02 | Suara baru masuk saat `/live` dan beranda terbuka | Angka agregat berubah tanpa reload dalam maksimal satu interval polling; tidak ada PII pada respons. |
+| LIV-02 | Jumlah suara kandidat berubah pada `/live` | Kartu otomatis terurut `voteCount` menurun; tie memakai nomor urut menaik; perpindahan tidak mengganggu reduced motion. |
 | RES-01 | Visibility `turnout_only` | Endpoint dan realtime publik tidak memuat total per calon. |
 | ADM-01 | Visitor membuka rute admin | Ditolak/diarahkan ke login tanpa data admin terbuka. |
 | ADM-02 | Admin mencoba edit calon saat open | Ditolak dan tercatat audit. |
@@ -26,6 +27,8 @@ Implementasi hanya dimulai setelah panitia memberikan daftar calon individu, keb
 | IMP-01 | Spreadsheet punya NIM duplikat | Preview gagal/menandai baris sebelum commit. |
 | SEC-01 | PII pada respons/event/log publik | Test snapshot memastikan tidak ada NIM, nama, IP, token, atau pilihan calon personal. |
 | A11Y-01 | Keyboard dan reduced motion | Semua form/konfirmasi dapat selesai tanpa mouse dan animasi esensial mati. |
+| VIS-02 | Isolasi motion dan GSAP | GSAP hanya termuat/berjalan pada hero beranda; route vote, admin, dan live tidak memiliki GSAP atau loop dekoratif. |
+| VIS-03 | Redesign responsif | Hierarki dan poster asli tetap terbaca pada lebar 320, 768, 1024, dan 1440 px; tidak ada crop poster atau horizontal overflow. |
 
 ## Strategi test
 

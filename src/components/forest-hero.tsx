@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { ArrowDownRight, ArrowRight, Sparkles } from "lucide-react";
-import { motion, useReducedMotion, useScroll, useSpring, useTransform } from "motion/react";
-import { useRef, type CSSProperties, type PointerEvent } from "react";
+import { motion, useReducedMotion } from "motion/react";
+import { useEffect, useRef, type CSSProperties, type PointerEvent } from "react";
 import { StatusBadge } from "@/components/status-badge";
 import { TypewriterPhrase } from "@/components/typewriter-phrase";
 
@@ -18,11 +18,32 @@ const leaves = Array.from({ length: 7 }, (_, index) => index);
 export function ForestHero({ statusLabel, scheduleLabel, isOpen }: ForestHeroProps) {
   const sceneRef = useRef<HTMLElement>(null);
   const reduceMotion = useReducedMotion();
-  const { scrollY } = useScroll();
-  const backdropY = useTransform(scrollY, [0, 760], [0, reduceMotion ? 0 : 110]);
-  const foregroundY = useTransform(scrollY, [0, 760], [0, reduceMotion ? 0 : -55]);
-  const springBackdropY = useSpring(backdropY, { stiffness: 110, damping: 28 });
-  const springForegroundY = useSpring(foregroundY, { stiffness: 110, damping: 28 });
+
+  useEffect(() => {
+    if (reduceMotion || !sceneRef.current) return;
+
+    let cancelled = false;
+    let context: { revert: () => void } | undefined;
+
+    void import("gsap").then(({ gsap }) => {
+      if (cancelled || !sceneRef.current) return;
+
+      context = gsap.context(() => {
+        const timeline = gsap.timeline({ defaults: { ease: "power3.out" } });
+        timeline
+          .from("[data-forest-layer='backdrop']", { autoAlpha: 0, y: 22, duration: 0.62 })
+          .from("[data-forest-layer='kicker']", { autoAlpha: 0, y: 16, duration: 0.42 }, "-=0.4")
+          .from("[data-forest-layer='title-line']", { autoAlpha: 0, y: 28, stagger: 0.1, duration: 0.54 }, "-=0.24")
+          .from("[data-forest-layer='hero-detail']", { autoAlpha: 0, y: 16, stagger: 0.08, duration: 0.42 }, "-=0.3")
+          .from("[data-forest-layer='event-panel']", { autoAlpha: 0, x: 22, rotate: 1.5, duration: 0.56 }, "-=0.52");
+      }, sceneRef);
+    });
+
+    return () => {
+      cancelled = true;
+      context?.revert();
+    };
+  }, [reduceMotion]);
 
   function updatePointer(event: PointerEvent<HTMLElement>) {
     if (reduceMotion || event.pointerType === "touch") return;
@@ -35,11 +56,11 @@ export function ForestHero({ statusLabel, scheduleLabel, isOpen }: ForestHeroPro
 
   return (
     <section className="hero forest-hero" ref={sceneRef} onPointerMove={updatePointer}>
-      <motion.div className="forest-backdrop" style={{ y: springBackdropY }} aria-hidden="true">
+      <div className="forest-backdrop" data-forest-layer="backdrop" aria-hidden="true">
         <div className="forest-glow" />
         <div className="forest-horizon forest-horizon-far" />
         <div className="forest-horizon forest-horizon-near" />
-      </motion.div>
+      </div>
       <div className="forest-leaves" aria-hidden="true">{leaves.map((leaf) => {
         const style = {
           "--leaf-size": `${7 + (leaf % 4) * 3}px`,
@@ -54,24 +75,24 @@ export function ForestHero({ statusLabel, scheduleLabel, isOpen }: ForestHeroPro
         return <i key={leaf} style={style} />;
       })}</div>
       <div className="container hero-grid forest-hero-grid">
-        <motion.div className="hero-copy forest-copy" style={{ y: springForegroundY }}>
-          <motion.div initial={reduceMotion ? false : { opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}>
+        <div className="hero-copy forest-copy">
+          <div data-forest-layer="kicker">
             <StatusBadge label={statusLabel} />
             <p className="eyebrow forest-eyebrow"><Sparkles aria-hidden="true" size={14} /> Pemilihan Ketua Angkatan · 2026</p>
-          </motion.div>
+          </div>
           <h1 className="forest-title" aria-label="PGSD 2026">
-            <motion.span initial={reduceMotion ? false : { y: "120%" }} animate={{ y: 0 }} transition={{ duration: 0.75, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}>PGSD</motion.span>
-            <motion.span initial={reduceMotion ? false : { y: "120%" }} animate={{ y: 0 }} transition={{ duration: 0.75, delay: 0.17, ease: [0.16, 1, 0.3, 1] }}>2026</motion.span>
+            <span data-forest-layer="title-line">PGSD</span>
+            <span data-forest-layer="title-line">2026</span>
           </h1>
-          <TypewriterPhrase />
-          <motion.p className="hero-lead forest-lead" initial={reduceMotion ? false : { opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.28, ease: "easeOut" }}>Kenali seluruh calon, pertimbangkan pilihanmu, lalu gunakan satu suara untuk arah angkatan.</motion.p>
-          <motion.div className="hero-actions" initial={reduceMotion ? false : { opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, delay: 0.36, ease: "easeOut" }}>
+          <div data-forest-layer="hero-detail"><TypewriterPhrase /></div>
+          <p className="hero-lead forest-lead" data-forest-layer="hero-detail">Kenali seluruh calon, pertimbangkan pilihanmu, lalu gunakan satu suara untuk arah angkatan.</p>
+          <div className="hero-actions" data-forest-layer="hero-detail">
             <Link className="button button-light forest-cta" href={isOpen ? "/vote" : "#kandidat"}>{isOpen ? "Masuk ke bilik suara" : "Lihat semua calon"} <ArrowRight aria-hidden="true" size={18} /></Link>
             <Link className="forest-text-cta" href="#panduan">Lihat cara memilih <ArrowDownRight aria-hidden="true" size={18} /></Link>
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
 
-        <motion.aside className="event-panel forest-event-panel" initial={reduceMotion ? false : { opacity: 0, scale: 0.94, y: 26 }} animate={{ opacity: 1, scale: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.18, ease: [0.16, 1, 0.3, 1] }} whileHover={reduceMotion ? undefined : { y: -6, rotate: -1 }} aria-label="Status pemilihan">
+        <motion.aside className="event-panel forest-event-panel" data-forest-layer="event-panel" whileHover={reduceMotion ? undefined : { y: -5, rotate: -0.6 }} transition={{ type: "spring", stiffness: 310, damping: 22 }} aria-label="Status pemilihan">
           <div className="event-panel-topline"><span>Status saat ini</span><i aria-hidden="true" /></div>
           <p className="panel-label">Periode pemilihan</p>
           <strong>{statusLabel}</strong>

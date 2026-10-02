@@ -28,13 +28,13 @@ Pada perangkat 1024 × 768 atau lebih besar, seluruh konten harus masuk satu vie
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
-Grid sebenarnya adalah 3 × 3 pada desktop; diagram hanya menunjukkan urutan baca. Urutan selalu nomor ballot, tidak pernah diurutkan ulang menurut perolehan suara. Hal ini menghindari loncatan visual dan kesan kompetitif yang berlebihan.
+Grid sebenarnya adalah 3 × 3 pada desktop; diagram hanya menunjukkan kapasitas, bukan urutan tetap. Calon diurutkan berdasarkan jumlah suara menurun. Bila jumlah suara sama, nomor ballot menaik menjadi tie-break deterministik. Perubahan peringkat memakai layout motion singkat, namun selalu langsung tersedia sebagai urutan DOM dan label ARIA; reduced motion menghilangkan perpindahan animatif.
 
 ## Data dan state
 
 | Elemen | Sumber | Aturan tampilan |
 | --- | --- | --- |
-| Nomor, nama, kelas calon | Snapshot server kandidat `published` | Seluruh calon published, urut nomor ballot. Kelas menjadi teks kecil opsional pada layar lebar. |
+| Nomor, nama, kelas calon | Snapshot server kandidat `published` | Seluruh calon published, diurutkan `voteCount` menurun lalu nomor ballot menaik. Kelas menjadi teks kecil opsional pada layar lebar. |
 | Jumlah suara | `result.candidates[].voteCount` | Angka besar, tabular, tanpa animasi dari nilai fiktif. |
 | Persentase | `result.candidates[].votePercent` | Teks pendukung; boleh disembunyikan pada layar paling kecil agar jumlah tetap terbaca. |
 | Total/partisipasi | `totalCast`, `totalEligible`, `turnoutPercent` | Ringkas di header; tidak ada daftar pemilih. |
@@ -66,14 +66,14 @@ Tidak ada poster pada `/live`: sembilan poster tidak dapat dibaca pada satu laya
 - Latar hijau tua padat; garis hutan sangat tipis pada tepi, tidak memakai scene parallax landing page.
 - Aksen merah bata hanya pada badge `LIVE` dan perubahan suara; hijau muda untuk status sehat.
 - Setiap tile memakai surface solid, nomor ballot, nama, dan angka tabular. Tidak ada gradient pelangi, confetti, bar chart besar, atau card tilt.
-- Saat count kandidat berubah dari snapshot server nyata, angka menjalankan highlight opacity/scale maksimal 180 ms. Tile lain tidak bergerak.
+- Saat count kandidat berubah dari snapshot server nyata, angka menjalankan highlight opacity/scale maksimal 320 ms. Bila hasil mengubah peringkat, tile berpindah maksimal 380 ms; tie tidak berpindah acak.
 - Indikator koneksi boleh berdenyut pelan; semua loop dihentikan oleh `prefers-reduced-motion`.
-- Transisi data tidak mengubah urutan, tinggi tile, atau posisi fokus.
+- Transisi data tidak mengubah tinggi tile atau posisi fokus. Urutan boleh berubah hanya melalui aturan peringkat yang terlihat dan deterministik.
 
 ## Polling dan integritas
 
 1. Client memuat snapshot awal dari endpoint yang sama dengan beranda: `/api/results`.
-2. Saat event `open` dan data visible, lakukan polling tiap 10 detik dengan `Cache-Control: no-store`.
+2. Saat event `open` dan data visible, lakukan polling tiap 5 detik dengan `Cache-Control: no-store`; saat `scheduled`, polling tiap 10 detik agar layar siap ketika event dibuka.
 3. Saat request gagal, pertahankan snapshot terakhir, tandai tertunda, lalu retry 15 → 30 → 60 detik hingga berhasil.
 4. Saat event menjadi `closed`, refetch sekali; jika kebijakan `final_only` mengizinkan, tampilkan snapshot final dan hentikan polling.
 5. Hanya data agregat dari API yang dipakai. Tidak ada subscription ke table vote di browser, local counter, atau optimistic increment.
@@ -95,5 +95,6 @@ Polling dipilih karena build saat ini belum memiliki provider realtime; ia lebih
 - [ ] Count, persentase, total, dan timestamp cocok dengan snapshot `/api/results` pada visibility yang sama.
 - [ ] Saat visibility disembunyikan, tidak ada count/persentase/tile hasil yang muncul.
 - [ ] Perubahan count hanya menganimasi tile yang benar-benar berubah dan reduced motion mematikan efek non-esensial.
+- [ ] Setiap snapshot mengurutkan `voteCount` menurun; jumlah sama memakai nomor ballot menaik dan tidak mengubah urutan secara acak.
 - [ ] Route memiliki `noindex`, tidak ada di sitemap/header/footer, dan tidak merender PII atau detail pilihan individual.
 - [ ] Gangguan jaringan mempertahankan snapshot terakhir dengan label jujur dan tidak mengarang angka baru.
