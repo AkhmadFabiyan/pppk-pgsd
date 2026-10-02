@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { ConsoleSignature } from "@/components/console-signature";
 import { SiteChrome } from "@/components/site-chrome";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
@@ -31,6 +32,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="id">
       <body>
+        <ConsoleSignature />
         <SiteChrome>{children}</SiteChrome>
       </body>
     </html>

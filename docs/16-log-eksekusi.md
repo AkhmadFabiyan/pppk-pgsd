@@ -34,6 +34,7 @@ File ini adalah register kerja aktif. Setiap proses material wajib memiliki entr
 | EXE-20261002-17 | T5/T7 | Sederhanakan inisialisasi akun admin | In review | Pelaksana teknis | Panitia (keamanan dan setup) | 2026-10-02 | Pasang environment Preview, uji login awal dengan secret baru, lalu setujui konfigurasi Production. |
 | EXE-20261002-18 | T9 | Rancang ulang motion beranda publik | In review | Pelaksana teknis | Panitia (review visual dan aksesibilitas) | 2026-10-02 | Review landing pada Preview dengan database aman dan cek mobile/reduced-motion sebelum menyetujui rilis. |
 | EXE-20261002-19 | T5/T7 | Rancang reset peserta dan data simulasi | In review | Pelaksana teknis | Panitia (operasional dan integritas) | 2026-10-02 | Pasang guard Preview/local pada database test, lalu UAT urutan reset suara → reset peserta sebelum rilis. |
+| EXE-20261002-20 | T9 | Tambahkan signature branding konsol | In review | Pelaksana teknis | User | 2026-10-02 | Tinjau pesan konsol sekali per sesi pada browser biasa dan pastikan tanpa PII, request, atau gangguan UI. |
 
 ## Detail entry aktif
 
@@ -449,6 +450,43 @@ File ini adalah register kerja aktif. Setiap proses material wajib memiliki entr
 | Tanggal/WIB | 2026-10-02 WIB |
 | Persetujuan | User meminta perubahan di-push ke GitHub. |
 | Dampak | Commit memuat source reset test/peserta, migration marker test, template environment, dan dokumentasi; tidak memuat `.env.local`, database URL, PII, atau secret. |
+| Keputusan | Lanjutkan commit dan push branch `main` setelah staged diff diperiksa. |
+
+### EXE-20261002-20 — Tambahkan signature branding konsol
+
+| Field | Catatan |
+| --- | --- |
+| Status | `In progress` — implementasi kecil dimulai; tidak ada data pengguna atau konfigurasi server yang akan diakses. |
+| Tahap runbook | T9 / detail branding non-visual. |
+| Tujuan | Menampilkan identitas pembuat di browser console secara ringkas untuk pengembang yang memeriksa situs. |
+| Scope | Client component kecil di root layout, pesan `Akhmad Fabiyan`, tautan LinkedIn, dan website pribadi; sekali per tab browser. |
+| Out of scope | Watermark visual halaman, analytics, request eksternal, penyimpanan PII, anti-copy, perubahan voting/admin, atau dependency baru. |
+| Dokumen wajib dibaca | `04-ui-ux-dan-visual.md`, `14-design-system.md`, `engineering/11-accessibility-motion.md`, dan panduan Next.js Server/Client Components. |
+| Entry condition | User meminta watermark branding pada browser console. |
+| Risiko dan mitigasi | Console tidak boleh mengandung klaim keamanan atau mengganggu debugging. Pesan berbentuk teks statis, dijalankan satu kali per `sessionStorage`, dan tidak melakukan side effect selain `console.info`. |
+| Owner | Pelaksana teknis. |
+| Reviewer/approver | User. |
+| Keputusan sementara | Gunakan console signature, bukan watermark visual. |
+| Waktu | Mulai 2026-10-02 WIB. |
+
+#### Amendment A1 — Implementasi dan quality gate lokal
+
+| Field | Catatan |
+| --- | --- |
+| Tanggal/WIB | 2026-10-02 WIB |
+| Aksi yang dilakukan | Menambahkan `ConsoleSignature` client island pada root layout. Ia menggunakan `sessionStorage` dan guard module runtime agar `console.info` statis hanya tampil sekali per tab. |
+| Dokumen diperbarui | `14-design-system.md` dan `16-log-eksekusi.md`. |
+| Bukti | `npm run typecheck`, `npm run lint`, `npm run build`, dan `git diff --check` lulus. |
+| Batas pengujian | Pesan telah tervalidasi melalui compile/lint/build. Pemeriksaan manual DevTools Console tetap menunggu browser Preview/local dengan database yang dapat merender aplikasi. |
+| Keputusan | Siap direview; tidak ada UI, data, request, atau dependency baru. |
+
+#### Amendment A2 — Commit dan push signature konsol
+
+| Field | Catatan |
+| --- | --- |
+| Tanggal/WIB | 2026-10-02 WIB |
+| Persetujuan | User meminta perubahan di-push ke GitHub. |
+| Dampak | Commit mencakup client component signature konsol, root layout, dan dokumentasi; tidak mencakup `.env.local`, PII, atau secret. |
 | Keputusan | Lanjutkan commit dan push branch `main` setelah staged diff diperiksa. |
 
 ### Template untuk entry baru

@@ -36,3 +36,7 @@ Container publik maksimum 1200 px dengan gutter 16/24/32 px. Beranda publik mema
 ## Motion
 
 Gunakan CSS transition dan Motion untuk state/feedback berjangka 120–400 ms. Hormati `prefers-reduced-motion`; dilarang memakai canvas, parallax, Lenis, particle, autoplay, atau animasi loop pada rilis pertama. Kontrak lengkap ada pada `04-ui-ux-dan-visual.md`.
+
+## Signature konsol
+
+Root layout memuat client island kecil yang menjalankan `console.info` satu kali per tab browser. Pesan statis menampilkan `Akhmad Fabiyan`, LinkedIn `linkedin.com/in/akhmadfabiyan`, dan website `akhmadfabiyan.com` dengan warna forest/brick. Signature ini bukan elemen visual, analytics, atau kontrol keamanan: ia tidak membuat request, tidak membaca data aplikasi, tidak menyimpan PII, dan tidak mengganggu rute voting/admin.
