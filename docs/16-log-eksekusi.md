@@ -35,6 +35,7 @@ File ini adalah register kerja aktif. Setiap proses material wajib memiliki entr
 | EXE-20261002-18 | T9 | Rancang ulang motion beranda publik | In review | Pelaksana teknis | Panitia (review visual dan aksesibilitas) | 2026-10-02 | Review landing pada Preview dengan database aman dan cek mobile/reduced-motion sebelum menyetujui rilis. |
 | EXE-20261002-19 | T5/T7 | Rancang reset peserta dan data simulasi | In review | Pelaksana teknis | Panitia (operasional dan integritas) | 2026-10-02 | Jalankan UAT admin untuk urutan reset suara → reset peserta pada database yang dipilih panitia. |
 | EXE-20261002-20 | T9 | Tambahkan signature branding konsol | In review | Pelaksana teknis | User | 2026-10-02 | Tinjau pesan konsol sekali per sesi pada browser biasa dan pastikan tanpa PII, request, atau gangguan UI. |
+| EXE-20261002-21 | T9 | Implementasi ulang workspace admin responsif | In review | Pelaksana teknis | User | 2026-10-02 | User meninjau panel autentik pada Preview/local; feedback UI atau UAT menentukan perubahan berikutnya. |
 
 ## Detail entry aktif
 
@@ -525,6 +526,42 @@ File ini adalah register kerja aktif. Setiap proses material wajib memiliki entr
 | Persetujuan | User meminta perubahan di-push ke GitHub. |
 | Dampak | Commit memuat source reset tanpa environment guard dan dokumen tata kelola yang diselaraskan; tidak memuat `.env.local`, database URL, PII, maupun secret. |
 | Keputusan | Lanjutkan commit dan push branch `main` setelah staged diff diperiksa. |
+
+### EXE-20261002-21 — Implementasi ulang workspace admin responsif
+
+| Field | Catatan |
+| --- | --- |
+| Status | `In review` — implementasi UI dan quality gate lokal selesai; visual panel autentik menunggu review user. |
+| Tahap runbook | T9 / UX admin, responsivitas, aksesibilitas, dan hierarchy tindakan. |
+| Tujuan | Mengganti dashboard kartu generik menjadi workspace panitia yang jelas, responsif, dan menarik tanpa mengubah perilaku data/aksi operasional. |
+| Scope | Markup `/panitia`, CSS admin, copy tampilan, navigasi section, presentasi data mobile, disclosure reset native, serta motion CSS ringan. |
+| Out of scope | Mengubah role, database, API/server action, mekanisme vote/reset, kandidat/poster, dependency, atau menjalankan tindakan admin. |
+| Dokumen wajib dibaca | `04-ui-ux-dan-visual.md`, `14-design-system.md`, `19-operasional-aplikasi.md`, `ui/admin-event.md`, `10-quality-gate-dan-pengujian.md`, dan panduan Next.js Server/Client Components. |
+| Entry condition | User meminta perbaikan UI aktual, bukan rancangan Markdown saja. |
+| Risiko dan mitigasi | Rework visual dapat merusak form/action atau membuat panel berat. Page dipertahankan sebagai Server Component; form/action/field name tidak diubah; disclosure memakai HTML native dan motion CSS mematuhi reduced-motion. |
+| Owner | Pelaksana teknis. |
+| Reviewer/approver | User. |
+| Waktu | Mulai 2026-10-02 WIB. |
+
+#### Amendment A1 — Implementasi dan quality gate lokal
+
+| Field | Catatan |
+| --- | --- |
+| Tanggal/WIB | 2026-10-02 WIB |
+| Aksi yang dilakukan | Menulis ulang markup `/panitia` sebagai command workspace: topbar, navigasi section, CTA berdasarkan status, readiness, strip metrik, kontrol event, panel persiapan, daftar peserta responsif, audit timeline, serta disclosure reset. Mengganti CSS admin dengan grid desktop/tablet/mobile dan motion ringan yang mematuhi reduced-motion. |
+| Dokumen diperbarui | `ui/admin-event.md`, `04-ui-ux-dan-visual.md`, dan `16-log-eksekusi.md`. |
+| Bukti | `npm run typecheck`, `npm run lint`, dan `npm run build` lulus. Build menghasilkan route dinamis `/panitia`. Preview lokal menampilkan halaman akses terbatas tanpa sesi; UAT visual panel autentik belum dijalankan agar tidak mengirim kredensial atau menjalankan aksi admin. |
+| Batas | Tidak ada field action, API, database, role, mekanisme vote/reset, kandidat, atau data event yang diubah maupun dijalankan. |
+| Keputusan | Siap direview. User dapat masuk ke `/panitia` pada Preview/local untuk menilai visual autentik; perubahan berikutnya hanya berdasarkan feedback UI atau hasil UAT. |
+
+#### Amendment A2 — Commit dan push redesign admin
+
+| Field | Catatan |
+| --- | --- |
+| Tanggal/WIB | 2026-10-02 WIB |
+| Persetujuan | User meminta perubahan di-push ke GitHub. |
+| Dampak | Commit hanya memuat markup, CSS, dan dokumentasi redesign admin; tidak memuat `.env.local`, credential, database URL, PII, atau data event. |
+| Keputusan | Lanjutkan commit serta push branch `main` setelah staged diff diperiksa. |
 
 ### Template untuk entry baru
 

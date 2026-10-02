@@ -89,7 +89,7 @@ Hasil live hanya menggunakan agregat yang disetujui: jumlah suara, persentase, t
 
 ### Admin
 
-Admin memakai layout kerja yang terang, padat, dan tidak bertema dekoratif. Navigasi samping desktop berubah menjadi sheet mobile. Area utama fokus pada status event, kandidat, import eligible, audit, hasil, dan reset terkontrol. Aksi buka, tutup, reset, import, publish, serta export selalu meminta alasan, re-auth/konfirmasi sesuai SOP, dan meninggalkan audit log.
+Admin memakai workspace kerja terang, padat, dan tidak bertema dekoratif. Topbar konteks, navigasi section horizontal, tindakan berikutnya, readiness, operasi voting, persiapan, monitoring, dan reset memiliki urutan tetap. Pada ponsel, navigasi dapat digeser horizontal dan daftar peserta berubah menjadi rekaman ringkas—bukan tabel desktop yang dipaksa sempit. Motion hanya dipakai untuk feedback singkat dan disclosure; tidak ada dekorasi looping. Aksi buka, tutup, reset, import, publish, serta export selalu meminta alasan/konfirmasi sesuai SOP dan meninggalkan audit log. Detail implementasi ada pada `ui/admin-event.md`.
 
 ## Responsif dan aksesibilitas
 
