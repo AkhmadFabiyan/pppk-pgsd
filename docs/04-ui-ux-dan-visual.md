@@ -85,7 +85,7 @@ Receipt bukan tahap halaman tambahan bagi pemilih; ia adalah output server setel
 
 ### Hasil
 
-Hasil live hanya menggunakan agregat yang disetujui: jumlah suara, persentase, total suara sah, partisipasi, waktu pembaruan terakhir, dan status koneksi. Tidak pernah menampilkan daftar pemilih, pilihan individual, NIM, IP, atau fingerprint. Saat realtime gagal, angka terakhir tetap diberi timestamp dan status `Pembaruan tertunda`; tidak ada counter atau data buatan.
+Hasil live hanya menggunakan agregat yang disetujui: jumlah suara, persentase, total suara sah, partisipasi, tanggal dan waktu pembaruan terakhir dalam WIB, serta status koneksi. Tidak pernah menampilkan daftar pemilih, pilihan individual, NIM, IP, atau fingerprint. Saat realtime gagal, angka terakhir tetap diberi timestamp dan status `Pembaruan tertunda`; tidak ada counter atau data buatan.
 
 ### Admin
 

@@ -42,10 +42,22 @@ function AnimatedNumber({ value }: { value: number }) {
   return <span>{(reduceMotion ? value : number).toLocaleString("id-ID")}</span>;
 }
 
+function formatResultUpdatedAt(value: string) {
+  const timestamp = new Intl.DateTimeFormat("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Asia/Jakarta"
+  }).format(new Date(value));
+  return `${timestamp} WIB`;
+}
+
 export function AnimatedResultSummary({ result, candidates }: { result: PublicResult; candidates: CandidateSummary[] }) {
   const reduceMotion = useReducedMotion();
   const resultsByCandidate = new Map(result.candidates.map((item) => [item.candidateId, item]));
-  const updatedAt = new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Jakarta" }).format(new Date(result.updatedAt));
+  const updatedAt = formatResultUpdatedAt(result.updatedAt);
 
   return (
     <div className="result-summary result-summary-animated">
@@ -70,7 +82,7 @@ export function AnimatedResultSummary({ result, candidates }: { result: PublicRe
           );
         })}
       </ul>
-      <p className="results-updated">Diperbarui {updatedAt}</p>
+      <p className="results-updated">Pembaruan terakhir · <time dateTime={result.updatedAt}>{updatedAt}</time></p>
     </div>
   );
 }

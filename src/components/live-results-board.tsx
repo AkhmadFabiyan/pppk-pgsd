@@ -14,11 +14,13 @@ function formatNumber(value: number) {
 
 function formatUpdatedAt(value: string) {
   return new Intl.DateTimeFormat("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-    timeZone: "Asia/Jakarta",
-    timeZoneName: "short"
-  }).format(new Date(value));
+    timeZone: "Asia/Jakarta"
+  }).format(new Date(value)) + " WIB";
 }
 
 export function LiveResultsBoard({
@@ -115,7 +117,7 @@ export function LiveResultsBoard({
       </div>
 
       <footer className="live-results-footer">
-        <span>{connection === "stale" ? "Menampilkan snapshot terakhir" : `Diperbarui ${formatUpdatedAt(result.updatedAt)}`}</span>
+        <span>{connection === "stale" ? "Menampilkan snapshot terakhir · " : "Pembaruan terakhir · "}<time dateTime={result.updatedAt}>{formatUpdatedAt(result.updatedAt)}</time></span>
         <span>{result.totalEligible} pemilih eligible</span>
       </footer>
       <p className="sr-only" aria-live="polite">{connection === "stale" ? "Pembaruan hasil tertunda." : `Rekap terbaru: ${result.totalCast} suara.`}</p>

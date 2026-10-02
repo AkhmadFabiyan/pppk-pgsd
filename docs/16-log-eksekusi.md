@@ -43,6 +43,7 @@ File ini adalah register kerja aktif. Setiap proses material wajib memiliki entr
 | EXE-20261003-26 | T5/T9 | Perbarui grafik hasil secara otomatis | In review | Pelaksana teknis | User | 2026-10-03 | Polling React, animasi angka, status koneksi, dan quality check selesai; UAT database masih wajib. |
 | EXE-20261003-27 | T9 | Urutkan papan hasil live berdasarkan jumlah suara | In review | Pelaksana teknis | User | 2026-10-03 | Ranking, tie-break, motion layout, dan quality check selesai; UAT vote database masih wajib. |
 | EXE-20261003-28 | T9 | Redesign UI/UX Civic Forest yang ringan dan animatif | In review | Pelaksana teknis | User/panitia | 2026-10-03 | Build dan pemeriksaan bundle lulus; review visual memakai database sah masih diperlukan. |
+| EXE-20261003-29 | T9 | Tampilkan tanggal snapshot pada hasil publik | In review | Pelaksana teknis | User | 2026-10-03 | Source dan quality check selesai; user dapat meninjau label tanggal pada data snapshot sah. |
 
 ## Detail entry aktif
 
@@ -723,6 +724,25 @@ File ini adalah register kerja aktif. Setiap proses material wajib memiliki entr
 | Keputusan | Lanjut implementasi dalam scope tercatat; tidak deploy atau mengubah data event. |
 | Owner | Pelaksana teknis. |
 | Reviewer/approver | User/panitia untuk review visual publik. |
+| Waktu | Mulai 2026-10-03 WIB. |
+
+### EXE-20261003-29 — Tampilkan tanggal snapshot pada hasil publik
+
+| Field | Catatan |
+| --- | --- |
+| Status | `In review` — source, dokumentasi, dan quality check selesai; menunggu review user pada data snapshot sah. |
+| Tahap runbook | T9 / hasil publik, aksesibilitas, dan responsivitas. |
+| Tujuan | Menampilkan tanggal dan waktu pembaruan snapshot hasil secara jelas pada ringkasan beranda dan layar `/live`. |
+| Scope | Format `updatedAt` publik, label pembaruan, CSS pendukung, serta spesifikasi hasil live/quality gate. |
+| Out of scope | Mengubah polling, API, data suara, timezone event, policy visibility, maupun data pribadi. |
+| Dokumen wajib dibaca | `04-ui-ux-dan-visual.md`, `08-kontrak-api-dan-realtime.md`, `10-quality-gate-dan-pengujian.md`, `ui/live-results-display.md`, dan log ini. |
+| Risiko dan mitigasi | Waktu browser dapat berbeda atau terasa seperti waktu lokal. Gunakan ISO `updatedAt` dari snapshot server dan format eksplisit `Asia/Jakarta`/`WIB`; saat koneksi stale tetap nyatakan snapshot terakhir. |
+| Aksi yang dilakukan | Memformat `updatedAt` menjadi tanggal kalender, waktu, dan `WIB` pada ringkasan beranda. Footer `/live` selalu menampilkan tanggal snapshot; saat stale, label menjelaskan bahwa itu snapshot terakhir. Menggunakan elemen HTML `time` dengan atribut ISO `dateTime`. |
+| Bukti | `npm run typecheck`, `npm run lint`, `npm run build`, dan `git diff --check` lulus pada 2026-10-03 WIB. Tidak ada API/database/payload baru. |
+| Exit condition | User meninjau kedua label pada data snapshot sah. Tidak diperlukan perubahan data atau deployment baru sebelum commit bila diminta. |
+| Keputusan | Lanjut implementasi; tidak ada perubahan kontrak data. |
+| Owner | Pelaksana teknis. |
+| Reviewer/approver | User. |
 | Waktu | Mulai 2026-10-03 WIB. |
 
 ### Template untuk entry baru

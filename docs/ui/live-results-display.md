@@ -38,7 +38,7 @@ Grid sebenarnya adalah 3 × 3 pada desktop; diagram hanya menunjukkan kapasitas,
 | Jumlah suara | `result.candidates[].voteCount` | Angka besar, tabular, tanpa animasi dari nilai fiktif. |
 | Persentase | `result.candidates[].votePercent` | Teks pendukung; boleh disembunyikan pada layar paling kecil agar jumlah tetap terbaca. |
 | Total/partisipasi | `totalCast`, `totalEligible`, `turnoutPercent` | Ringkas di header; tidak ada daftar pemilih. |
-| Waktu pembaruan | `updatedAt` | Diformat `id-ID`, zona `Asia/Jakarta`. |
+| Waktu pembaruan | `updatedAt` | Tanggal kalender, waktu, dan label `WIB` diformat `id-ID` dalam zona `Asia/Jakarta`, baik saat tersambung maupun memakai snapshot terakhir. |
 | Koneksi | Hasil request polling | `Tersambung`, `Memperbarui`, atau `Pembaruan tertunda`; tidak pernah menyatakan vote diterima. |
 
 State yang wajib dirender:
