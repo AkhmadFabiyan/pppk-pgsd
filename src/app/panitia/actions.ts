@@ -14,7 +14,7 @@ import {
   setResultVisibility,
   syncCandidateCatalog
 } from "@/lib/db";
-import { hashPassword, isValidBootstrapToken, establishAdminSession, endAdminSession, requireAdmin, sha256, verifyPassword } from "@/lib/security";
+import { establishAdminSession, endAdminSession, hashPassword, initialAdminUsername, isValidInitialAdminCredentials, requireAdmin, sha256, verifyPassword } from "@/lib/security";
 import { parseVoterWorkbook } from "@/lib/voter-import";
 
 function textValue(formData: FormData, name: string) {
@@ -32,25 +32,33 @@ function refreshPublicPaths() {
   revalidatePath("/panitia");
 }
 
-export async function bootstrapAdminAction(formData: FormData) {
-  if (await hasAdminUsers()) redirect("/panitia/login?error=Setup%20admin%20sudah%20selesai.");
-  const username = textValue(formData, "username").toLowerCase();
-  const password = textValue(formData, "password");
-  const setupToken = textValue(formData, "setupToken");
-  if (!/^[a-z0-9._-]{3,40}$/.test(username) || password.length < 12 || !isValidBootstrapToken(setupToken)) {
-    redirect("/panitia/login?error=Data%20setup%20tidak%20valid.");
-  }
-  const adminId = await createAdmin(username, await hashPassword(password));
-  await establishAdminSession(adminId);
-  redirect("/panitia?notice=Akun%20admin%20awal%20berhasil%20dibuat.");
-}
-
 export async function loginAction(formData: FormData) {
   const username = textValue(formData, "username").toLowerCase();
   const password = textValue(formData, "password");
   if (!(await consumeRateLimit("admin.login", sha256(`admin-login:${username}`), 10, 15 * 60 * 1000))) {
     redirect("/panitia/login?error=Terlalu%20banyak%20percobaan.%20Coba%20lagi%20nanti.");
   }
+
+  if (!(await hasAdminUsers())) {
+    if (!isValidInitialAdminCredentials(username, password)) {
+      redirect("/panitia/login?error=Username%20atau%20kata%20sandi%20tidak%20valid.");
+    }
+
+    let adminId: string;
+    try {
+      adminId = await createAdmin(initialAdminUsername(), await hashPassword(password));
+    } catch (error) {
+      const concurrentAdmin = await findAdminByUsername(initialAdminUsername());
+      if (!concurrentAdmin || !concurrentAdmin.is_active || !(await verifyPassword(password, concurrentAdmin.password_hash))) {
+        throw error;
+      }
+      await establishAdminSession(concurrentAdmin.id);
+      redirect("/panitia");
+    }
+    await establishAdminSession(adminId);
+    redirect("/panitia?notice=Akun%20admin%20awal%20berhasil%20dibuat.");
+  }
+
   const admin = await findAdminByUsername(username);
   if (!admin || !admin.is_active || !(await verifyPassword(password, admin.password_hash))) {
     redirect("/panitia/login?error=Username%20atau%20kata%20sandi%20tidak%20valid.");

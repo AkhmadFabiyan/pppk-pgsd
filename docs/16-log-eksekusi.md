@@ -31,6 +31,7 @@ File ini adalah register kerja aktif. Setiap proses material wajib memiliki entr
 | EXE-20261002-14 | T5/T9 | Siapkan deployment Vercel dan sederhanakan pengalaman publik | In review | Pelaksana teknis | Panitia (review UX dan deployment) | 2026-10-02 | Panitia memasang database/secret Vercel, menjalankan UAT Preview tanpa PII production, lalu menyetujui release. |
 | EXE-20261002-15 | T9 | Rancang layar hasil live satu viewport | Done | Pelaksana teknis | Panitia (review UX dan kebijakan hasil) | 2026-10-02 | Menunggu persetujuan untuk mengimplementasikan route `/live` pada build berikutnya. |
 | EXE-20261002-16 | T5/T9 | Implementasi layar hasil live satu viewport | In review | Pelaksana teknis | Panitia (review UX dan kebijakan hasil) | 2026-10-02 | Panitia meninjau `/live` dengan database Preview dan menyetujui layar operasional sebelum memakainya pada event. |
+| EXE-20261002-17 | T5/T7 | Sederhanakan inisialisasi akun admin | In review | Pelaksana teknis | Panitia (keamanan dan setup) | 2026-10-02 | Pasang environment Preview, uji login awal dengan secret baru, lalu setujui konfigurasi Production. |
 
 ## Detail entry aktif
 
@@ -301,6 +302,37 @@ File ini adalah register kerja aktif. Setiap proses material wajib memiliki entr
 | Exit condition | Panitia memasang database Preview, mengatur visibility hasil pada data aman, lalu mereview 1024 × 768 dan mobile/zoom sebelum entry ini dapat `Done`. |
 | Keputusan | Siap direview; route tidak mengubah kebijakan hasil dan tetap fail-closed bila result tidak visible. |
 | Waktu | Mulai 2026-10-02 WIB; implementasi dan quality gate kode selesai 2026-10-02 WIB. |
+
+### EXE-20261002-17 — Sederhanakan inisialisasi akun admin
+
+| Field | Catatan |
+| --- | --- |
+| Status | `In review` — implementasi dan quality gate lokal selesai; belum diuji end-to-end karena database lokal belum dikonfigurasi. |
+| Tahap runbook | T5/T7 / autentikasi admin dan konfigurasi deployment. |
+| Tujuan | Menghapus interaksi token bootstrap dari UI dan memungkinkan satu akun admin awal dibuat aman dari kredensial server-only. |
+| Scope | Username awal baku, password awal environment, login tunggal, dokumentasi konfigurasi, dan quality gate kode. |
+| Out of scope | Menaruh password pada source, Git, atau dokumentasi; mengubah password admin yang sudah ada; reset database; mengubah peran/RBAC; atau membuka voting. |
+| Dokumen wajib dibaca | `03-data-dan-keamanan.md`, `19-operasional-aplikasi.md`, `engineering/01-security.md`, `engineering/10-deployment.md`, `ui/admin-login.md`, dan panduan Next.js environment variables/server actions. |
+| Dokumen yang terdampak | `16-log-eksekusi.md`, `.env.example`, `scripts/create-local-env.mjs`, `19-operasional-aplikasi.md`, `engineering/10-deployment.md`, `12-rute-dan-seo.md`, `ui/admin-login.md`, serta source autentikasi admin. |
+| Entry condition | User meminta kredensial admin tetap; password yang pernah dikirim lewat chat diperlakukan sebagai terekspos dan tidak boleh disalin ke artefak proyek. |
+| Owner | Pelaksana teknis. |
+| Reviewer/approver | Panitia penanggung jawab setup dan admin kedua sebelum environment Production dipasang. |
+| Risiko dan mitigasi | Password hardcode akan bocor melalui repository/build. Password awal hanya dibaca dari `ADMIN_INITIAL_PASSWORD` server-only, dibandingkan constant-time, di-hash dengan scrypt sebelum disimpan, dan hanya dapat membuat akun ketika tabel admin masih kosong. |
+| Aksi yang dilakukan | Mengganti form setup tiga field menjadi login tunggal; username awal default dipusatkan di server, password awal diverifikasi dari environment, lalu hash disimpan saat akun pertama dibuat. Token bootstrap dan action terkait dihapus. Script local, template environment, runbook deployment, route, dan kontrak UI diperbarui. Audit future memakai event `admin.initialized`. |
+| Bukti | `npm run typecheck`, `npm run lint`, dan `npm run build` lulus. Audit build menampilkan hanya route aktif, termasuk `/panitia/login`. `git diff --check` lulus; pencarian source tidak menemukan `ADMIN_BOOTSTRAP_TOKEN` atau `isValidBootstrapToken`. Tidak ada nilai secret dibaca atau ditulis. |
+| Exit condition | Panitia mengisi `DATABASE_URL` dan secret baru pada environment Preview, membuktikan login awal dan login ulang dengan database aman, lalu mengesahkan konfigurasi Production. |
+| Keputusan | Siap direview. Jangan gunakan password yang sudah pernah dibagikan melalui chat; buat secret baru langsung pada dashboard Vercel. |
+| Waktu | Mulai 2026-10-02 WIB; implementasi dan quality gate lokal selesai 2026-10-02 WIB. |
+
+#### Amendment A1
+
+| Field | Catatan |
+| --- | --- |
+| Tanggal/WIB | 2026-10-02 WIB |
+| Alasan perubahan | User meminta perubahan inisialisasi admin didorong ke repository GitHub. |
+| Dampak | Commit akan memuat source login, template environment, dan dokumentasi tanpa `.env.local` atau secret. |
+| Persetujuan | User. |
+| Keputusan | Lanjutkan commit dan push ke branch `main` setelah pemeriksaan status/diff bersih. |
 
 ### Template untuk entry baru
 

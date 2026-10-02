@@ -31,7 +31,8 @@ Atur variable di Vercel Project Settings → Environment Variables. Nilai rahasi
 | --- | --- | --- |
 | `DATABASE_URL` | Development, Preview, Production | URL PostgreSQL serverless. Gunakan database terpisah per lingkungan; hak akses hanya untuk aplikasi. `POSTGRES_URL` dapat dipakai sebagai nama alternatif. |
 | `VOTING_TOKEN_SECRET` | Development, Preview, Production | Nilai acak minimal 32 karakter dan berbeda pada setiap lingkungan. Menjadi syarat server untuk membuka voting. |
-| `ADMIN_BOOTSTRAP_TOKEN` | Development, Preview, Production | Nilai acak minimal 16 karakter dan berbeda pada setiap lingkungan. Hanya untuk membuat admin pertama; simpan secara terbatas. |
+| `ADMIN_INITIAL_USERNAME` | Development, Preview, Production | Opsional; default `admin@pppk-pgsd.vercel.app`. Hanya dipakai ketika database environment belum memiliki akun admin. |
+| `ADMIN_INITIAL_PASSWORD` | Development, Preview, Production | Secret baru minimal 12 karakter dan berbeda per lingkungan. Dipakai sekali untuk membuat akun admin awal; tidak boleh masuk source atau `NEXT_PUBLIC_*`. |
 | `NEXT_PUBLIC_SITE_URL` | Production | URL HTTPS canonical tanpa trailing slash, misalnya `https://voting.example.ac.id`. Jangan gunakan URL preview sebagai canonical. |
 
 Tidak ada `VOTING_DB_PATH`. Database SQLite/file lokal tidak kompatibel dengan filesystem Vercel yang tidak persisten.
@@ -40,9 +41,9 @@ Tidak ada `VOTING_DB_PATH`. Database SQLite/file lokal tidak kompatibel dengan f
 
 1. Jalankan `npm install`, `npm run typecheck`, `npm run lint`, dan `npm run build` pada commit yang akan dirilis.
 2. Di Vercel, import repository dan gunakan framework preset **Next.js**. `package.json` mematok runtime Node `24.x`; jangan override ke runtime lama.
-3. Pasang database serverless dan masukkan empat variable di atas pada environment yang tepat. Pastikan Preview tidak menunjuk database Production.
+3. Pasang database serverless dan masukkan lima variable di atas pada environment yang tepat. Pastikan Preview tidak menunjuk database Production.
 4. Deploy Preview terlebih dahulu. Kunjungi `/` dan `/panitia/login`; request pertama akan menyiapkan schema idempoten pada database environment tersebut.
-5. Buat admin test memakai bootstrap token environment Preview, kemudian lakukan UAT dengan spreadsheet salinan aman dan NIM dummy. Jangan unggah master peserta production pada Preview.
+5. Login memakai username/password awal environment Preview untuk membuat admin test, kemudian lakukan UAT dengan spreadsheet salinan aman dan NIM dummy. Jangan unggah master peserta production pada Preview.
 6. Setelah reviewer menyetujui UAT, promote commit yang sama ke Production dan isi variable Production yang berbeda.
 7. Buka `/panitia/login` di domain production, buat admin pertama, sinkronkan calon, lalu lakukan setup event mengikuti `../19-operasional-aplikasi.md`.
 8. Sebelum klik **Buka voting**, selesaikan checklist T10 dan catat keputusan pada `../16-log-eksekusi.md`.
@@ -53,7 +54,7 @@ Tidak ada `VOTING_DB_PATH`. Database SQLite/file lokal tidak kompatibel dengan f
 | --- | --- |
 | `/` | HTTP `200`, memiliki satu H1, kandidat yang published saja, tanpa NIM/hasil rahasia. |
 | `/vote` saat `scheduled` | Tidak memberikan akses surat suara. |
-| `/panitia/login` | Memungkinkan bootstrap/login tanpa mengungkap token pada HTML atau log. |
+| `/panitia/login` | Memungkinkan pembuatan akun awal/login tanpa mengungkap secret environment pada HTML atau log. |
 | `/robots.txt` dan `/sitemap.xml` | Hanya canonical publik yang dapat diindeks. |
 | Verifikasi NIM test | Pesan generik untuk NIM tidak sah; token sesi singkat hanya untuk NIM test yang eligible. |
 | Submit test | Hanya satu insert vote per NIM test; retry dengan idempotency key sama menerima receipt yang sama. |
@@ -65,7 +66,7 @@ Tidak ada `VOTING_DB_PATH`. Database SQLite/file lokal tidak kompatibel dengan f
 - Bila deploy UI bermasalah sebelum voting dibuka, rollback deployment Vercel ke build terakhir yang diketahui baik; database tidak perlu di-rollback untuk perubahan UI.
 - Bila perubahan schema/logic telah dipakai atau ada suara sah, jangan melakukan rollback database secara spontan. Tutup voting bila integritas tidak dapat dipastikan, catat insiden, lalu ikuti `../09-sop-panitia.md`.
 - Backup/snapshot database dilakukan sebelum UAT production, sebelum membuka event, dan sebelum tindakan administratif material. Uji pemulihan pada database terpisah.
-- Rotation secret dilakukan setelah admin bootstrap selesai atau jika ada dugaan kebocoran. Rotasi token sesi akan membuat sesi aktif berakhir; jadwalkan di luar periode voting.
+- Bila `ADMIN_INITIAL_PASSWORD` diduga bocor sebelum akun awal dibuat, ganti secret di Vercel sebelum mencoba login. Setelah akun terbentuk, perubahan variable ini tidak mengubah password database; pemulihan perlu prosedur admin terpisah. Rotasi token sesi akan membuat sesi aktif berakhir; jadwalkan di luar periode voting.
 
 ## Batas implementasi saat ini
 
@@ -77,7 +78,7 @@ Tidak ada `VOTING_DB_PATH`. Database SQLite/file lokal tidak kompatibel dengan f
 ## Gate release
 
 - [ ] Environment Production memakai database production yang tepat dan backup awal dibuat.
-- [ ] `DATABASE_URL`, `VOTING_TOKEN_SECRET`, dan `ADMIN_BOOTSTRAP_TOKEN` tidak kosong serta berbeda dari Preview.
+- [ ] `DATABASE_URL`, `VOTING_TOKEN_SECRET`, dan `ADMIN_INITIAL_PASSWORD` tidak kosong serta berbeda dari Preview; `ADMIN_INITIAL_USERNAME` sudah dikonfirmasi.
 - [ ] Build/lint/typecheck hijau pada commit release.
 - [ ] UAT Preview tercatat tanpa spreadsheet maupun NIM production.
 - [ ] Canonical URL, robots, sitemap, dan HTTPS diverifikasi.

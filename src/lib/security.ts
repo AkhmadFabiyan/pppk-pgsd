@@ -6,6 +6,7 @@ import { createAdminSession, deleteAdminSession, findAdminSession } from "@/lib/
 const scrypt = promisify(scryptCallback);
 const ADMIN_COOKIE = "pgsd_admin_session";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 8;
+const DEFAULT_INITIAL_ADMIN_USERNAME = "admin@pppk-pgsd.vercel.app";
 
 export function sha256(value: string) {
   return createHash("sha256").update(value).digest("hex");
@@ -33,12 +34,22 @@ export async function verifyPassword(password: string, stored: string) {
   return expectedBuffer.length === derived.length && timingSafeEqual(expectedBuffer, derived);
 }
 
-export function isValidBootstrapToken(token: string) {
-  const expected = process.env.ADMIN_BOOTSTRAP_TOKEN;
-  if (!expected || expected.length < 16) return false;
-  const left = Buffer.from(token);
-  const right = Buffer.from(expected);
+function constantTimeEqual(leftValue: string, rightValue: string) {
+  const left = Buffer.from(leftValue);
+  const right = Buffer.from(rightValue);
   return left.length === right.length && timingSafeEqual(left, right);
+}
+
+export function initialAdminUsername() {
+  return process.env.ADMIN_INITIAL_USERNAME?.trim().toLowerCase() || DEFAULT_INITIAL_ADMIN_USERNAME;
+}
+
+export function isValidInitialAdminCredentials(username: string, password: string) {
+  const expectedPassword = process.env.ADMIN_INITIAL_PASSWORD;
+  if (!expectedPassword || expectedPassword.length < 12) return false;
+  const usernameMatches = constantTimeEqual(username, initialAdminUsername());
+  const passwordMatches = constantTimeEqual(password, expectedPassword);
+  return usernameMatches && passwordMatches;
 }
 
 export async function establishAdminSession(adminId: string) {

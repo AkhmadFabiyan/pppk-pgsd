@@ -13,9 +13,11 @@ if (existsSync(target)) {
     "# Isi dengan URL PostgreSQL serverless development milikmu.",
     "DATABASE_URL=",
     `VOTING_TOKEN_SECRET=${randomBytes(32).toString("base64url")}`,
-    `ADMIN_BOOTSTRAP_TOKEN=${randomBytes(24).toString("base64url")}`,
+    "# Isi password awal admin (minimum 12 karakter); jangan commit file ini.",
+    "ADMIN_INITIAL_USERNAME=admin@pppk-pgsd.vercel.app",
+    "ADMIN_INITIAL_PASSWORD=",
     ""
   ].join("\n");
   writeFileSync(target, content, { encoding: "utf8", mode: 0o600 });
-  console.log(".env.local dibuat. Isi DATABASE_URL terlebih dahulu, lalu jalankan npm run dev dan buka /panitia/login.");
+  console.log(".env.local dibuat. Isi DATABASE_URL dan ADMIN_INITIAL_PASSWORD, lalu jalankan npm run dev dan buka /panitia/login.");
 }

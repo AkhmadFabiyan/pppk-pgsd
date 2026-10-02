@@ -279,7 +279,7 @@ export async function createAdmin(username: string, passwordHash: string) {
   const id = randomUUID();
   await sql.transaction([
     sql`INSERT INTO admin_users (id, username, password_hash, created_at) VALUES (${id}, ${username}, ${passwordHash}, ${now()})`,
-    sql`INSERT INTO audit_logs (id, admin_id, action, detail, created_at) VALUES (${randomUUID()}, NULL, 'admin.bootstrap', 'Akun admin awal dibuat.', ${now()})`
+    sql`INSERT INTO audit_logs (id, admin_id, action, detail, created_at) VALUES (${randomUUID()}, NULL, 'admin.initialized', 'Akun admin awal dibuat.', ${now()})`
   ]);
   return id;
 }

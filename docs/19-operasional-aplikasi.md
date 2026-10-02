@@ -19,17 +19,18 @@ Dokumen ini menjelaskan perilaku aplikasi **saat ini**, bukan rancangan target. 
 | Database | PostgreSQL serverless dengan URL `DATABASE_URL` (atau `POSTGRES_URL`) yang dapat dijangkau Vercel. Gunakan database berbeda untuk development/preview dan production. |
 | HTTPS | Wajib untuk deployment publik agar cookie admin dikirim sebagai `Secure`. |
 | `VOTING_TOKEN_SECRET` | Minimal 32 karakter; dipakai untuk membungkus hash token voting dan merupakan syarat membuka event. |
-| `ADMIN_BOOTSTRAP_TOKEN` | Minimal 16 karakter; hanya digunakan untuk membuat akun admin pertama. |
+| `ADMIN_INITIAL_USERNAME` | Opsional; default-nya `admin@pppk-pgsd.vercel.app`. Hanya dipakai saat membuat akun admin pertama. |
+| `ADMIN_INITIAL_PASSWORD` | Minimal 12 karakter; hanya dibaca server untuk membuat akun admin pertama, lalu disimpan sebagai hash `scrypt` di database. |
 
-Jangan commit `.env.local`, URL database, token bootstrap, kata sandi, atau hasil ekspor. File ini hanya menyimpan instruksi tanpa rahasia.
+Jangan commit `.env.local`, URL database, kata sandi, atau hasil ekspor. File ini hanya menyimpan instruksi tanpa rahasia.
 
 ## Setup pertama kali (local)
 
 1. Jalankan `npm install`.
-2. Jalankan `npm run setup:local` sekali. Script membuat `.env.local` dengan dua secret acak, placeholder `DATABASE_URL`, dan **menolak menimpa** file yang sudah ada.
-3. Isi `DATABASE_URL` dengan database development PostgreSQL serverless. Jangan gunakan database production untuk development.
+2. Jalankan `npm run setup:local` sekali. Script membuat `.env.local` dengan secret voting acak, placeholder `DATABASE_URL`, konfigurasi username admin awal, dan **menolak menimpa** file yang sudah ada.
+3. Isi `DATABASE_URL` dengan database development PostgreSQL serverless dan isi `ADMIN_INITIAL_PASSWORD` dengan secret baru minimal 12 karakter. Jangan gunakan database atau password production untuk development.
 4. Jalankan `npm run dev`.
-5. Buka `/panitia/login`, lalu buat username admin, kata sandi minimal 12 karakter, dan masukkan nilai `ADMIN_BOOTSTRAP_TOKEN` dari `.env.local`.
+5. Buka `/panitia/login`, gunakan username admin awal yang tampil dan password dari `ADMIN_INITIAL_PASSWORD`. Login pertama membuat akun admin dan sesi secara otomatis.
 6. Masuk ke `/panitia`, sinkronkan materi calon bila katalog diubah, lalu cek status publikasi setiap calon.
 7. Unggah spreadsheet XLSX peserta. Parser mencari header `NIM`, `NAMA`, `KELAS`, dan opsional `TTD` pada setiap sheet; NIM dinormalisasi sebagai digit dan duplikasi/format salah menggagalkan seluruh import.
 8. Cek jumlah peserta dan daftar internal. Keputusan siapa yang eligible harus disahkan panitia sebelum event dibuka; implementasi saat ini menganggap seluruh baris valid dari spreadsheet sebagai eligible.
@@ -63,7 +64,9 @@ Beranda memakai satu scene hutan CSS/Motion yang ringan: progress scroll, horizo
 | Voting on/off | `open` hanya setelah seluruh prasyarat; `closed` langsung menolak verifikasi dan submit baru. |
 | Hasil | Rekap publik hanya agregat dan mengikuti visibility yang dipilih admin. Route `/live` memakai endpoint agregat yang sama dan tidak menampilkan apa pun saat visibility tertutup. |
 | Reset pra-voting | Memerlukan alasan minimal delapan karakter dan kata konfirmasi `RESET`; ditolak bila `open` atau sudah ada suara sah. |
-| Audit | Bootstrap admin, status event, visibility, import, kandidat, sinkron katalog, dan reset dicatat dengan waktu serta ringkasan aman. |
+| Audit | Inisialisasi admin, status event, visibility, import, kandidat, sinkron katalog, dan reset dicatat dengan waktu serta ringkasan aman. |
+
+Setelah akun pertama ada di database, aplikasi selalu memverifikasi password hash pada database. Mengubah `ADMIN_INITIAL_PASSWORD` tidak mengganti password akun yang telah ada dan bukan mekanisme pemulihan akses.
 
 ## Perubahan materi calon
 
