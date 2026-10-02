@@ -16,8 +16,8 @@ API di bawah adalah kontrak konseptual. Implementasi dapat memakai Route Handler
 | --- | --- | --- | --- |
 | `GET /api/v1/elections/{slug}` | slug | judul, status, jadwal, visibility, calon publik | Cache pendek saat tidak open. |
 | `GET /api/v1/elections/{slug}/results` | slug | agregat sesuai visibility | Tidak ada PII. |
-| `POST /api/v1/elections/{slug}/verify-nim` | NIM, anti-bot token bila dipicu | `sessionToken`, expiry atau error generik | Rate limit ketat. |
-| `POST /api/v1/elections/{slug}/votes` | session token, candidate ID, idempotency key | receipt atau status submit sama | Transactional. |
+| `POST /api/vote/verify` | NIM, token instalasi acak browser | `sessionToken`, expiry atau error generik | Menerbitkan cookie device `HttpOnly`; rate limit NIM/IP/browser; tidak mengirim OTP. |
+| `POST /api/vote/submit` | session token, candidate ID, idempotency key | receipt atau status submit sama | Cookie same-origin harus cocok dengan session; dua claim browser disimpan atomik pada vote. |
 | `GET /api/v1/elections/{slug}/receipts/{code}` | receipt | status receipt tanpa calon/NIM | Opsional; rate limit. |
 
 ### Contoh submit vote
@@ -42,6 +42,8 @@ Respons sukses:
 ```
 
 Kode aplikasi yang perlu ditangani UI: `election_not_open`, `invalid_or_expired_session`, `candidate_unavailable`, `already_voted`, `rate_limited`, `verification_required`, dan `temporarily_unavailable`. Untuk `invalid_nim` dan `already_voted`, tampilan publik dapat memakai pesan sama bila panitia ingin mengurangi enumerasi NIM.
+
+Pada mode device-integrity, `device_already_used` dicatat sebagai kode internal tetapi UI memakai pesan netral dan kanal bantuan; ia tidak boleh menyebut NIM atau pemilih lain. Verify menerima token instalasi hanya untuk membentuk HMAC server-side; submit tidak mengirim kembali token tersebut karena cookie `HttpOnly` yang sama wajib ikut dalam request same-origin. Kontrak lengkap cookie, mode tanpa OTP, serta batas browser ada pada `20-integritas-perangkat-dan-anti-duplikasi.md`. Source perlu UAT database sebelum event dibuka.
 
 ## Endpoint admin
 
@@ -85,8 +87,8 @@ Channel publik: `election:{slug}:public`. Pesan memuat agregat hasil live: total
 | Endpoint | Kunci limit | Respons |
 | --- | --- | --- |
 | View publik | IP/session | Longgar; cache CDN bila aman. |
-| Verify NIM | IP hash + NIM hash + session | Kecil; setelah threshold gunakan CAPTCHA/adaptive delay. |
-| Submit vote | session + voter + IP hash | Sangat kecil; idempotency retry diizinkan. |
+| Verify NIM | IP hash + NIM hash + device/session bila high-security mode | Kecil; setelah threshold gunakan CAPTCHA/adaptive delay, bukan blokir Wi-Fi secara massal. |
+| Submit vote | session + voter + device binding + IP hash | Sangat kecil; idempotency retry diizinkan. |
 | Login panitia | identifier + IP | Ketat, lockout sementara, alert. |
 | Ekspor | admin user | Kecil; job asynchronous untuk file besar. |
 

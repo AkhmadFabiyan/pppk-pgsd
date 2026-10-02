@@ -8,7 +8,7 @@ Dokumen ini menjelaskan perilaku aplikasi **saat ini**, bukan rancangan target. 
 - Satu event `pgsd-2026` tersedia dengan state `scheduled`, `open`, dan `closed`; keadaan awal selalu `scheduled` dan hasil tersembunyi.
 - Sembilan calon diambil dari katalog `src/lib/site.ts` dan poster pada `public/paslon/`. Poster ditampilkan pada rasio asli tanpa crop.
 - Master peserta masuk melalui unggahan XLSX oleh admin; spreadsheet sumber tidak pernah dibaca langsung oleh visitor dan tidak diubah oleh aplikasi.
-- **Reset suara voting** tersedia bagi admin yang telah login tanpa konfigurasi environment tambahan. Ia menghapus seluruh suara, receipt, sesi voting, serta rate limit voting; peserta tidak dihapus. Event kembali menjadi `scheduled` dan hasil disembunyikan.
+- **Reset suara voting** tersedia bagi admin yang telah login tanpa konfigurasi environment tambahan. Ia menghapus seluruh suara, receipt, dua claim browser pada vote, sesi voting, serta rate limit voting; peserta tidak dihapus. Event kembali menjadi `scheduled` dan hasil disembunyikan.
 - **Reset peserta** hanya aktif setelah jumlah suara `0` dan status event `scheduled`. Ia menghapus daftar NIM serta sesi verifikasi yang tersisa. Calon, materi calon, akun admin, dan audit dipertahankan. Kedua langkah menggunakan alasan serta konfirmasi teks dan dicatat pada audit.
 - Sistem juga belum menyediakan MFA, SSO/OTP kampus, CAPTCHA, maupun ekspor arsip. Kebutuhan tersebut memerlukan entry eksekusi baru sebelum ditambahkan.
 
@@ -41,14 +41,14 @@ Jangan commit `.env.local`, URL database, kata sandi, atau hasil ekspor. File in
 ## Alur visitor yang berjalan
 
 1. Visitor masuk ke `/vote` ketika event `open`.
-2. Visitor memasukkan NIM. API menerapkan batas lima percobaan per alamat jaringan dalam sepuluh menit dan selalu memberi pesan gagal yang generik.
-3. Jika NIM eligible dan belum memiliki vote, server mengeluarkan token sesi opaque yang berlaku sepuluh menit.
+2. Visitor memasukkan NIM. Browser membuat token instalasi acak yang hanya di-HMAC server-side; server juga menerbitkan cookie perangkat `HttpOnly`. API menerapkan limit terpisah per NIM, IP hash, dan browser serta selalu memberi pesan gagal yang generik. IP tidak menjadi pengunci unik.
+3. Jika NIM eligible, browser belum memiliki claim pada vote lain, dan event terbuka, server mengeluarkan token sesi opaque yang berlaku sepuluh menit.
 4. Visitor memilih satu calon, memeriksa ringkasan, kemudian mengirim.
-5. Server memvalidasi ulang state event, token, calon published, dan menjalankan transaksi PostgreSQL serverless dengan constraint `UNIQUE(election_id, voter_id)`.
-6. Hanya commit pertama per NIM yang dapat diterima. Idempotency key mengembalikan receipt sama untuk retry request yang identik; browser tidak menyimpan NIM, token, ataupun pilihan sebagai sumber data permanen.
+5. Server memvalidasi ulang state event, token, cookie browser yang harus cocok, calon published, dan menjalankan transaksi PostgreSQL serverless dengan constraint `UNIQUE(election_id, voter_id)` serta dua unique index claim browser.
+6. Hanya commit pertama per NIM atau browser normal yang dapat diterima. Idempotency key mengembalikan receipt sama untuk retry request yang identik; browser tidak menyimpan NIM, token sesi, ataupun pilihan sebagai sumber data permanen.
 7. Receipt menampilkan hanya kode acak dan waktu penerimaan, tanpa NIM atau calon terpilih.
 
-IP digunakan hanya untuk rate limit dalam bentuk hash. Sistem tidak mengklaim memakai fingerprint biometrik/perangkat sebagai identitas pemilih.
+IP digunakan hanya untuk rate limit dalam bentuk HMAC. Sistem tidak mengumpulkan fingerprint biometrik/perangkat. Dua token browser bukan bukti perangkat fisik maupun kepemilikan NIM: orang yang sengaja menghapus cookie dan local storage, memakai mode privat, atau berganti browser dapat menghindari pengikat browser. Detail batas, notice, dan gate UAT ada pada `20-integritas-perangkat-dan-anti-duplikasi.md`.
 
 ## Pengalaman visual publik
 
@@ -64,7 +64,7 @@ Beranda memakai satu scene hutan CSS/Motion yang ringan: progress scroll, horizo
 | Kandidat | Sinkron katalog dan ubah published hanya sebelum event `open`; pembukaan event membutuhkan minimal dua calon published. |
 | Voting on/off | `open` hanya setelah seluruh prasyarat; `closed` langsung menolak verifikasi dan submit baru. |
 | Hasil | Rekap publik hanya agregat dan mengikuti visibility yang dipilih admin. Route `/live` memakai endpoint agregat yang sama dan tidak menampilkan apa pun saat visibility tertutup. |
-| Reset suara voting | Admin login, alasan minimal delapan karakter, dan `RESET SUARA VOTING`. Menghapus suara/receipt/sesi/rate limit, menyembunyikan hasil, dan mengembalikan event ke `scheduled`. |
+| Reset suara voting | Admin login, alasan minimal delapan karakter, dan `RESET SUARA VOTING`. Menghapus suara/receipt/claim browser/sesi/rate limit, menyembunyikan hasil, dan mengembalikan event ke `scheduled`. |
 | Reset peserta | Hanya setelah event `scheduled` dan suara `0`. Memerlukan alasan minimal delapan karakter dan `RESET PESERTA`; server menolak jika suara masih ada. |
 | Audit | Inisialisasi admin, status event, visibility, import, kandidat, sinkron katalog, dan reset dicatat dengan waktu serta ringkasan aman. |
 
@@ -82,7 +82,7 @@ Setelah akun pertama ada di database, aplikasi selalu memverifikasi password has
 - `npm run typecheck`
 - `npm run lint`
 - `npm run build`
-- UAT akun admin, import salinan aman, satu verifikasi NIM test, satu vote test, receipt, reset suara, reset peserta setelah suara nol, serta audit kedua tindakan.
+- UAT akun admin, import salinan aman, satu verifikasi NIM test, duplicate NIM, duplicate browser cookie/local storage, dua perangkat pada Wi-Fi sama, satu vote test, receipt, reset suara, reset peserta setelah suara nol, serta audit kedua tindakan.
 - Konfirmasi domain HTTPS, backup database persistent, owner panitia, kebijakan eligible, jadwal, dan kanal dukungan.
 
 Lihat juga `02-alur-voting.md` untuk kontrak bisnis, `03-data-dan-keamanan.md` untuk batas privasi, dan `13-reset-dan-pengulangan-event.md` untuk rancangan prosedur lanjutan yang belum termasuk build ini.

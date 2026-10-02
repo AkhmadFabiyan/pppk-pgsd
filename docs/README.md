@@ -26,9 +26,10 @@ Dokumentasi ini adalah sumber acuan sebelum implementasi website voting. Ruang l
 19. [17-decision-register.md](17-decision-register.md)
 20. [18-rancangan-legalitas-dan-privasi.md](18-rancangan-legalitas-dan-privasi.md)
 21. [19-operasional-aplikasi.md](19-operasional-aplikasi.md) — cara setup dan batas fitur yang benar-benar telah dibangun.
-22. [engineering/README.md](engineering/README.md), [database/README.md](database/README.md), [ui/README.md](ui/README.md), [workflow/README.md](workflow/README.md), dan [phases/README.md](phases/README.md) — indeks domain granular.
-23. [data/daftar-nim-master.md](data/daftar-nim-master.md) - internal admin, jangan dipublikasikan
-24. [data/mapping-calon-nim-internal.md](data/mapping-calon-nim-internal.md) - internal admin/restricted, jangan dipublikasikan
+22. [20-integritas-perangkat-dan-anti-duplikasi.md](20-integritas-perangkat-dan-anti-duplikasi.md) — implementasi in-review dua claim browser tanpa OTP, Wi-Fi bersama, reset, dan privasi.
+23. [engineering/README.md](engineering/README.md), [database/README.md](database/README.md), [ui/README.md](ui/README.md), [workflow/README.md](workflow/README.md), dan [phases/README.md](phases/README.md) — indeks domain granular.
+24. [data/daftar-nim-master.md](data/daftar-nim-master.md) - internal admin, jangan dipublikasikan
+25. [data/mapping-calon-nim-internal.md](data/mapping-calon-nim-internal.md) - internal admin/restricted, jangan dipublikasikan
 
 ## Status keputusan
 
@@ -38,7 +39,7 @@ Dokumentasi ini adalah sumber acuan sebelum implementasi website voting. Ruang l
 | Daftar pemilih final | Menunggu panitia | Tentukan semua master atau hanya 425 peserta bertanda hadir. |
 | Calon individu | Siap review panitia | Sembilan poster calon dan visi-misi tersedia pada folder sumber `paslon/`; mapping NIM sudah dibuat secara internal dan masih memerlukan review dua admin serta pengesahan posisi. |
 | Jadwal voting | Menunggu panitia | Tanggal agenda proposal telah berlalu. |
-| Faktor identitas kedua | Menunggu panitia | SSO kampus atau OTP direkomendasikan bila NIM saja dinilai tidak cukup. |
+| Device-binding tanpa OTP | Source in review | User menyetujui rancangan pada 2026-10-03; dua claim browser ter-HMAC, IP tetap shared-network friendly, dengan batas impersonasi yang jelas. Migration staging, UAT, dan notice privasi masih wajib. |
 | Stack | Siap deploy | Next.js + TypeScript di Vercel dan PostgreSQL serverless yang dikonfigurasi melalui environment variable. |
 | Source aplikasi | Siap konfigurasi | Next.js, PostgreSQL serverless, import peserta, admin, voting, receipt, hasil agregat, serta reset suara → reset peserta tersedia. Setup dan batasnya ada pada `19-operasional-aplikasi.md`. |
 | Ekspansi dokumentasi | Selesai | Struktur voting dipecah menjadi katalog, fase, engineering, database, UI, workflow, dan aset setara kedalaman `v12`; dokumen operasional aplikasi melengkapi status implementasi. |

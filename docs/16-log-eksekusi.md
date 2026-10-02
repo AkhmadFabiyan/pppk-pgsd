@@ -38,6 +38,7 @@ File ini adalah register kerja aktif. Setiap proses material wajib memiliki entr
 | EXE-20261002-21 | T9 | Implementasi ulang workspace admin responsif | In review | Pelaksana teknis | User | 2026-10-02 | User meninjau panel autentik pada Preview/local; feedback UI atau UAT menentukan perubahan berikutnya. |
 | EXE-20261002-22 | T3/T5 | Selaraskan visi–misi katalog dengan poster calon | In review | Pelaksana teknis | User | 2026-10-02 | Deploy perubahan, sinkronkan record lewat admin sebelum event dibuka, lalu panitia meninjau teks publik. |
 | EXE-20261002-23 | T9 | Sederhanakan galeri kandidat menjadi poster-only | In review | Pelaksana teknis | User | 2026-10-02 | Review galeri desktop/mobile setelah build lulus; keputusan user menentukan release. |
+| EXE-20261003-24 | T3/T7 | Implementasi integritas perangkat tanpa memblokir Wi-Fi bersama | In review | Pelaksana teknis | User + reviewer teknis | 2026-10-03 | Source, migration kompatibel, API, reset, dan quality check selesai; UAT database non-production masih wajib. |
 
 ## Detail entry aktif
 
@@ -620,6 +621,47 @@ File ini adalah register kerja aktif. Setiap proses material wajib memiliki entr
 | Owner | Pelaksana teknis. |
 | Reviewer/approver | User. |
 | Waktu | Mulai 2026-10-02 WIB. |
+
+### EXE-20261003-24 — Implementasi integritas perangkat tanpa memblokir Wi-Fi bersama
+
+| Field | Catatan |
+| --- | --- |
+| Status | `In review` — source dan quality check selesai; migration staging serta UAT database non-production belum dilakukan. |
+| Tahap runbook | T3 / keamanan-data dan T7 / integritas alur voting. |
+| Tujuan | Menghasilkan kontrol berlapis agar satu NIM hanya memberi satu suara, satu perangkat tidak dapat digunakan untuk banyak pemilih pada event yang sama, Wi-Fi bersama tetap dapat dipakai dari perangkat berbeda, dan reset suara mengizinkan event baru secara bersih. |
+| Scope | Dua claim browser tanpa OTP, fungsi IP, model data/API, reset, privasi, monitoring, dan acceptance test. |
+| Out of scope | Library fingerprint, biometrik/lokasi presisi, IP mentah, OTP/SSO, CAPTCHA, test dengan data production, dan klaim identitas perangkat fisik. |
+| Dokumen wajib dibaca | `02-alur-voting.md`, `03-data-dan-keamanan.md`, `07-kontrak-data.md`, `08-kontrak-api-dan-realtime.md`, `10-quality-gate-dan-pengujian.md`, `13-reset-dan-pengulangan-event.md`, `17-decision-register.md`, `18-rancangan-legalitas-dan-privasi.md`, dan `16-log-eksekusi.md`. |
+| Dokumen yang terdampak | `20-integritas-perangkat-dan-anti-duplikasi.md` sebagai pemilik detail, serta `02`, `03`, `07`, `08`, `10`, `13`, `17`, `18`, `19`, `README`, dan `CATALOG` sebagai kontrak/routing terkait. |
+| Entry condition | User meminta satu perangkat satu penggunaan vote sambil mengizinkan perangkat berbeda dalam Wi-Fi yang sama. |
+| Risiko dan mitigasi | Browser token dapat dihapus, berubah, atau dibypass; constraint vote menjadi pengaman utama, dua token browser menghambat penghapusan tunggal, IP hanya rate-limit, dan UI tidak mengklaim identitas fisik. |
+| Aksi yang dilakukan | Menambahkan HMAC domain-separated, cookie device `HttpOnly`, token instalasi browser, kolom sesi/vote dan dua unique index claim browser, binding cookie saat submit, limit NIM/IP/browser, reset `vote.*`, serta notice UI. Claim disimpan pada vote agar insert atomik tidak dapat menyisakan binding yatim. |
+| Bukti | `npm run typecheck`, `npm run lint`, `npm run build`, dan `git diff --check` lulus pada 2026-10-03 WIB. Build menampilkan Route Handler `/api/vote/verify` dan `/api/vote/submit`. Database tidak dihubungkan pada lingkungan kerja ini sehingga test integrasi/konkurensi belum dilakukan. |
+| Exit condition | Jalankan migration dan seluruh skenario `DEV-*` pada staging non-production, load test Wi-Fi bersama, backup/restore, review notice privasi, lalu UAT panitia sebelum event dapat dibuka. |
+| Keputusan | Go untuk review teknis; no-go membuka event hingga gate staging/UAT terpenuhi. |
+| Owner | Pelaksana teknis. |
+| Reviewer/approver | User + reviewer teknis; UAT privasi dan batas impersonasi tanpa OTP diperlukan sebelum event dibuka. |
+| Waktu | Mulai 2026-10-03 WIB. |
+
+#### Amendment A1
+
+| Field | Isi |
+| --- | --- |
+| Tanggal/WIB | 2026-10-03 WIB |
+| Alasan perubahan | User menetapkan bahwa alur vote tidak boleh mengirim OTP. |
+| Dampak | Rancangan berganti menjadi NIM + device binding + risk control tanpa OTP/SSO; dokumen kontrak, acceptance, register keputusan, dan index diperbarui. Risiko impersonasi NIM tidak dapat dianggap terselesaikan oleh fingerprint/IP. |
+| Persetujuan | Arahan user tercatat; persetujuan formal `DEC-04` tetap dibutuhkan dari panitia sesuai matriks otoritas. |
+| Keputusan | Lanjut review policy tanpa OTP; tidak ada coding atau migration sebelum sign-off. |
+
+#### Amendment A2
+
+| Field | Isi |
+| --- | --- |
+| Tanggal/WIB | 2026-10-03 WIB |
+| Alasan perubahan | User memberi persetujuan eksplisit untuk memproses implementasi mode tanpa OTP. |
+| Dampak | `DEC-04` berstatus disetujui user; scope bertambah ke migration database, Route Handler, client device token, reset binding, dan test tanpa data production. |
+| Persetujuan | User, 2026-10-03. |
+| Keputusan | Lanjut implementasi; event tidak boleh dibuka sebelum quality gate dan UAT terpenuhi. |
 
 ### Template untuk entry baru
 

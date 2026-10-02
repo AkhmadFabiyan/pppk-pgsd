@@ -48,7 +48,14 @@ export type ImportedVoter = {
 
 export type VoteSubmitResult =
   | { status: "accepted"; receiptCode: string; castAt: string }
-  | { status: "already_voted" | "invalid_session" | "candidate_unavailable" | "election_not_open" };
+  | { status: "already_voted" | "device_already_used" | "invalid_session" | "candidate_unavailable" | "election_not_open" };
+
+export type VotingSecurityContext = {
+  deviceBindingHash: string;
+  deviceInstallationHash: string;
+  ipHash: string;
+  hashVersion: number;
+};
 
 type ElectionRow = { id: string; title: string; status: ElectionStatus; result_visibility: ResultVisibility; updated_at: string };
 type CandidateRow = { id: string; ballot_number: number; slug: string; display_name: string; class_name: string; poster: string; vision: string; missions_json: string; is_published: boolean };
@@ -155,6 +162,13 @@ async function migrate() {
       UNIQUE (election_id, voter_id),
       UNIQUE (election_id, voter_id, idempotency_hash)
     )`,
+    sql`ALTER TABLE voting_sessions ADD COLUMN IF NOT EXISTS device_binding_hash TEXT`,
+    sql`ALTER TABLE voting_sessions ADD COLUMN IF NOT EXISTS device_installation_hash TEXT`,
+    sql`ALTER TABLE voting_sessions ADD COLUMN IF NOT EXISTS ip_hash TEXT`,
+    sql`ALTER TABLE voting_sessions ADD COLUMN IF NOT EXISTS hash_version INTEGER`,
+    sql`ALTER TABLE votes ADD COLUMN IF NOT EXISTS device_binding_hash TEXT`,
+    sql`ALTER TABLE votes ADD COLUMN IF NOT EXISTS device_installation_hash TEXT`,
+    sql`ALTER TABLE votes ADD COLUMN IF NOT EXISTS hash_version INTEGER`,
     sql`CREATE TABLE IF NOT EXISTS rate_limits (
       scope TEXT NOT NULL,
       key_hash TEXT NOT NULL,
@@ -171,6 +185,10 @@ async function migrate() {
     )`,
     sql`CREATE INDEX IF NOT EXISTS voters_event_nim_idx ON voters (election_id, nim)`,
     sql`CREATE INDEX IF NOT EXISTS votes_event_candidate_idx ON votes (election_id, candidate_id)`,
+    sql`CREATE UNIQUE INDEX IF NOT EXISTS votes_event_device_cookie_unique_idx
+      ON votes (election_id, device_binding_hash) WHERE device_binding_hash IS NOT NULL`,
+    sql`CREATE UNIQUE INDEX IF NOT EXISTS votes_event_device_installation_unique_idx
+      ON votes (election_id, device_installation_hash) WHERE device_installation_hash IS NOT NULL`,
     sql`CREATE INDEX IF NOT EXISTS voting_sessions_token_idx ON voting_sessions (token_hash)`,
     sql`INSERT INTO elections (id, title, status, result_visibility, updated_at)
       VALUES (${ELECTION_ID}, 'Pemilihan Ketua Angkatan PGSD 2026', 'scheduled', 'hidden', ${now()})
@@ -431,7 +449,7 @@ export async function resetVotes(adminId: string, reason: string) {
     sql`UPDATE elections SET status = 'scheduled', result_visibility = 'hidden', updated_at = ${now()} WHERE id = ${ELECTION_ID}`,
     sql`DELETE FROM voting_sessions WHERE election_id = ${ELECTION_ID}`,
     sql`DELETE FROM votes WHERE election_id = ${ELECTION_ID}`,
-    sql`DELETE FROM rate_limits WHERE scope IN ('vote.verify', 'vote.submit')`,
+    sql`DELETE FROM rate_limits WHERE scope LIKE 'vote.%'`,
     sql`INSERT INTO audit_logs (id, admin_id, action, detail, created_at) VALUES (${randomUUID()}, ${adminId}, 'election.votes_reset', ${`Reset suara voting: ${reason.slice(0, 160)}`}, ${now()})`
   ]);
 }
@@ -463,7 +481,7 @@ export async function consumeRateLimit(scope: string, keyHash: string, limit: nu
   return rows.length === 1;
 }
 
-export async function issueVotingSession(nim: string, tokenHash: string, expiresAt: string) {
+export async function issueVotingSession(nim: string, tokenHash: string, expiresAt: string, security: VotingSecurityContext) {
   await ensureSchema();
   const rows = await query<{ id: string }>`WITH active_event AS (
       SELECT id FROM elections WHERE id = ${ELECTION_ID} AND status = 'open' FOR UPDATE
@@ -471,31 +489,35 @@ export async function issueVotingSession(nim: string, tokenHash: string, expires
       SELECT voters.id FROM voters JOIN active_event ON active_event.id = voters.election_id
       WHERE voters.election_id = ${ELECTION_ID} AND voters.nim = ${nim} AND voters.is_eligible = TRUE
     )
-    INSERT INTO voting_sessions (id, election_id, voter_id, token_hash, status, expires_at, created_at)
-    SELECT ${randomUUID()}, ${ELECTION_ID}, eligible_voter.id, ${tokenHash}, 'issued', ${expiresAt}, ${now()}
+    INSERT INTO voting_sessions (id, election_id, voter_id, token_hash, status, expires_at, device_binding_hash, device_installation_hash, ip_hash, hash_version, created_at)
+    SELECT ${randomUUID()}, ${ELECTION_ID}, eligible_voter.id, ${tokenHash}, 'issued', ${expiresAt}, ${security.deviceBindingHash}, ${security.deviceInstallationHash}, ${security.ipHash}, ${security.hashVersion}, ${now()}
     FROM eligible_voter
     WHERE NOT EXISTS (SELECT 1 FROM votes WHERE votes.election_id = ${ELECTION_ID} AND votes.voter_id = eligible_voter.id)
+      AND NOT EXISTS (SELECT 1 FROM votes WHERE votes.election_id = ${ELECTION_ID} AND votes.device_binding_hash = ${security.deviceBindingHash})
+      AND NOT EXISTS (SELECT 1 FROM votes WHERE votes.election_id = ${ELECTION_ID} AND votes.device_installation_hash = ${security.deviceInstallationHash})
     ON CONFLICT (token_hash) DO NOTHING
     RETURNING id`;
   return rows.length === 1;
 }
 
-export async function submitVote(tokenHash: string, candidateId: string, idempotencyHash: string, receiptCode: string): Promise<VoteSubmitResult> {
+export async function submitVote(tokenHash: string, candidateId: string, idempotencyHash: string, receiptCode: string, deviceBindingHash: string): Promise<VoteSubmitResult> {
   await ensureSchema();
   const castAt = now();
   const inserted = await query<{ receipt_code: string; cast_at: string }>`WITH active_event AS (
       SELECT id FROM elections WHERE id = ${ELECTION_ID} AND status = 'open' FOR UPDATE
     ), active_session AS (
-      SELECT voting_sessions.voter_id FROM voting_sessions JOIN active_event ON active_event.id = voting_sessions.election_id
-      WHERE voting_sessions.token_hash = ${tokenHash} AND voting_sessions.status = 'issued' AND voting_sessions.expires_at > ${castAt}
+      SELECT voting_sessions.voter_id, voting_sessions.device_installation_hash, voting_sessions.hash_version FROM voting_sessions JOIN active_event ON active_event.id = voting_sessions.election_id
+      WHERE voting_sessions.token_hash = ${tokenHash} AND voting_sessions.device_binding_hash = ${deviceBindingHash}
+        AND voting_sessions.status = 'issued' AND voting_sessions.expires_at > ${castAt}
     ), valid_candidate AS (
       SELECT id FROM candidates WHERE id = ${candidateId} AND election_id = ${ELECTION_ID} AND is_published = TRUE
     ), inserted AS (
-      INSERT INTO votes (id, election_id, voter_id, candidate_id, idempotency_hash, receipt_code, cast_at)
-      SELECT ${randomUUID()}, ${ELECTION_ID}, active_session.voter_id, valid_candidate.id, ${idempotencyHash}, ${receiptCode}, ${castAt}
+      INSERT INTO votes (id, election_id, voter_id, candidate_id, idempotency_hash, receipt_code, cast_at, device_binding_hash, device_installation_hash, hash_version)
+      SELECT ${randomUUID()}, ${ELECTION_ID}, active_session.voter_id, valid_candidate.id, ${idempotencyHash}, ${receiptCode}, ${castAt}, ${deviceBindingHash}, active_session.device_installation_hash, active_session.hash_version
       FROM active_session CROSS JOIN valid_candidate
-      ON CONFLICT (election_id, voter_id) DO NOTHING
-      RETURNING receipt_code, cast_at
+      WHERE NOT EXISTS (SELECT 1 FROM votes WHERE votes.election_id = ${ELECTION_ID} AND votes.voter_id = active_session.voter_id)
+      ON CONFLICT DO NOTHING
+      RETURNING id, receipt_code, cast_at
     ), session_updated AS (
       UPDATE voting_sessions SET status = 'submitted' WHERE token_hash = ${tokenHash} AND EXISTS (SELECT 1 FROM inserted)
     ), event_updated AS (
@@ -505,10 +527,18 @@ export async function submitVote(tokenHash: string, candidateId: string, idempot
 
   const previous = await query<{ receipt_code: string; cast_at: string; idempotency_hash: string }>`SELECT votes.receipt_code, votes.cast_at, votes.idempotency_hash FROM votes
     JOIN voting_sessions ON voting_sessions.voter_id = votes.voter_id AND voting_sessions.election_id = votes.election_id
-    WHERE voting_sessions.token_hash = ${tokenHash} AND votes.election_id = ${ELECTION_ID}`;
+    WHERE voting_sessions.token_hash = ${tokenHash} AND voting_sessions.device_binding_hash = ${deviceBindingHash}
+      AND votes.election_id = ${ELECTION_ID}`;
   if (previous[0]) return previous[0].idempotency_hash === idempotencyHash
     ? { status: "accepted", receiptCode: previous[0].receipt_code, castAt: previous[0].cast_at }
     : { status: "already_voted" };
+
+  const deviceBinding = await query<{ voter_id: string }>`SELECT votes.voter_id FROM votes
+    LEFT JOIN voting_sessions AS current_session ON current_session.token_hash = ${tokenHash}
+    WHERE votes.election_id = ${ELECTION_ID}
+      AND (votes.device_binding_hash = ${deviceBindingHash}
+        OR votes.device_installation_hash = current_session.device_installation_hash)`;
+  if (deviceBinding[0]) return { status: "device_already_used" };
 
   const event = await eventRow();
   if (event.status !== "open") return { status: "election_not_open" };

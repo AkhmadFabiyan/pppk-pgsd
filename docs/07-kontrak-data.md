@@ -76,6 +76,9 @@ Index: `(election_id, nim)` unique; `(election_id, is_eligible)` untuk rekap. NI
 | `cast_at` | server timestamp, immutable | Terbatas |
 | `receipt_code` | token acak unik, tidak mengandung NIM/calon | Pemilih |
 | `idempotency_key_hash` | hash key submit, unique terbatas | Internal |
+| `device_binding_hash` | HMAC cookie server; unique per event bila tidak null | Sangat terbatas |
+| `device_installation_hash` | HMAC token instalasi local storage; unique per event bila tidak null | Sangat terbatas |
+| `hash_version` | versi format claim browser | Internal |
 | `voided_at`, `void_reason`, `voided_by` | nullable; hanya prosedur dua pihak | Sangat terbatas |
 
 Constraint wajib: unique `(election_id, voter_id)` untuk vote yang sah; integrity check calon/voter milik event yang sama; FK restrict delete. Query publik selalu mengecualikan vote voided.
@@ -88,9 +91,14 @@ Constraint wajib: unique `(election_id, voter_id)` untuk vote yang sah; integrit
 | `election_id`, `voter_id` | FK wajib |
 | `expires_at` | pendek, misalnya 10 menit; angka final dikonfirmasi saat implementasi |
 | `status` | enum |
-| `ip_hash`, `device_signal_hash` | nullable, hash bersalt versi yang dilacak |
+| `ip_hash` | nullable, HMAC versioned dengan domain terpisah; tidak menyimpan nilai mentah |
+| `device_binding_hash`, `device_installation_hash`, `hash_version` | wajib pada mode ini; hash cookie harus cocok antara verify dan submit |
 | `risk_score`, `risk_reason_codes` | untuk review, tidak otomatis menolak kecuali kebijakan eksplisit |
 | timestamps | wajib |
+
+### Claim browser pada `votes`
+
+Claim cookie dan instalasi disimpan pada vote yang sah, sehingga satu insert atomik menegakkan tiga pengunci: voter, cookie browser, dan instalasi browser. Constraint/index wajib: unique `(election_id, voter_id)` serta unique partial `(election_id, device_binding_hash)` dan `(election_id, device_installation_hash)` ketika nilai tidak null. Detail policy dan batas browser ada pada `20-integritas-perangkat-dan-anti-duplikasi.md`.
 
 ### `imports`, `audit_logs`, dan `admin_users`
 
@@ -138,6 +146,8 @@ erDiagram
 | DAT-06 | Calon/event/voter yang memiliki vote tidak dapat dihapus secara fisik. |
 | DAT-07 | Semua timestamp write menggunakan server clock UTC; UI membuat representasi WIB. |
 | DAT-08 | Reset suara hanya menghapus `votes`, receipt yang melekat, sesi voting, dan rate limit event; peserta baru dapat dihapus setelah hitung vote `0`. Calon, akun admin, dan audit tidak ikut dihapus. |
+| DAT-09 | Pada mode ini, tiap HMAC cookie dan HMAC instalasi browser hanya boleh muncul pada satu vote per event. IP bukan unique constraint vote. |
+| DAT-10 | Reset suara menghapus vote yang membawa kedua claim browser, sesi, dan rate limit vote dalam transaction yang sama agar event yang di-reset dapat dimulai bersih. |
 
 ## Validasi field dan normalisasi
 

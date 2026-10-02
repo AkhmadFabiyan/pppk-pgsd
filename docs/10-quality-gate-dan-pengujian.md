@@ -14,11 +14,14 @@ Implementasi hanya dimulai setelah panitia memberikan daftar calon individu, keb
 | VOT-04 | NIM tidak ada atau tidak eligible | Tidak bisa memperoleh sesi vote; pesan tidak membocorkan peserta lain. |
 | VOT-05 | Periode belum buka/sudah tutup | Server menolak meski UI stale atau waktu browser dimanipulasi. |
 | VOT-06 | Calon dinonaktifkan | Tidak dapat dipilih pada submit server. |
+| DEV-01 | Device A sudah vote dengan NIM A lalu mencoba NIM B | Vote kedua ditolak secara generik oleh device binding; tidak ada PII bocor. |
+| DEV-02 | Dua HP berbeda memakai Wi-Fi/IP publik yang sama | Kedua vote sah bila NIM dan faktor lain valid; IP tidak menjadi unique constraint. |
+| DEV-03 | Reset suara voting pada event device-integrity | Vote/receipt/dua claim browser/sesi/rate limit `vote.*` terhapus bersama, audit reset tetap ada. |
 | RES-01 | Visibility `turnout_only` | Endpoint dan realtime publik tidak memuat total per calon. |
 | ADM-01 | Visitor membuka rute admin | Ditolak/diarahkan ke login tanpa data admin terbuka. |
 | ADM-02 | Admin mencoba edit calon saat open | Ditolak dan tercatat audit. |
 | ADM-03 | Admin mereset peserta saat masih ada vote | Ditolak tanpa mengubah peserta dan menjelaskan bahwa reset suara harus dilakukan lebih dahulu. |
-| ADM-04 | Admin mereset suara dengan alasan dan konfirmasi yang tepat | Vote/receipt/sesi/rate limit dihapus, event menjadi `scheduled`, peserta tetap ada, dan audit tercatat. |
+| ADM-04 | Admin mereset suara dengan alasan dan konfirmasi yang tepat | Vote/receipt/claim browser/sesi/rate limit dihapus, event menjadi `scheduled`, peserta tetap ada, dan audit tercatat. |
 | IMP-01 | Spreadsheet punya NIM duplikat | Preview gagal/menandai baris sebelum commit. |
 | SEC-01 | PII pada respons/event/log publik | Test snapshot memastikan tidak ada NIM, nama, IP, token, atau pilihan calon personal. |
 | A11Y-01 | Keyboard dan reduced motion | Semua form/konfirmasi dapat selesai tanpa mouse dan animasi esensial mati. |
@@ -31,6 +34,7 @@ Implementasi hanya dimulai setelah panitia memberikan daftar calon individu, keb
 - E2E: jalur pemilih serta panitia di Chrome/Edge/Safari; jaringan lambat/offline/refresh/back navigation.
 - Load: simulasi jumlah pemilih serentak yang melebihi proyeksi dan fokus pada endpoint verify/submit/hasil. Tetapkan target dari keputusan kapasitas, bukan angka asumsi.
 - Security: dependency scan, secret scan, SAST, vulnerability review, session/cookie hardening, abuse-case review, dan penetration test proporsional sebelum event.
+- Device integrity: uji cookie atau local storage yang dihapus sendiri, keduanya dihapus, mode privat, IP berpindah, perangkat berbeda pada Wi-Fi sama, conflict claim, dan reset; jangan menyimpulkan token browser membuktikan identitas fisik.
 - Visual: 320, 375, 768, 1024, 1440 px; portrait/landscape; light/dark bila tersedia; kontras WCAG AA minimum untuk teks dan kontrol.
 
 ## Gate per tahap
@@ -39,6 +43,7 @@ Implementasi hanya dimulai setelah panitia memberikan daftar calon individu, keb
 | --- | --- |
 | Data | Import preview, NIM sebagai string, unique NIM, count approved. |
 | Vote integrity | Transaction + unique constraint + idempotency teruji. |
+| Device integrity (bila diaktifkan) | Device binding atomik tanpa OTP, Wi-Fi bersama, redaksi hash, dan reset diuji menurut `DEV-*`. |
 | Privacy | Data minimization, redaksi log, notice, admin-only policy, retensi, dan export control ditinjau. |
 | UX | Mobile, keyboard, screen reader labels, error recovery, reduced motion. |
 | Operasional | Monitoring, backup-restore drill, incident SOP, owner on-call, UAT sign-off. |

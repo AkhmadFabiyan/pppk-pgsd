@@ -6,7 +6,7 @@ Reset pada aplikasi ini memakai dua tindakan admin yang berurutan. Ia tidak meng
 
 | Tindakan | Kapan tersedia | Dampak | Nama tombol yang dipakai |
 | --- | --- | --- | --- |
-| Reset suara voting | Admin yang telah login, pada state event apa pun. | Menghapus vote/receipt, sesi, dan rate limit voting; peserta tetap ada sampai aksi reset peserta berikutnya. | `Reset suara voting` |
+| Reset suara voting | Admin yang telah login, pada state event apa pun. | Menghapus vote/receipt beserta dua claim browsernya, sesi, dan seluruh rate limit `vote.*`; peserta tetap ada sampai aksi reset peserta berikutnya. | `Reset suara voting` |
 | Reset peserta | Event `scheduled` dan total suara `0`. | Menghapus daftar peserta dan sisa sesi verifikasi. | `Reset peserta` |
 
 Nama tombol selalu spesifik agar admin memahami urutan dan dampaknya.
@@ -17,7 +17,7 @@ Untuk scope aplikasi ini, panel admin menambahkan **dua** aksi reset yang wajib 
 
 | Aksi UI | Tujuan | Kapan dapat dijalankan | Data yang berubah | Data yang tetap ada |
 | --- | --- | --- | --- | --- |
-| `Reset suara voting` | Mengosongkan suara agar peserta dapat dikelola ulang. | Admin telah login, memasukkan alasan, dan mengetik konfirmasi yang tepat. | Vote, receipt, sesi voting, serta rate limit `vote.*`; event kembali `scheduled` dan hasil tersembunyi. | Daftar peserta, calon, akun admin, konfigurasi kandidat, dan audit lama; satu audit reset baru ditambahkan. |
+| `Reset suara voting` | Mengosongkan suara agar peserta dapat dikelola ulang. | Admin telah login, memasukkan alasan, dan mengetik konfirmasi yang tepat. | Vote, receipt, dua claim browser pada vote, sesi voting, dan rate limit `vote.*`; event kembali `scheduled` dan hasil tersembunyi. | Daftar peserta, calon, akun admin, konfigurasi kandidat, dan audit lama; satu audit reset baru ditambahkan. |
 | `Reset peserta` | Menghapus daftar NIM setelah suara benar-benar kosong. | Event `scheduled` dan total suara `0`. | `voters` dan sisa `voting_sessions`; event tetap `scheduled` dan hasil tersembunyi. | Calon, akun admin, konfigurasi kandidat, vote yang sudah tidak ada, dan audit lama; satu audit reset baru harus ditambahkan. |
 
 Urutan ini disengaja: `Reset peserta` tidak dapat ditekan atau dipanggil bila masih ada suara. Pada UI, ia disabled dengan pesan **“Kosongkan suara voting terlebih dahulu.”** Server juga menghitung ulang jumlah vote dalam transaction sebelum menghapus peserta, sehingga request langsung tidak dapat melompati tahap pertama. Reset suara tersedia bagi admin tanpa setup environment tambahan; karena itu alasan, konfirmasi teks, audit, dan lock event wajib tetap dipertahankan.
@@ -39,8 +39,8 @@ Server melakukan satu transaction dengan urutan:
 
 1. set event menjadi `scheduled`, hasil `hidden`, dan perbarui waktu;
 2. hapus `voting_sessions` event;
-3. hapus `votes` event beserta receipt yang melekat pada baris tersebut;
-4. hapus rate-limit dengan scope `vote.verify` dan `vote.submit`; dan
+3. hapus `votes` event beserta receipt dan dua claim browser yang melekat pada baris tersebut;
+4. hapus semua rate-limit dengan scope `vote.*`; dan
 5. tambahkan audit `election.votes_reset` berisi actor dan alasan tanpa NIM atau pilihan per orang.
 
 Peserta, kandidat, dan akun admin tidak boleh ikut terhapus. Setelah transaction selesai, UI menampilkan `0 suara` dan tombol `Reset peserta` menjadi aktif; browser tidak menyimpan receipt lama sebagai bukti event baru.

@@ -12,6 +12,26 @@ type ApiResponse = {
   error?: { message?: string };
 };
 
+const DEVICE_TOKEN_STORAGE_KEY = "pgsd_vote_device_installation";
+
+function createDeviceToken() {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function getDeviceToken() {
+  try {
+    const stored = window.localStorage.getItem(DEVICE_TOKEN_STORAGE_KEY);
+    if (stored && /^[A-Za-z0-9_-]{32,160}$/.test(stored)) return stored;
+    const token = createDeviceToken();
+    window.localStorage.setItem(DEVICE_TOKEN_STORAGE_KEY, token);
+    return token;
+  } catch {
+    return createDeviceToken();
+  }
+}
+
 async function requestJson(path: string, body: Record<string, string>) {
   const response = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), cache: "no-store" });
   const payload = await response.json() as ApiResponse;
@@ -34,7 +54,8 @@ export function VotingWizard({ candidates }: { candidates: CandidateSummary[] })
     setError("");
     setPending(true);
     try {
-      const payload = await requestJson("/api/vote/verify", { nim });
+      const nextDeviceToken = getDeviceToken();
+      const payload = await requestJson("/api/vote/verify", { nim, deviceToken: nextDeviceToken });
       if (!payload.data?.sessionToken) throw new Error("Sesi voting tidak tersedia.");
       setSessionToken(payload.data.sessionToken);
       setStep("choose");
@@ -73,6 +94,7 @@ export function VotingWizard({ candidates }: { candidates: CandidateSummary[] })
         <ShieldCheck aria-hidden="true" className="wizard-icon" />
         <p className="eyebrow eyebrow-green">Tahap 1 dari 3</p><h2>Verifikasi NIM</h2>
         <p>Masukkan NIM milik sendiri. Hanya pemilih dalam daftar resmi yang dapat melanjutkan.</p>
+        <p className="form-hint">Browser dan jaringan diproses secara terbatas untuk mencegah suara ganda. Data ini tidak ditampilkan publik.</p>
         <label>NIM<input name="nim" inputMode="numeric" autoComplete="off" value={nim} onChange={(event) => setNim(event.target.value.replace(/\D/g, ""))} minLength={8} maxLength={20} required disabled={pending} /></label>
         <button className="button" type="submit" disabled={pending}>{pending ? <><LoaderCircle className="spin" aria-hidden="true" size={18} /> Memeriksa</> : <>Lanjut pilih calon <ChevronRight aria-hidden="true" size={18} /></>}</button>
       </form>}

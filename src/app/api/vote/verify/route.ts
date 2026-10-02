@@ -1,12 +1,21 @@
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { consumeRateLimit, issueVotingSession } from "@/lib/db";
-import { randomToken, sha256 } from "@/lib/security";
+import { hmacSha256, randomToken } from "@/lib/security";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+const DEVICE_COOKIE = "pgsd_vote_device";
+const DEVICE_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
+const HASH_VERSION = 1;
+
 function clientAddress(request: Request) {
   return request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("x-real-ip") || "unknown";
+}
+
+function isDeviceToken(value: string) {
+  return /^[A-Za-z0-9_-]{32,160}$/.test(value);
 }
 
 export async function POST(request: Request) {
@@ -14,19 +23,45 @@ export async function POST(request: Request) {
   if (!secret || secret.length < 32) return NextResponse.json({ error: { code: "service_unavailable", message: "Layanan voting belum siap." } }, { status: 503 });
 
   let nim = "";
+  let deviceToken = "";
   try {
-    const body = await request.json() as { nim?: unknown };
+    const body = await request.json() as { nim?: unknown; deviceToken?: unknown };
     nim = String(body.nim ?? "").replace(/\D/g, "");
+    deviceToken = String(body.deviceToken ?? "");
   } catch {
     return NextResponse.json({ error: { code: "invalid_request", message: "Permintaan tidak valid." } }, { status: 400 });
   }
-  if (!/^\d{8,20}$/.test(nim)) return NextResponse.json({ error: { code: "verification_failed", message: "NIM tidak dapat diverifikasi." } }, { status: 400 });
+  if (!/^\d{8,20}$/.test(nim) || !isDeviceToken(deviceToken)) return NextResponse.json({ error: { code: "verification_failed", message: "Verifikasi tidak dapat diproses." } }, { status: 400 });
 
-  const throttleKey = sha256(`${secret}:verify:${clientAddress(request)}`);
-  if (!(await consumeRateLimit("vote.verify", throttleKey, 5, 10 * 60 * 1000))) return NextResponse.json({ error: { code: "rate_limited", message: "Terlalu banyak percobaan. Coba lagi beberapa menit." } }, { status: 429 });
+  const jar = await cookies();
+  const storedDeviceCookie = jar.get(DEVICE_COOKIE)?.value;
+  const deviceCookie = storedDeviceCookie && isDeviceToken(storedDeviceCookie) ? storedDeviceCookie : randomToken();
+  const deviceBindingHash = hmacSha256(secret, "vote-device-binding:v1", deviceCookie);
+  const deviceInstallationHash = hmacSha256(secret, "vote-device-installation:v1", deviceToken);
+  const ipHash = hmacSha256(secret, "vote-ip:v1", clientAddress(request));
+  const nimHash = hmacSha256(secret, "vote-nim:v1", nim);
+  const [ipAllowed, nimAllowed, deviceAllowed] = await Promise.all([
+    consumeRateLimit("vote.verify.ip", ipHash, 1_200, 10 * 60 * 1000),
+    consumeRateLimit("vote.verify.nim", nimHash, 4, 10 * 60 * 1000),
+    consumeRateLimit("vote.verify.device", deviceBindingHash, 6, 10 * 60 * 1000)
+  ]);
+  if (!ipAllowed || !nimAllowed || !deviceAllowed) return NextResponse.json({ error: { code: "rate_limited", message: "Terlalu banyak percobaan. Coba lagi beberapa menit." } }, { status: 429 });
 
   const sessionToken = randomToken();
-  const accepted = await issueVotingSession(nim, sha256(`${secret}:session:${sessionToken}`), new Date(Date.now() + 10 * 60 * 1000).toISOString());
+  const accepted = await issueVotingSession(
+    nim,
+    hmacSha256(secret, "vote-session:v1", sessionToken),
+    new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+    { deviceBindingHash, deviceInstallationHash, ipHash, hashVersion: HASH_VERSION }
+  );
   if (!accepted) return NextResponse.json({ error: { code: "verification_failed", message: "NIM tidak dapat diverifikasi." } }, { status: 403 });
-  return NextResponse.json({ data: { sessionToken, expiresInSeconds: 600 } }, { headers: { "Cache-Control": "no-store" } });
+  const response = NextResponse.json({ data: { sessionToken, expiresInSeconds: 600 } }, { headers: { "Cache-Control": "no-store" } });
+  if (deviceCookie !== storedDeviceCookie) response.cookies.set(DEVICE_COOKIE, deviceCookie, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: DEVICE_COOKIE_MAX_AGE_SECONDS
+  });
+  return response;
 }

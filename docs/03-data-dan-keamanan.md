@@ -7,8 +7,8 @@
 | `Election` | judul, zona waktu, buka/tutup, status, kebijakan hasil | Satu event pemilihan. |
 | `Candidate` | election, nomor urut, nama, kelas sumber, foto, visi-misi, status | Calon hanya dapat diubah sebelum voting dibuka. |
 | `Voter` | NIM, nama, kelas, sumber impor, eligible | NIM disimpan sebagai teks agar nol awal tidak hilang. |
-| `Vote` | election, voter, calon, waktu sah, receipt code | Constraint unik pada election + voter. |
-| `VotingSession` | voter sementara, token sesi, device signal terhash, IP terhash, status, kedaluwarsa | Untuk pencegahan penyalahgunaan, bukan identitas primer. |
+| `Vote` | election, voter, calon, waktu sah, receipt code, dua HMAC claim browser | Constraint unik pada election + voter serta dua unique index claim browser. |
+| `VotingSession` | voter sementara, token sesi, HMAC cookie/instalasi browser, IP terhash, status, kedaluwarsa | Untuk pencegahan penyalahgunaan, bukan identitas primer. |
 | `AuditLog` | aktor, aksi, target, alasan, metadata minimal, waktu | Append-only; pilihan calon tidak dicantumkan dalam log publik. |
 
 Pilihan suara dan identitas pemilih dipisahkan secara logis. Tabel/akses rekap publik hanya menerima agregat, bukan pasangan NIM-calon. Akses data pilihan individual dibatasi untuk audit resmi yang disetujui panitia.
@@ -33,16 +33,18 @@ Kontrol utama adalah constraint unik di database dan transaksi server. Sinyal pe
 | NIM + daftar master | Menetapkan hak pilih awal. | NIM dapat diketahui orang lain; belum cukup kuat bila dipakai sendirian. |
 | Session token HTTP-only dan kedaluwarsa | Mengikat proses voting pada sesi yang sah. | Tidak menggantikan validasi server. |
 | Rate limit per NIM, IP terhash, dan sesi | Mengurangi brute force/banjir request. | IP dapat dipakai bersama atau berubah. Jangan menjadikannya larangan absolut. |
-| Device signal/fingerprint terhash | Menandai pola risiko untuk ditinjau. | Tidak akurat, mudah berubah/dibypass, dan memerlukan pemberitahuan privasi. Tidak boleh menjadi satu-satunya dasar penolakan. |
-| CAPTCHA adaptif | Menahan otomasi ketika ada indikator risiko. | Tidak diperlukan untuk semua pemilih agar aksesibilitas terjaga. |
+| Dua claim browser terhash | Cookie server dan token instalasi menahan browser normal agar tidak menyelesaikan vote untuk NIM lain dalam event yang sama. | Keduanya dapat dihapus atau diganti dengan browser lain; tidak membuktikan kepemilikan NIM/perangkat fisik. |
+| Fingerprint/CAPTCHA | Tidak aktif pada rilis ini. | Jika diperlukan, butuh keputusan, notice privasi, fallback aksesibel, dan test baru. |
 | Audit log dan monitor anomali | Membantu investigasi setelah kejadian. | Perlu admin yang menindaklanjuti. |
 
-Rekomendasi penting: untuk jaminan "satu orang satu suara" yang lebih kuat, tambahkan faktor kepemilikan terverifikasi, misalnya login SSO kampus atau OTP ke kontak yang telah dimiliki panitia. Fingerprint browser dan IP tidak dapat membuktikan identitas seseorang dan tidak boleh dipasarkan sebagai pencegah kecurangan yang pasti.
+Keputusan saat ini adalah tidak memakai pengiriman OTP. Karena itu sistem hanya boleh mengklaim pencegahan duplikasi teknis melalui NIM, transaction, device binding, dan risk control. Fingerprint browser dan IP tidak dapat membuktikan identitas seseorang dan tidak boleh dipasarkan sebagai pencegah kecurangan yang pasti. SSO kampus hanya dapat dipertimbangkan pada proyek terpisah dengan keputusan baru.
+
+Kontrak device binding, perilaku Wi-Fi bersama, reset, dan batas teknis browser ada pada `20-integritas-perangkat-dan-anti-duplikasi.md`. `DEC-04` telah disetujui user; source diimplementasikan tetapi masih menunggu migration staging, test, dan UAT sebelum event production dibuka.
 
 ## Privasi dan retensi
 
 - Tampilkan pemberitahuan singkat sebelum verifikasi: NIM dipakai untuk validasi satu suara; IP/sinyal perangkat diproses secara terbatas untuk keamanan.
-- Simpan hash bersalt untuk IP dan device signal jika kebutuhan investigasi tidak memerlukan nilai mentah.
+- Simpan HMAC versioned untuk IP, cookie browser, dan token instalasi bila kebutuhan integritas tidak memerlukan nilai mentah.
 - Enkripsi data pribadi saat tersimpan dan gunakan HTTPS di seluruh lingkungan.
 - Terapkan least privilege, MFA untuk semua admin, password hashing modern, CSRF protection, validasi input, dan log akses.
 - Tetapkan pemilik data serta masa retensi. Default rancangan: hapus/anonimkan sinyal keamanan dan sesi 30 hari setelah hasil disahkan; arsip rekap dan audit mengikuti kebijakan HMP/UNESA yang disetujui.
@@ -64,7 +66,7 @@ Rekomendasi penting: untuk jaminan "satu orang satu suara" yang lebih kuat, tamb
 | --- | --- | --- | --- |
 | Duplicate vote | Submit paralel atau retry request. | Transaction, unique constraint, idempotency. | Alert konflik/rekonsiliasi. |
 | NIM enumeration | Bot mencoba banyak NIM. | Pesan generik, rate limit, challenge adaptif. | Metrik invalid attempt per sumber. |
-| Impersonasi | Seseorang memakai NIM teman. | Faktor kedua bila tersedia, session pendek, review anomali. | SOP sengketa tanpa membuka pilihan. |
+| Impersonasi | Seseorang memakai NIM teman. | Device binding, session pendek, CAPTCHA adaptif, dan review anomali. | SOP sengketa tanpa membuka pilihan; risiko tetap ada tanpa faktor kepemilikan. |
 | Abuse admin | Mengubah calon/periode atau eksport data. | Admin-only policy, MFA, approval dua akun, immutable audit. | Alert aksi privileged dan log review. |
 | Data exfiltration | PII masuk analytics, screenshot, log, URL. | Data minimization, allowlist telemetry, redaction. | Scan log/export dan incident process. |
 | Denial of service | Traffic lonjakan saat masa voting singkat. | CDN/cache publik, rate limit, queue, capacity test. | Status page dan monitoring latency/error. |
@@ -73,7 +75,7 @@ Rekomendasi penting: untuk jaminan "satu orang satu suara" yang lebih kuat, tamb
 
 - Token sesi/receipt dibuat dengan sumber acak kriptografis; token mentah hanya ditampilkan sekali bila perlu dan tidak dicatat log.
 - Session cookie memakai `HttpOnly`, `Secure`, `SameSite` sesuai alur, TTL pendek, dan rotasi setelah verifikasi.
-- IP/device signal memakai HMAC/hash bersalt dengan secret runtime dan version marker; jangan gunakan hash polos yang mudah dicocokkan ulang.
+- IP, cookie browser, dan token instalasi memakai HMAC dengan secret runtime, domain terpisah, dan version marker; jangan gunakan hash polos yang mudah dicocokkan ulang.
 - Password admin memakai password hashing modern dari provider auth, bukan enkripsi reversibel atau hash manual.
 - Semua compare secret menggunakan primitive aman dari library/platform yang dipilih.
 

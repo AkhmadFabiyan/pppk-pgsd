@@ -59,6 +59,8 @@ flowchart TD
 
 **Pengunci utama anti-duplikasi** adalah constraint database `UNIQUE(election_id, voter_id)` dan transaksi server. Kondisi ini tetap aman ketika NIM sama mencoba mengirim dari dua HP, dua browser, atau dua tab pada waktu hampir bersamaan: hanya commit pertama yang sah. `idempotency key` membuat retry akibat jaringan mengembalikan receipt yang sama, bukan menciptakan vote baru. IP hash, device signal, dan CAPTCHA hanya berperan sebagai rate limit/sinyal risiko, bukan identitas utama atau alasan penolakan otomatis.
 
+Mode device-integrity pada `20-integritas-perangkat-dan-anti-duplikasi.md` menambahkan dua claim browser unik pada commit tanpa OTP: cookie server `HttpOnly` dan token instalasi local storage, keduanya hanya tersimpan sebagai HMAC. IP tetap tidak menjadi constraint unik agar perangkat berbeda pada Wi-Fi yang sama tetap dapat memilih. Mode ini mencegah duplikasi teknis normal, bukan membuktikan kepemilikan NIM atau perangkat fisik; source menunggu migration staging, test, dan UAT sebelum event dibuka.
+
 ## Alur pemilih
 
 ```mermaid
@@ -127,9 +129,9 @@ Semua proses pemilih berlangsung dalam satu route `/vote`; status event diperiks
 
 | Tahap | Input/aksi | Validasi server | Output aman |
 | --- | --- | --- | --- |
-| 1. Verifikasi NIM | NIM + anti-bot challenge bila dipicu. | Event `open`, format, master, eligible, belum memiliki vote, rate limit. | Token sesi opaque atau pesan generik. |
+| 1. Verifikasi NIM | NIM + anti-bot challenge bila policy memicu. | Event `open`, format, master, eligible, belum memiliki vote, rate limit, serta policy perangkat. | Token sesi opaque atau pesan generik. |
 | 2. Pilih calon | Tekan satu radio ballot; lihat ringkasan bila perlu. | UI hanya; calon diverifikasi lagi saat submit. | Satu pilihan lokal dan tombol lanjut. |
-| 3. Konfirmasi & kirim | Submit `candidateId` + token + idempotency key. | Token, calon published, foreign relation, unique vote, dan risk policy. | Receipt bila accepted; kode error aman bila gagal. |
+| 3. Konfirmasi & kirim | Submit `candidateId` + token + idempotency key. | Token, cookie browser, calon published, foreign relation, unique voter/cookie/instalasi, dan rate limit. | Receipt bila accepted; kode error aman bila gagal. |
 
 Receipt diterbitkan setelah tahap tiga, bukan tahap input keempat. Halaman receipt tidak menampilkan pilihan calon atau PII.
 

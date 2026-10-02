@@ -1,4 +1,4 @@
-import { createHash, randomBytes, scrypt as scryptCallback, timingSafeEqual } from "node:crypto";
+import { createHash, createHmac, randomBytes, scrypt as scryptCallback, timingSafeEqual } from "node:crypto";
 import { promisify } from "node:util";
 import { cookies } from "next/headers";
 import { createAdminSession, deleteAdminSession, findAdminSession } from "@/lib/db";
@@ -10,6 +10,10 @@ const DEFAULT_INITIAL_ADMIN_USERNAME = "admin@pppk-pgsd.vercel.app";
 
 export function sha256(value: string) {
   return createHash("sha256").update(value).digest("hex");
+}
+
+export function hmacSha256(secret: string, domain: string, value: string) {
+  return createHmac("sha256", secret).update(`${domain}:${value}`).digest("hex");
 }
 
 export function randomToken(bytes = 32) {
