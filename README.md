@@ -8,7 +8,7 @@ Website voting Ketua Angkatan PGSD 2026 berbasis Next.js. Aplikasi memiliki dua 
 - Voting tiga tahap: verifikasi NIM, pilih calon, dan konfirmasi.
 - Satu suara final per NIM melalui transaksi PostgreSQL serverless dan constraint unik di database.
 - Receipt tanpa NIM maupun pilihan calon.
-- Panel panitia untuk import XLSX, daftar peserta internal, kontrol open/close, hasil, kandidat, audit, dan reset pra-voting.
+- Panel panitia untuk import XLSX, daftar peserta internal, kontrol open/close, hasil, kandidat, audit, serta reset suara → reset peserta.
 
 ## Menjalankan secara local
 

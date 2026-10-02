@@ -8,7 +8,7 @@ import {
   findAdminByUsername,
   hasAdminUsers,
   replaceVoters,
-  resetSimulationVotes,
+  resetVotes,
   resetVoters,
   setCandidatePublished,
   setElectionStatus,
@@ -143,18 +143,18 @@ export async function importVotersAction(formData: FormData) {
   redirectWithMessage("notice", `${importedCount} peserta berhasil diimpor.`);
 }
 
-export async function resetSimulationVotesAction(formData: FormData) {
+export async function resetVotesAction(formData: FormData) {
   const admin = await requireAdmin();
   const confirmation = textValue(formData, "confirmation");
   const reason = textValue(formData, "reason");
   if (confirmation !== "RESET SUARA VOTING" || reason.length < 8) redirectWithMessage("error", "Ketik RESET SUARA VOTING dan isi alasan minimal 8 karakter.");
   try {
-    await resetSimulationVotes(admin.id, reason);
+    await resetVotes(admin.id, reason);
   } catch (error) {
     redirectWithMessage("error", error instanceof Error ? error.message : "Reset suara ditolak.");
   }
   refreshPublicPaths();
-  redirectWithMessage("notice", "Suara simulasi telah direset. Peserta tetap tersimpan dan dapat direset pada tahap berikutnya.");
+  redirectWithMessage("notice", "Suara voting telah direset. Peserta tetap tersimpan dan dapat direset pada tahap berikutnya.");
 }
 
 export async function resetVotersAction(formData: FormData) {

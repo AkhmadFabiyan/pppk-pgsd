@@ -108,10 +108,10 @@ flowchart TD
 | --- | --- |
 | Tujuan | Menegakkan model event, calon, eligible voter, admin, audit, dan constraint database. |
 | Baca | `03`, `06`, `07`, `08`, `09`, `10`, `11`, `13`. |
-| Aksi | Buat migration, state machine event, admin authentication+MFA, policy authorization, import preview/commit, setup calon, audit append-only, reset draft/pemilihan ulang, dan ekspor restricted. |
+| Aksi | Buat migration, state machine event, admin authentication+MFA, policy authorization, import preview/commit, setup calon, audit append-only, reset suara → reset peserta, dan ekspor restricted. |
 | Perbarui | `06`, `07`, `08`, `09`, `10`, `11`, `13`, `16`. |
 | Bukti exit | Unit/integration test untuk constraint, admin-only policy, audit, import, candidate–voter uniqueness, dan reset lulus. |
-| Gate | Tidak ada panel admin yang dapat diakses visitor; tidak ada reset event yang memiliki vote sah. |
+| Gate | Tidak ada panel admin yang dapat diakses visitor; reset peserta selalu ditolak bila masih ada vote; reset suara memerlukan sesi admin, alasan, konfirmasi, audit, dan lock event. |
 
 ## T7 — Implementasi alur visitor dan integritas voting
 

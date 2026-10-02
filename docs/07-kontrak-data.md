@@ -131,13 +131,13 @@ erDiagram
 | Rule ID | Aturan database/domain |
 | --- | --- |
 | DAT-01 | Satu `voter` dan `candidate` wajib dimiliki event yang sama dengan `vote`; service memvalidasi ini sebelum insert, dan FK/index mendukungnya. |
-| DAT-02 | Satu voter hanya dapat mempunyai satu vote yang masih sah untuk satu event. Void tidak ditulis sebagai delete. |
+| DAT-02 | Satu voter hanya dapat mempunyai satu vote yang masih sah untuk satu event. Reset suara melalui action admin terkontrol adalah pengecualian operasional yang menghapus seluruh vote event, bukan mengedit pilihan individual. |
 | DAT-03 | `receipt_code` unik secara global atau minimal unik per event, acak, dan tidak dapat diturunkan dari primary key. |
 | DAT-04 | `ballot_number` unik per event dan non-null untuk calon published sebelum event dischedule. |
 | DAT-05 | `is_eligible` harus ditentukan saat commit import; override mengharuskan alasan, actor, dan audit. |
 | DAT-06 | Calon/event/voter yang memiliki vote tidak dapat dihapus secara fisik. |
 | DAT-07 | Semua timestamp write menggunakan server clock UTC; UI membuat representasi WIB. |
-| DAT-08 | Event yang memiliki vote sah tidak dapat di-reset atau dihapus; event pengganti memakai ID/slug baru dan `restarted_from_election_id`. |
+| DAT-08 | Reset suara hanya menghapus `votes`, receipt yang melekat, sesi voting, dan rate limit event; peserta baru dapat dihapus setelah hitung vote `0`. Calon, akun admin, dan audit tidak ikut dihapus. |
 
 ## Validasi field dan normalisasi
 

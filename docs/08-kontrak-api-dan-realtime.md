@@ -136,8 +136,8 @@ Semua respons error mengikuti bentuk yang konsisten agar UI dapat memulihkan kon
 | `POST /admin/elections/{id}/schedule` | Jadwalkan | opens/closes, visibility | scheduled event | jadwal dan actor. |
 | `POST /admin/elections/{id}/open` | Buka event | approval/confirmation | open event | actor, time, config snapshot hash. |
 | `POST /admin/elections/{id}/close` | Tutup event | reason bila manual | closed event | actor, time, final revision. |
-| `POST /admin/elections/{id}/reset-draft-request` | Ajukan reset draft | reason, re-auth, idempotency key | request pending | state/count sebelum aksi. |
-| `POST /admin/reset-requests/{id}/approve` | Sahkan reset draft | approval reason | event draft terbaru | approver berbeda. |
+| Server Action `resetVotesAction` | Reset suara voting | reason, `RESET SUARA VOTING` | event `scheduled`, vote `0` | actor/reason. |
+| Server Action `resetVotersAction` | Reset peserta setelah suara kosong | reason, `RESET PESERTA` | peserta `0` | actor/reason. |
 | `POST /admin/elections/{id}/create-replacement-request` | Ajukan pemilihan ulang | reason, replacement slug | request pending | event lama/reason. |
 | `POST /admin/replacement-requests/{id}/approve` | Sahkan event pengganti | approval reason | event draft baru | lineage dan approver berbeda. |
 | `POST /admin/imports` | Upload master | multipart file, election ID | import ID | upload hash/metadata. |
@@ -148,7 +148,7 @@ Semua respons error mengikuti bentuk yang konsisten agar UI dapat memulihkan kon
 
 Endpoint mutasi admin memakai optimistic concurrency (`revision`/`updatedAt`) untuk mencegah satu admin menimpa draft admin lain secara senyap. Action `open`, `close`, dan `void approve` meminta re-auth/MFA step-up bila provider mendukungnya.
 
-Reset draft hanya dapat disetujui saat event `draft`/`scheduled` dan `total_cast = 0`. Event yang memiliki vote sah tidak memiliki endpoint penghapusan/reset; gunakan event pengganti ber-ID/slug baru sesuai `13-reset-dan-pengulangan-event.md`.
+Reset suara dapat dijalankan oleh admin yang login dengan alasan dan konfirmasi teks yang benar; event dikembalikan ke `scheduled`. Reset peserta hanya dijalankan saat total suara `0` dan event `scheduled`. Detail urutan transaction ada di `13-reset-dan-pengulangan-event.md`.
 
 ## Caching, headers, dan CORS
 

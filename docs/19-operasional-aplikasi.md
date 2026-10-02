@@ -8,7 +8,7 @@ Dokumen ini menjelaskan perilaku aplikasi **saat ini**, bukan rancangan target. 
 - Satu event `pgsd-2026` tersedia dengan state `scheduled`, `open`, dan `closed`; keadaan awal selalu `scheduled` dan hasil tersembunyi.
 - Sembilan calon diambil dari katalog `src/lib/site.ts` dan poster pada `public/paslon/`. Poster ditampilkan pada rasio asli tanpa crop.
 - Master peserta masuk melalui unggahan XLSX oleh admin; spreadsheet sumber tidak pernah dibaca langsung oleh visitor dan tidak diubah oleh aplikasi.
-- **Reset suara voting** hanya tersedia untuk local/Vercel Preview saat event ditandai sebagai test dan guard environment lulus. Ia menghapus suara uji, receipt, sesi voting, serta rate limit voting; peserta tidak dihapus. Production selalu menolak aksi ini pada server.
+- **Reset suara voting** tersedia bagi admin yang telah login tanpa konfigurasi environment tambahan. Ia menghapus seluruh suara, receipt, sesi voting, serta rate limit voting; peserta tidak dihapus. Event kembali menjadi `scheduled` dan hasil disembunyikan.
 - **Reset peserta** hanya aktif setelah jumlah suara `0` dan status event `scheduled`. Ia menghapus daftar NIM serta sesi verifikasi yang tersisa. Calon, materi calon, akun admin, dan audit dipertahankan. Kedua langkah menggunakan alasan serta konfirmasi teks dan dicatat pada audit.
 - Sistem juga belum menyediakan MFA, SSO/OTP kampus, CAPTCHA, maupun ekspor arsip. Kebutuhan tersebut memerlukan entry eksekusi baru sebelum ditambahkan.
 
@@ -22,9 +22,6 @@ Dokumen ini menjelaskan perilaku aplikasi **saat ini**, bukan rancangan target. 
 | `VOTING_TOKEN_SECRET` | Minimal 32 karakter; dipakai untuk membungkus hash token voting dan merupakan syarat membuka event. |
 | `ADMIN_INITIAL_USERNAME` | Opsional; default-nya `admin@pppk-pgsd.vercel.app`. Hanya dipakai saat membuat akun admin pertama. |
 | `ADMIN_INITIAL_PASSWORD` | Minimal 12 karakter; hanya dibaca server untuk membuat akun admin pertama, lalu disimpan sebagai hash `scrypt` di database. |
-| `APP_ENV` | Isi `development` untuk local atau `preview` untuk Vercel Preview bila reset suara uji diperlukan. Jangan isi `production` untuk mengaktifkan reset. |
-| `SIMULATION_EVENT_ENABLED` | `true` hanya pada database test. Saat schema berjalan, memberi marker database `is_test` ke event; tidak tersedia di UI admin. |
-| `ALLOW_SIMULATION_RESET` | `true` hanya pada local/Preview database test agar tombol reset suara dapat dipakai. Production selalu menolak walaupun variable ini keliru terpasang. |
 
 Jangan commit `.env.local`, URL database, kata sandi, atau hasil ekspor. File ini hanya menyimpan instruksi tanpa rahasia.
 
@@ -67,7 +64,7 @@ Beranda memakai satu scene hutan CSS/Motion yang ringan: progress scroll, horizo
 | Kandidat | Sinkron katalog dan ubah published hanya sebelum event `open`; pembukaan event membutuhkan minimal dua calon published. |
 | Voting on/off | `open` hanya setelah seluruh prasyarat; `closed` langsung menolak verifikasi dan submit baru. |
 | Hasil | Rekap publik hanya agregat dan mengikuti visibility yang dipilih admin. Route `/live` memakai endpoint agregat yang sama dan tidak menampilkan apa pun saat visibility tertutup. |
-| Reset suara voting | Hanya local/Preview test dengan marker `is_test`, `APP_ENV` yang sesuai, dan `ALLOW_SIMULATION_RESET=true`. Memerlukan alasan minimal delapan karakter dan `RESET SUARA VOTING`; hasilnya kembali disembunyikan dan event menjadi `scheduled`. |
+| Reset suara voting | Admin login, alasan minimal delapan karakter, dan `RESET SUARA VOTING`. Menghapus suara/receipt/sesi/rate limit, menyembunyikan hasil, dan mengembalikan event ke `scheduled`. |
 | Reset peserta | Hanya setelah event `scheduled` dan suara `0`. Memerlukan alasan minimal delapan karakter dan `RESET PESERTA`; server menolak jika suara masih ada. |
 | Audit | Inisialisasi admin, status event, visibility, import, kandidat, sinkron katalog, dan reset dicatat dengan waktu serta ringkasan aman. |
 
@@ -85,7 +82,7 @@ Setelah akun pertama ada di database, aplikasi selalu memverifikasi password has
 - `npm run typecheck`
 - `npm run lint`
 - `npm run build`
-- UAT akun admin, import salinan aman, satu verifikasi NIM test, satu vote test pada database test, receipt, tutup voting, visibility hasil, serta penolakan reset setelah ada vote.
+- UAT akun admin, import salinan aman, satu verifikasi NIM test, satu vote test, receipt, reset suara, reset peserta setelah suara nol, serta audit kedua tindakan.
 - Konfirmasi domain HTTPS, backup database persistent, owner panitia, kebijakan eligible, jadwal, dan kanal dukungan.
 
 Lihat juga `02-alur-voting.md` untuk kontrak bisnis, `03-data-dan-keamanan.md` untuk batas privasi, dan `13-reset-dan-pengulangan-event.md` untuk rancangan prosedur lanjutan yang belum termasuk build ini.

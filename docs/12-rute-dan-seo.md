@@ -17,7 +17,7 @@ Website visitor memakai satu URL utama agar proses pemilihan mudah dipahami dan 
 | `/bukti/[receiptCode]` | Receipt individual setelah suara diterima. | Tidak | Tidak menampilkan pilihan/NIM. |
 | `/live` | Layar presentasi hasil live/final untuk TV atau proyektor panitia. | Tidak | Tanpa header/footer; hanya merender agregat saat kebijakan hasil mengizinkan. |
 | `/panitia/login` | Inisialisasi akun admin pertama atau login admin. | Tidak | Username/password, cookie server-side, dan password awal server-only untuk akun awal. |
-| `/panitia` | Operasi panitia: import/master peserta, kandidat, status, hasil, reset pra-voting, dan audit. | Tidak | Admin-only; route menampilkan layar akses bila sesi tidak ada. |
+| `/panitia` | Operasi panitia: import/master peserta, kandidat, status, hasil, reset suara → reset peserta, dan audit. | Tidak | Admin-only; route menampilkan layar akses bila sesi tidak ada. |
 | `/api/vote/verify`, `/api/vote/submit`, `/api/results` | API internal UI voting dan rekap publik yang diizinkan. | Tidak | Tidak masuk sitemap; respons voting selalu `no-store`. |
 
 ## Route legacy

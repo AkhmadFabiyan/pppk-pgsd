@@ -29,12 +29,12 @@
 4. Hasil calon dipublikasikan mengikuti kebijakan event. Pengumuman menyebut total eligible, total sah, partisipasi, calon, dan suara sah tanpa identitas pemilih.
 5. Masa sengketa dibuka sesuai keputusan panitia. Koreksi tidak boleh mengedit vote langsung; gunakan proses request, alasan, persetujuan pihak berbeda, dan rekap revisi.
 
-## Reset draft dan pemilihan ulang
+## Reset suara dan peserta
 
-- Reset hanya boleh dilakukan pada `draft`/`scheduled` sebelum ada vote sah, melalui re-auth, alasan tertulis, dan persetujuan akun admin kedua.
-- Jika event sudah memiliki vote sah, panitia tidak boleh mengosongkan hasil atau membuat peserta memilih ulang pada event yang sama. Tutup event, arsipkan bukti, lalu gunakan prosedur `Buat pemilihan ulang` untuk membuat event baru.
-- Reset data simulasi hanya berlaku untuk local/staging dengan data dummy; tidak pernah untuk production atau spreadsheet peserta asli.
-- Rincian batas data, UI, API, dan test berada pada `13-reset-dan-pengulangan-event.md`.
+1. Admin yang telah login membuka panel reset, mengisi alasan, lalu mengetik `RESET SUARA VOTING` untuk mengosongkan suara, receipt, sesi voting, dan rate limit. Event kembali `scheduled` dan hasil disembunyikan.
+2. Setelah ringkasan menunjukkan `0` suara, admin mengisi alasan dan `RESET PESERTA` untuk mengosongkan daftar peserta serta sisa sesi verifikasi.
+3. Calon, akun admin, materi calon, dan audit tetap ada. Audit mencatat actor dan alasan kedua tindakan.
+4. Jangan menghapus baris langsung dari database atau mengubah pilihan individual. Rincian UI, transaction, dan pengujian ada di `13-reset-dan-pengulangan-event.md`.
 
 ## SOP insiden
 

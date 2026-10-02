@@ -17,7 +17,8 @@ Implementasi hanya dimulai setelah panitia memberikan daftar calon individu, keb
 | RES-01 | Visibility `turnout_only` | Endpoint dan realtime publik tidak memuat total per calon. |
 | ADM-01 | Visitor membuka rute admin | Ditolak/diarahkan ke login tanpa data admin terbuka. |
 | ADM-02 | Admin mencoba edit calon saat open | Ditolak dan tercatat audit. |
-| ADM-03 | Admin mencoba reset event dengan vote sah | Ditolak tanpa mengubah vote/hasil dan tercatat audit. |
+| ADM-03 | Admin mereset peserta saat masih ada vote | Ditolak tanpa mengubah peserta dan menjelaskan bahwa reset suara harus dilakukan lebih dahulu. |
+| ADM-04 | Admin mereset suara dengan alasan dan konfirmasi yang tepat | Vote/receipt/sesi/rate limit dihapus, event menjadi `scheduled`, peserta tetap ada, dan audit tercatat. |
 | IMP-01 | Spreadsheet punya NIM duplikat | Preview gagal/menandai baris sebelum commit. |
 | SEC-01 | PII pada respons/event/log publik | Test snapshot memastikan tidak ada NIM, nama, IP, token, atau pilihan calon personal. |
 | A11Y-01 | Keyboard dan reduced motion | Semua form/konfirmasi dapat selesai tanpa mouse dan animasi esensial mati. |

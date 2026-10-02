@@ -33,7 +33,7 @@ Keputusan lisan, chat, atau asumsi belum menjadi dasar kerja sampai diringkas ke
 | Dokumentasi lebih dahulu | Untuk perubahan requirement/proses/data/API, perbarui dokumen sebelum atau dalam perubahan yang sama dengan kode. Tidak boleh menunda dokumen ke pekerjaan berikutnya. |
 | Gate sebelum lanjut | Tahap berikutnya hanya dimulai jika entry condition dan bukti exit dari tahap sebelumnya terpenuhi. |
 | Bukti, bukan klaim | Status `Done` hanya boleh dipakai bila link/file bukti test, review, screenshot ter-redaksi, checksum, atau sign-off tersedia. |
-| Dua admin untuk tindakan sensitif | Import final, publish calon, open/close event, void, reset draft, ekspor restricted, dan perubahan produksi mengikuti dua akun `admin` berbeda serta audit. |
+| Konfirmasi tindakan reset | Reset suara dan reset peserta memakai sesi `admin`, alasan wajib, konfirmasi teks eksplisit, urutan server-side, serta audit. Tindakan sensitif lain mengikuti dua akun `admin` berbeda bila mekanismenya tersedia. |
 | Tidak ada PII di log biasa | NIM, nama pemilih, IP, token, password, receipt lengkap, atau pilihan individu tidak ditulis dalam log, issue, commit, screenshot, maupun dokumen publik. Gunakan ID internal ter-redaksi atau referensi secure. |
 | Stop saat tidak pasti | Bila dokumen konflik, data belum sah, atau integritas suara diragukan, tandai `Blocked` dan jangan mengambil jalan pintas. |
 
@@ -118,7 +118,8 @@ Peran berikut adalah fungsi kerja, bukan role aplikasi baru; aplikasi tetap hany
 | Perubahan desain atau teks publik sebelum open | Pelaksana | 1 admin reviewer | Preview dan entry log. |
 | Kontrak data/API, auth, anti-fraud, retensi | Pelaksana teknis | Admin penanggung jawab + reviewer teknis | Review dokumen dan hasil test. |
 | Import master final, mapping calon, publish calon | Admin operasional | Admin kedua yang berbeda | Audit dan checklist restricted. |
-| Open/close event, reset draft, void, pemilihan ulang | Admin penanggung jawab | Admin kedua yang berbeda | Reason, audit, snapshot sebelum/sesudah. |
+| Reset suara, reset peserta | Admin penanggung jawab | Konfirmasi teks eksplisit | Reason, urutan server-side, dan audit. |
+| Open/close event, void, pemilihan ulang | Admin penanggung jawab | Admin kedua yang berbeda | Reason, audit, snapshot sebelum/sesudah. |
 | Deployment production atau rollback | Pelaksana teknis | Admin penanggung jawab | Build, smoke test, rollback plan. |
 | Pengumuman hasil | Humas/admin penanggung jawab | Admin review | Rekap tersahkan dan teks publik. |
 

@@ -16,10 +16,6 @@ if (existsSync(target)) {
     "# Isi password awal admin (minimum 12 karakter); jangan commit file ini.",
     "ADMIN_INITIAL_USERNAME=admin@pppk-pgsd.vercel.app",
     "ADMIN_INITIAL_PASSWORD=",
-    "# Guard reset suara hanya untuk database development ini; jangan salin ke Production.",
-    "APP_ENV=development",
-    "SIMULATION_EVENT_ENABLED=true",
-    "ALLOW_SIMULATION_RESET=true",
     ""
   ].join("\n");
   writeFileSync(target, content, { encoding: "utf8", mode: 0o600 });

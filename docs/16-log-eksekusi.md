@@ -33,7 +33,7 @@ File ini adalah register kerja aktif. Setiap proses material wajib memiliki entr
 | EXE-20261002-16 | T5/T9 | Implementasi layar hasil live satu viewport | In review | Pelaksana teknis | Panitia (review UX dan kebijakan hasil) | 2026-10-02 | Panitia meninjau `/live` dengan database Preview dan menyetujui layar operasional sebelum memakainya pada event. |
 | EXE-20261002-17 | T5/T7 | Sederhanakan inisialisasi akun admin | In review | Pelaksana teknis | Panitia (keamanan dan setup) | 2026-10-02 | Pasang environment Preview, uji login awal dengan secret baru, lalu setujui konfigurasi Production. |
 | EXE-20261002-18 | T9 | Rancang ulang motion beranda publik | In review | Pelaksana teknis | Panitia (review visual dan aksesibilitas) | 2026-10-02 | Review landing pada Preview dengan database aman dan cek mobile/reduced-motion sebelum menyetujui rilis. |
-| EXE-20261002-19 | T5/T7 | Rancang reset peserta dan data simulasi | In review | Pelaksana teknis | Panitia (operasional dan integritas) | 2026-10-02 | Pasang guard Preview/local pada database test, lalu UAT urutan reset suara → reset peserta sebelum rilis. |
+| EXE-20261002-19 | T5/T7 | Rancang reset peserta dan data simulasi | In review | Pelaksana teknis | Panitia (operasional dan integritas) | 2026-10-02 | Jalankan UAT admin untuk urutan reset suara → reset peserta pada database yang dipilih panitia. |
 | EXE-20261002-20 | T9 | Tambahkan signature branding konsol | In review | Pelaksana teknis | User | 2026-10-02 | Tinjau pesan konsol sekali per sesi pada browser biasa dan pastikan tanpa PII, request, atau gangguan UI. |
 
 ## Detail entry aktif
@@ -487,6 +487,43 @@ File ini adalah register kerja aktif. Setiap proses material wajib memiliki entr
 | Tanggal/WIB | 2026-10-02 WIB |
 | Persetujuan | User meminta perubahan di-push ke GitHub. |
 | Dampak | Commit mencakup client component signature konsol, root layout, dan dokumentasi; tidak mencakup `.env.local`, PII, atau secret. |
+| Keputusan | Lanjutkan commit dan push branch `main` setelah staged diff diperiksa. |
+
+#### Amendment A7 — Reset tanpa konfigurasi environment
+
+| Field | Catatan |
+| --- | --- |
+| Tanggal/WIB | 2026-10-02 WIB |
+| Persetujuan | User meminta tombol reset dapat dipakai tanpa mengatur environment variable tambahan. |
+| Scope perubahan | Menghapus guard environment dan marker test untuk reset suara; action tetap admin-only, membutuhkan alasan serta konfirmasi teks, mengembalikan event ke `scheduled`, dan tetap berurutan sebelum reset peserta. |
+| Risiko dan mitigasi | Reset suara menjadi tersedia pada deployment utama. Perlindungan yang tersisa adalah sesi admin, konfirmasi eksplisit, alasan wajib, audit, dan lock event untuk mencegah vote masuk bersamaan. Tidak ada aksi reset yang dijalankan selama implementasi. |
+| Keputusan | Implementasi dimulai; dokumentasi operasional dan deployment harus menghapus langkah konfigurasi yang tidak lagi diperlukan. |
+
+#### Amendment A8 — Dokumentasi tanpa guard environment
+
+| Field | Catatan |
+| --- | --- |
+| Tanggal/WIB | 2026-10-02 WIB |
+| Aksi yang dilakukan | Menghapus referensi setup environment/marker test dari runbook, kontrak data/API, SOP, quality gate, route, fase, dan operasi; mendokumentasikan reset suara → reset peserta sebagai alur admin langsung. |
+| Dokumen terdampak | `00`, `07`, `08`, `09`, `10`, `12`, `13`, `15`, `19`, `README`, `engineering/10-deployment.md`, `ui/admin-event.md`, `workflow/reset-rerun.md`, dan `phases/phase-13.md`. |
+| Keputusan | Lanjutkan quality gate source; UAT data tetap membutuhkan database yang dipilih panitia dan tidak dijalankan otomatis. |
+
+#### Amendment A9 — Quality gate tanpa environment reset
+
+| Field | Catatan |
+| --- | --- |
+| Tanggal/WIB | 2026-10-02 WIB |
+| Bukti | `npm run typecheck`, `npm run lint`, `npm run build`, dan `git diff --check` lulus setelah guard environment dihapus. |
+| Batas pengujian | UAT tidak dijalankan karena tidak ada database yang disetujui untuk dimodifikasi; tidak ada suara atau peserta diakses selama quality gate. |
+| Keputusan | Siap direview dan di-deploy. Setelah deploy, admin dapat menjalankan reset suara dengan konfirmasi tanpa menambah environment variable. |
+
+#### Amendment A10 — Commit dan push reset tanpa environment
+
+| Field | Catatan |
+| --- | --- |
+| Tanggal/WIB | 2026-10-02 WIB |
+| Persetujuan | User meminta perubahan di-push ke GitHub. |
+| Dampak | Commit memuat source reset tanpa environment guard dan dokumen tata kelola yang diselaraskan; tidak memuat `.env.local`, database URL, PII, maupun secret. |
 | Keputusan | Lanjutkan commit dan push branch `main` setelah staged diff diperiksa. |
 
 ### Template untuk entry baru

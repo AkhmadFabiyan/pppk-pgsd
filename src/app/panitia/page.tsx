@@ -7,7 +7,7 @@ import {
   eventStatusAction,
   importVotersAction,
   logoutAction,
-  resetSimulationVotesAction,
+  resetVotesAction,
   resetVotersAction,
   resultVisibilityAction,
   syncCandidatesAction
@@ -97,12 +97,12 @@ export default async function AdminPage({ searchParams }: { searchParams: Search
 
             <section className="admin-card admin-danger" aria-labelledby="reset-title">
               <RotateCcw aria-hidden="true" className="admin-card-icon" />
-              <p className="eyebrow eyebrow-red">Reset terkendali</p><h2 id="reset-title">Reset data test</h2>
-              <p>Urutan wajib: kosongkan suara simulasi terlebih dahulu, lalu reset daftar peserta. Calon, materi calon, akun admin, dan audit tidak dihapus.</p>
+              <p className="eyebrow eyebrow-red">Reset terkendali</p><h2 id="reset-title">Reset voting dan peserta</h2>
+              <p>Urutan wajib: kosongkan suara voting terlebih dahulu, lalu reset daftar peserta. Calon, materi calon, akun admin, dan audit tidak dihapus.</p>
               <div className="admin-divider" />
               <h3>1. Reset suara voting</h3>
-              <p>{summary.simulationReset.message}</p>
-              <form className="admin-form" action={resetSimulationVotesAction}><label>Alasan reset suara<textarea name="reason" required minLength={8} maxLength={160} /></label><label>Ketik <code>RESET SUARA VOTING</code><input name="confirmation" required /></label><button className="button button-danger" type="submit" disabled={!summary.simulationReset.isAvailable}>Reset suara voting</button></form>
+              <p>Mengosongkan seluruh suara, receipt, sesi voting, dan rate limit. Event kembali menjadi terjadwal.</p>
+              <form className="admin-form" action={resetVotesAction}><label>Alasan reset suara<textarea name="reason" required minLength={8} maxLength={160} /></label><label>Ketik <code>RESET SUARA VOTING</code><input name="confirmation" required /></label><button className="button button-danger" type="submit">Reset suara voting</button></form>
               <div className="admin-divider" />
               <h3>2. Reset peserta</h3>
               <p>{summary.voteCount > 0 ? "Kosongkan suara voting terlebih dahulu." : summary.status !== "scheduled" ? "Kembalikan event ke status terjadwal terlebih dahulu." : "Suara sudah kosong. Daftar peserta dapat direset."}</p>
