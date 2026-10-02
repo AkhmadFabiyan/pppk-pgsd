@@ -33,6 +33,9 @@ Atur variable di Vercel Project Settings → Environment Variables. Nilai rahasi
 | `VOTING_TOKEN_SECRET` | Development, Preview, Production | Nilai acak minimal 32 karakter dan berbeda pada setiap lingkungan. Menjadi syarat server untuk membuka voting. |
 | `ADMIN_INITIAL_USERNAME` | Development, Preview, Production | Opsional; default `admin@pppk-pgsd.vercel.app`. Hanya dipakai ketika database environment belum memiliki akun admin. |
 | `ADMIN_INITIAL_PASSWORD` | Development, Preview, Production | Secret baru minimal 12 karakter dan berbeda per lingkungan. Dipakai sekali untuk membuat akun admin awal; tidak boleh masuk source atau `NEXT_PUBLIC_*`. |
+| `APP_ENV` | Development dan Preview saja | Isi `development` atau `preview` hanya untuk database test yang membutuhkan reset suara. Production tidak memakai nilai yang mengaktifkan simulasi. |
+| `SIMULATION_EVENT_ENABLED` | Development dan Preview saja | `true` untuk memberi marker test pada event database test saat schema dijalankan. Jangan pasang pada Production. |
+| `ALLOW_SIMULATION_RESET` | Development dan Preview saja | `true` hanya bila reset suara test memang diperlukan. Server tetap menolak jika `VERCEL_ENV=production`. |
 | `NEXT_PUBLIC_SITE_URL` | Production | URL HTTPS canonical tanpa trailing slash, misalnya `https://voting.example.ac.id`. Jangan gunakan URL preview sebagai canonical. |
 
 Tidak ada `VOTING_DB_PATH`. Database SQLite/file lokal tidak kompatibel dengan filesystem Vercel yang tidak persisten.
@@ -43,7 +46,7 @@ Tidak ada `VOTING_DB_PATH`. Database SQLite/file lokal tidak kompatibel dengan f
 2. Di Vercel, import repository dan gunakan framework preset **Next.js**. `package.json` mematok runtime Node `24.x`; jangan override ke runtime lama.
 3. Pasang database serverless dan masukkan lima variable di atas pada environment yang tepat. Pastikan Preview tidak menunjuk database Production.
 4. Deploy Preview terlebih dahulu. Kunjungi `/` dan `/panitia/login`; request pertama akan menyiapkan schema idempoten pada database environment tersebut.
-5. Login memakai username/password awal environment Preview untuk membuat admin test, kemudian lakukan UAT dengan spreadsheet salinan aman dan NIM dummy. Jangan unggah master peserta production pada Preview.
+5. Bila Preview dipakai untuk UAT berulang, isi `APP_ENV=preview`, `SIMULATION_EVENT_ENABLED=true`, dan `ALLOW_SIMULATION_RESET=true` **hanya** pada environment Preview sebelum schema pertama kali dipakai. Login memakai username/password awal environment Preview untuk membuat admin test, kemudian lakukan UAT dengan spreadsheet salinan aman dan NIM dummy. Jangan unggah master peserta production pada Preview.
 6. Setelah reviewer menyetujui UAT, promote commit yang sama ke Production dan isi variable Production yang berbeda.
 7. Buka `/panitia/login` di domain production, buat admin pertama, sinkronkan calon, lalu lakukan setup event mengikuti `../19-operasional-aplikasi.md`.
 8. Sebelum klik **Buka voting**, selesaikan checklist T10 dan catat keputusan pada `../16-log-eksekusi.md`.
@@ -58,7 +61,8 @@ Tidak ada `VOTING_DB_PATH`. Database SQLite/file lokal tidak kompatibel dengan f
 | `/robots.txt` dan `/sitemap.xml` | Hanya canonical publik yang dapat diindeks. |
 | Verifikasi NIM test | Pesan generik untuk NIM tidak sah; token sesi singkat hanya untuk NIM test yang eligible. |
 | Submit test | Hanya satu insert vote per NIM test; retry dengan idempotency key sama menerima receipt yang sama. |
-| Reset pra-voting | Berhasil hanya sebelum event dibuka dan sebelum ada suara sah. |
+| Reset suara test | Hanya Preview/local dengan tiga guard simulasi; setelahnya event menjadi `scheduled`, vote menjadi `0`, dan peserta tetap ada. |
+| Reset peserta | Baru aktif setelah suara `0`; menghapus NIM test tanpa mengubah calon atau audit. |
 
 ## Kegagalan, rollback, dan operasi
 
@@ -79,6 +83,7 @@ Tidak ada `VOTING_DB_PATH`. Database SQLite/file lokal tidak kompatibel dengan f
 
 - [ ] Environment Production memakai database production yang tepat dan backup awal dibuat.
 - [ ] `DATABASE_URL`, `VOTING_TOKEN_SECRET`, dan `ADMIN_INITIAL_PASSWORD` tidak kosong serta berbeda dari Preview; `ADMIN_INITIAL_USERNAME` sudah dikonfirmasi.
+- [ ] `APP_ENV`, `SIMULATION_EVENT_ENABLED`, dan `ALLOW_SIMULATION_RESET` tidak diatur untuk mengaktifkan simulasi pada Production.
 - [ ] Build/lint/typecheck hijau pada commit release.
 - [ ] UAT Preview tercatat tanpa spreadsheet maupun NIM production.
 - [ ] Canonical URL, robots, sitemap, dan HTTPS diverifikasi.

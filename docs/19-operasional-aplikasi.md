@@ -8,8 +8,9 @@ Dokumen ini menjelaskan perilaku aplikasi **saat ini**, bukan rancangan target. 
 - Satu event `pgsd-2026` tersedia dengan state `scheduled`, `open`, dan `closed`; keadaan awal selalu `scheduled` dan hasil tersembunyi.
 - Sembilan calon diambil dari katalog `src/lib/site.ts` dan poster pada `public/paslon/`. Poster ditampilkan pada rasio asli tanpa crop.
 - Master peserta masuk melalui unggahan XLSX oleh admin; spreadsheet sumber tidak pernah dibaca langsung oleh visitor dan tidak diubah oleh aplikasi.
-- Reset yang tersedia adalah **Reset pra-voting**: hanya ketika event belum `open` dan belum ada suara sah. Ia menghapus master peserta dan sesi verifikasi, mengembalikan status ke `scheduled`, menyembunyikan hasil, serta mempertahankan calon dan audit. Suara sah tidak mempunyai tombol hapus.
-- Sistem belum menyediakan pemilihan ulang dengan event baru, MFA, SSO/OTP kampus, CAPTCHA, maupun ekspor arsip. Kebutuhan itu tetap berada pada dokumen rancangan dan memerlukan entry eksekusi baru sebelum ditambahkan.
+- **Reset suara voting** hanya tersedia untuk local/Vercel Preview saat event ditandai sebagai test dan guard environment lulus. Ia menghapus suara uji, receipt, sesi voting, serta rate limit voting; peserta tidak dihapus. Production selalu menolak aksi ini pada server.
+- **Reset peserta** hanya aktif setelah jumlah suara `0` dan status event `scheduled`. Ia menghapus daftar NIM serta sesi verifikasi yang tersisa. Calon, materi calon, akun admin, dan audit dipertahankan. Kedua langkah menggunakan alasan serta konfirmasi teks dan dicatat pada audit.
+- Sistem juga belum menyediakan MFA, SSO/OTP kampus, CAPTCHA, maupun ekspor arsip. Kebutuhan tersebut memerlukan entry eksekusi baru sebelum ditambahkan.
 
 ## Prasyarat server
 
@@ -21,6 +22,9 @@ Dokumen ini menjelaskan perilaku aplikasi **saat ini**, bukan rancangan target. 
 | `VOTING_TOKEN_SECRET` | Minimal 32 karakter; dipakai untuk membungkus hash token voting dan merupakan syarat membuka event. |
 | `ADMIN_INITIAL_USERNAME` | Opsional; default-nya `admin@pppk-pgsd.vercel.app`. Hanya dipakai saat membuat akun admin pertama. |
 | `ADMIN_INITIAL_PASSWORD` | Minimal 12 karakter; hanya dibaca server untuk membuat akun admin pertama, lalu disimpan sebagai hash `scrypt` di database. |
+| `APP_ENV` | Isi `development` untuk local atau `preview` untuk Vercel Preview bila reset suara uji diperlukan. Jangan isi `production` untuk mengaktifkan reset. |
+| `SIMULATION_EVENT_ENABLED` | `true` hanya pada database test. Saat schema berjalan, memberi marker database `is_test` ke event; tidak tersedia di UI admin. |
+| `ALLOW_SIMULATION_RESET` | `true` hanya pada local/Preview database test agar tombol reset suara dapat dipakai. Production selalu menolak walaupun variable ini keliru terpasang. |
 
 Jangan commit `.env.local`, URL database, kata sandi, atau hasil ekspor. File ini hanya menyimpan instruksi tanpa rahasia.
 
@@ -63,7 +67,8 @@ Beranda memakai satu scene hutan CSS/Motion yang ringan: progress scroll, horizo
 | Kandidat | Sinkron katalog dan ubah published hanya sebelum event `open`; pembukaan event membutuhkan minimal dua calon published. |
 | Voting on/off | `open` hanya setelah seluruh prasyarat; `closed` langsung menolak verifikasi dan submit baru. |
 | Hasil | Rekap publik hanya agregat dan mengikuti visibility yang dipilih admin. Route `/live` memakai endpoint agregat yang sama dan tidak menampilkan apa pun saat visibility tertutup. |
-| Reset pra-voting | Memerlukan alasan minimal delapan karakter dan kata konfirmasi `RESET`; ditolak bila `open` atau sudah ada suara sah. |
+| Reset suara voting | Hanya local/Preview test dengan marker `is_test`, `APP_ENV` yang sesuai, dan `ALLOW_SIMULATION_RESET=true`. Memerlukan alasan minimal delapan karakter dan `RESET SUARA VOTING`; hasilnya kembali disembunyikan dan event menjadi `scheduled`. |
+| Reset peserta | Hanya setelah event `scheduled` dan suara `0`. Memerlukan alasan minimal delapan karakter dan `RESET PESERTA`; server menolak jika suara masih ada. |
 | Audit | Inisialisasi admin, status event, visibility, import, kandidat, sinkron katalog, dan reset dicatat dengan waktu serta ringkasan aman. |
 
 Setelah akun pertama ada di database, aplikasi selalu memverifikasi password hash pada database. Mengubah `ADMIN_INITIAL_PASSWORD` tidak mengganti password akun yang telah ada dan bukan mekanisme pemulihan akses.

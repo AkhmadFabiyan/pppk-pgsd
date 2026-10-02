@@ -8,7 +8,8 @@ import {
   findAdminByUsername,
   hasAdminUsers,
   replaceVoters,
-  resetBeforeVoting,
+  resetSimulationVotes,
+  resetVoters,
   setCandidatePublished,
   setElectionStatus,
   setResultVisibility,
@@ -29,6 +30,7 @@ function refreshPublicPaths() {
   revalidatePath("/");
   revalidatePath("/vote");
   revalidatePath("/bukti/[receiptCode]", "page");
+  revalidatePath("/live");
   revalidatePath("/panitia");
 }
 
@@ -141,16 +143,30 @@ export async function importVotersAction(formData: FormData) {
   redirectWithMessage("notice", `${importedCount} peserta berhasil diimpor.`);
 }
 
-export async function resetBeforeVotingAction(formData: FormData) {
+export async function resetSimulationVotesAction(formData: FormData) {
   const admin = await requireAdmin();
   const confirmation = textValue(formData, "confirmation");
   const reason = textValue(formData, "reason");
-  if (confirmation !== "RESET" || reason.length < 8) redirectWithMessage("error", "Ketik RESET dan isi alasan minimal 8 karakter.");
+  if (confirmation !== "RESET SUARA VOTING" || reason.length < 8) redirectWithMessage("error", "Ketik RESET SUARA VOTING dan isi alasan minimal 8 karakter.");
   try {
-    await resetBeforeVoting(admin.id, reason);
+    await resetSimulationVotes(admin.id, reason);
   } catch (error) {
-    redirectWithMessage("error", error instanceof Error ? error.message : "Reset ditolak.");
+    redirectWithMessage("error", error instanceof Error ? error.message : "Reset suara ditolak.");
   }
   refreshPublicPaths();
-  redirectWithMessage("notice", "Data peserta dan sesi pra-voting telah direset. Kandidat tetap tersimpan.");
+  redirectWithMessage("notice", "Suara simulasi telah direset. Peserta tetap tersimpan dan dapat direset pada tahap berikutnya.");
+}
+
+export async function resetVotersAction(formData: FormData) {
+  const admin = await requireAdmin();
+  const confirmation = textValue(formData, "confirmation");
+  const reason = textValue(formData, "reason");
+  if (confirmation !== "RESET PESERTA" || reason.length < 8) redirectWithMessage("error", "Ketik RESET PESERTA dan isi alasan minimal 8 karakter.");
+  try {
+    await resetVoters(admin.id, reason);
+  } catch (error) {
+    redirectWithMessage("error", error instanceof Error ? error.message : "Reset peserta ditolak.");
+  }
+  refreshPublicPaths();
+  redirectWithMessage("notice", "Daftar peserta dan sesi verifikasi telah direset. Kandidat tetap tersimpan.");
 }

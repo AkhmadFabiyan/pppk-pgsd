@@ -27,6 +27,7 @@ export type AdminSummary = ElectionSnapshot & {
   voterCount: number;
   voteCount: number;
   adminCount: number;
+  simulationReset: { isAvailable: boolean; message: string };
   recentAudit: Array<{ action: string; detail: string; createdAt: string }>;
 };
 
@@ -50,7 +51,7 @@ export type VoteSubmitResult =
   | { status: "accepted"; receiptCode: string; castAt: string }
   | { status: "already_voted" | "invalid_session" | "candidate_unavailable" | "election_not_open" };
 
-type ElectionRow = { id: string; title: string; status: ElectionStatus; result_visibility: ResultVisibility; updated_at: string };
+type ElectionRow = { id: string; title: string; status: ElectionStatus; result_visibility: ResultVisibility; is_test: boolean; updated_at: string };
 type CandidateRow = { id: string; ballot_number: number; slug: string; display_name: string; class_name: string; poster: string; vision: string; missions_json: string; is_published: boolean };
 type CountRow = { count: number | string };
 
@@ -60,6 +61,25 @@ declare global {
 
 function now() {
   return new Date().toISOString();
+}
+
+function isSimulationEnvironment() {
+  const appEnvironment = process.env.APP_ENV;
+  const vercelEnvironment = process.env.VERCEL_ENV;
+  return vercelEnvironment !== "production"
+    && (appEnvironment === "development" || appEnvironment === "preview")
+    && (!vercelEnvironment || vercelEnvironment === "development" || vercelEnvironment === "preview");
+}
+
+function shouldMarkEventAsTest() {
+  return isSimulationEnvironment() && process.env.SIMULATION_EVENT_ENABLED === "true";
+}
+
+function simulationResetState(event: ElectionRow) {
+  if (!isSimulationEnvironment()) return { isAvailable: false, message: "Reset suara hanya tersedia pada local atau Vercel Preview." };
+  if (process.env.ALLOW_SIMULATION_RESET !== "true") return { isAvailable: false, message: "Reset suara belum diaktifkan untuk environment test ini." };
+  if (!event.is_test) return { isAvailable: false, message: "Event ini tidak ditandai sebagai data simulasi." };
+  return { isAvailable: true, message: "Reset suara tersedia untuk data simulasi ini." };
 }
 
 function databaseUrl() {
@@ -94,8 +114,10 @@ async function migrate() {
       title TEXT NOT NULL,
       status TEXT NOT NULL CHECK (status IN ('scheduled', 'open', 'closed')),
       result_visibility TEXT NOT NULL CHECK (result_visibility IN ('hidden', 'full_live', 'final_only')),
+      is_test BOOLEAN NOT NULL DEFAULT FALSE,
       updated_at TIMESTAMPTZ NOT NULL
     )`,
+    sql`ALTER TABLE elections ADD COLUMN IF NOT EXISTS is_test BOOLEAN NOT NULL DEFAULT FALSE`,
     sql`CREATE TABLE IF NOT EXISTS candidates (
       id TEXT PRIMARY KEY,
       election_id TEXT NOT NULL REFERENCES elections(id) ON DELETE RESTRICT,
@@ -172,10 +194,14 @@ async function migrate() {
     sql`CREATE INDEX IF NOT EXISTS voters_event_nim_idx ON voters (election_id, nim)`,
     sql`CREATE INDEX IF NOT EXISTS votes_event_candidate_idx ON votes (election_id, candidate_id)`,
     sql`CREATE INDEX IF NOT EXISTS voting_sessions_token_idx ON voting_sessions (token_hash)`,
-    sql`INSERT INTO elections (id, title, status, result_visibility, updated_at)
-      VALUES (${ELECTION_ID}, 'Pemilihan Ketua Angkatan PGSD 2026', 'scheduled', 'hidden', ${now()})
+    sql`INSERT INTO elections (id, title, status, result_visibility, is_test, updated_at)
+      VALUES (${ELECTION_ID}, 'Pemilihan Ketua Angkatan PGSD 2026', 'scheduled', 'hidden', ${shouldMarkEventAsTest()}, ${now()})
       ON CONFLICT (id) DO NOTHING`
   ]);
+
+  if (shouldMarkEventAsTest()) {
+    await sql`UPDATE elections SET is_test = TRUE, updated_at = ${now()} WHERE id = ${ELECTION_ID} AND is_test = FALSE`;
+  }
 
   await sql.transaction(candidates.map((candidate) => sql`INSERT INTO candidates (id, election_id, ballot_number, slug, display_name, class_name, poster, vision, missions_json, is_published)
     VALUES (${`candidate-${candidate.number}`}, ${ELECTION_ID}, ${candidate.number}, ${candidate.slug}, ${candidate.name}, ${candidate.className}, ${candidate.poster}, ${candidate.vision}, ${JSON.stringify(candidate.missions)}, TRUE)
@@ -327,6 +353,7 @@ export async function getAdminSummary(): Promise<AdminSummary> {
     voterCount: numberValue(voterRows[0]?.count ?? 0),
     voteCount: numberValue(voteRows[0]?.count ?? 0),
     adminCount: numberValue(adminRows[0]?.count ?? 0),
+    simulationReset: simulationResetState(await eventRow()),
     recentAudit: auditRows.map((row) => ({ action: row.action, detail: row.detail, createdAt: row.created_at }))
   };
 }
@@ -424,16 +451,31 @@ export async function replaceVoters(adminId: string, voters: ImportedVoter[]) {
   ]);
 }
 
-export async function resetBeforeVoting(adminId: string, reason: string) {
+export async function resetSimulationVotes(adminId: string, reason: string) {
+  const event = await eventRow();
+  const state = simulationResetState(event);
+  if (!state.isAvailable) throw new Error(state.message);
+  const sql = sqlClient();
+  await sql.transaction([
+    sql`UPDATE elections SET status = 'scheduled', result_visibility = 'hidden', updated_at = ${now()} WHERE id = ${ELECTION_ID}`,
+    sql`DELETE FROM voting_sessions WHERE election_id = ${ELECTION_ID}`,
+    sql`DELETE FROM votes WHERE election_id = ${ELECTION_ID}`,
+    sql`DELETE FROM rate_limits WHERE scope IN ('vote.verify', 'vote.submit')`,
+    sql`INSERT INTO audit_logs (id, admin_id, action, detail, created_at) VALUES (${randomUUID()}, ${adminId}, 'simulation.vote_reset', ${`Reset suara simulasi: ${reason.slice(0, 160)}`}, ${now()})`
+  ]);
+}
+
+export async function resetVoters(adminId: string, reason: string) {
   const event = await eventRow();
   const sql = sqlClient();
   const voteRows = await query<CountRow>`SELECT COUNT(*)::int AS count FROM votes WHERE election_id = ${ELECTION_ID}`;
-  if (event.status === "open" || numberValue(voteRows[0]?.count ?? 0) > 0) throw new Error("Reset ditolak: voting terbuka atau sudah memiliki suara sah.");
+  if (event.status !== "scheduled") throw new Error("Reset peserta hanya tersedia setelah event kembali terjadwal.");
+  if (numberValue(voteRows[0]?.count ?? 0) > 0) throw new Error("Kosongkan suara voting terlebih dahulu.");
   await sql.transaction([
     sql`DELETE FROM voting_sessions WHERE election_id = ${ELECTION_ID}`,
     sql`DELETE FROM voters WHERE election_id = ${ELECTION_ID}`,
     sql`UPDATE elections SET status = 'scheduled', result_visibility = 'hidden', updated_at = ${now()} WHERE id = ${ELECTION_ID}`,
-    sql`INSERT INTO audit_logs (id, admin_id, action, detail, created_at) VALUES (${randomUUID()}, ${adminId}, 'election.reset_before_vote', ${`Reset pra-voting: ${reason.slice(0, 160)}`}, ${now()})`
+    sql`INSERT INTO audit_logs (id, admin_id, action, detail, created_at) VALUES (${randomUUID()}, ${adminId}, 'election.voters_reset', ${`Reset peserta: ${reason.slice(0, 160)}`}, ${now()})`
   ]);
 }
 
@@ -452,9 +494,11 @@ export async function consumeRateLimit(scope: string, keyHash: string, limit: nu
 
 export async function issueVotingSession(nim: string, tokenHash: string, expiresAt: string) {
   await ensureSchema();
-  const rows = await query<{ id: string }>`WITH eligible_voter AS (
-      SELECT voters.id FROM voters JOIN elections ON elections.id = voters.election_id
-      WHERE voters.election_id = ${ELECTION_ID} AND voters.nim = ${nim} AND voters.is_eligible = TRUE AND elections.status = 'open'
+  const rows = await query<{ id: string }>`WITH active_event AS (
+      SELECT id FROM elections WHERE id = ${ELECTION_ID} AND status = 'open' FOR UPDATE
+    ), eligible_voter AS (
+      SELECT voters.id FROM voters JOIN active_event ON active_event.id = voters.election_id
+      WHERE voters.election_id = ${ELECTION_ID} AND voters.nim = ${nim} AND voters.is_eligible = TRUE
     )
     INSERT INTO voting_sessions (id, election_id, voter_id, token_hash, status, expires_at, created_at)
     SELECT ${randomUUID()}, ${ELECTION_ID}, eligible_voter.id, ${tokenHash}, 'issued', ${expiresAt}, ${now()}
@@ -468,9 +512,11 @@ export async function issueVotingSession(nim: string, tokenHash: string, expires
 export async function submitVote(tokenHash: string, candidateId: string, idempotencyHash: string, receiptCode: string): Promise<VoteSubmitResult> {
   await ensureSchema();
   const castAt = now();
-  const inserted = await query<{ receipt_code: string; cast_at: string }>`WITH active_session AS (
-      SELECT voting_sessions.voter_id FROM voting_sessions JOIN elections ON elections.id = voting_sessions.election_id
-      WHERE voting_sessions.token_hash = ${tokenHash} AND voting_sessions.status = 'issued' AND voting_sessions.expires_at > ${castAt} AND elections.status = 'open'
+  const inserted = await query<{ receipt_code: string; cast_at: string }>`WITH active_event AS (
+      SELECT id FROM elections WHERE id = ${ELECTION_ID} AND status = 'open' FOR UPDATE
+    ), active_session AS (
+      SELECT voting_sessions.voter_id FROM voting_sessions JOIN active_event ON active_event.id = voting_sessions.election_id
+      WHERE voting_sessions.token_hash = ${tokenHash} AND voting_sessions.status = 'issued' AND voting_sessions.expires_at > ${castAt}
     ), valid_candidate AS (
       SELECT id FROM candidates WHERE id = ${candidateId} AND election_id = ${ELECTION_ID} AND is_published = TRUE
     ), inserted AS (

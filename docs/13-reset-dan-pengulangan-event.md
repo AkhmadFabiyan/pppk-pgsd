@@ -9,10 +9,57 @@ Istilah **reset** dibedakan menjadi tiga tindakan dengan batas yang tegas.
 | Tindakan | Kapan tersedia | Dampak | Nama tombol yang dipakai |
 | --- | --- | --- | --- |
 | Reset draft | Event `draft`/`scheduled` dan belum memiliki vote sah. | Mengembalikan konfigurasi draft ke kondisi awal yang disetujui; audit/import snapshot tetap tersimpan. | `Reset draft` |
-| Reset simulasi | Hanya local atau staging, memakai data dummy. | Menghapus data test event, vote test, sesi, dan idempotency test. | `Reset data simulasi` |
+| Reset suara voting simulasi | Hanya local atau staging, memakai data dummy. | Menghapus vote test/receipt, sesi, dan rate limit voting; peserta tetap ada sampai aksi reset peserta berikutnya. | `Reset suara voting` |
 | Pemilihan ulang | Event production sudah memiliki vote sah, telah dibuka, atau telah ditutup. | Menutup/mengarsipkan event lama dan membuat event pengganti baru yang kosong. Data event lama tetap utuh. | `Buat pemilihan ulang` |
 
 Tombol umum bernama `Reset voting` tidak digunakan pada production karena maknanya ambigu dan berisiko disalahpahami.
+
+## Keputusan rancangan aplikasi
+
+Untuk scope aplikasi ini, panel admin menambahkan **dua** aksi reset yang wajib dijalankan berurutan: `Reset suara voting`, lalu `Reset peserta`. Tidak ada tombol reset calon, akun admin, konfigurasi, atau materi calon. Tata kelola pemilihan ulang production pada bagian berikut tetap menjadi SOP, bukan fitur reset langsung di panel.
+
+| Aksi UI | Tujuan | Kapan dapat dijalankan | Data yang berubah | Data yang tetap ada |
+| --- | --- | --- | --- | --- |
+| `Reset suara voting` | Mengosongkan suara uji agar peserta dapat dikelola ulang. | Hanya database `development` atau Vercel Preview yang diberi marker test dan semua guard environment lulus. | Vote uji, receipt uji, sesi voting, serta rate limit `vote.*`; event kembali `scheduled` dan hasil tersembunyi. | Daftar peserta, calon, akun admin, konfigurasi kandidat, dan audit lama; satu audit reset baru harus ditambahkan. |
+| `Reset peserta` | Menghapus daftar NIM setelah suara benar-benar kosong. | Event tidak `open` dan total suara `0`. | `voters` dan sisa `voting_sessions`; event tetap `scheduled` dan hasil tersembunyi. | Calon, akun admin, konfigurasi kandidat, vote yang sudah tidak ada, dan audit lama; satu audit reset baru harus ditambahkan. |
+
+Urutan ini disengaja: `Reset peserta` tidak dapat ditekan atau dipanggil bila masih ada suara. Pada UI, ia disabled dengan pesan **“Kosongkan suara voting terlebih dahulu.”** Server juga menghitung ulang jumlah vote dalam transaction sebelum menghapus peserta, sehingga request langsung tidak dapat melompati tahap pertama. `Reset suara voting` tidak boleh tampil atau dapat dipanggil pada Production. Bila event resmi telah memiliki suara, tidak ada tombol hapus; SOP pemilihan ulang memakai event baru.
+
+### Guard `Reset suara voting`
+
+Reset suara hanya merupakan alat pengujian, bukan fitur production. Server wajib memeriksa **seluruh** guard berikut di dalam transaction/action, bukan sekadar menyembunyikan tombol:
+
+1. `APP_ENV` bernilai `development` atau `preview`; bila `VERCEL_ENV=production`, selalu tolak.
+2. Flag server-only `ALLOW_SIMULATION_RESET=true` tersedia.
+3. Event memiliki marker `is_test=true` yang disimpan di database. Marker tidak boleh dapat diubah dari halaman admin biasa.
+4. Database yang dipakai adalah database test/Preview yang berbeda dari Production dan tidak pernah berisi spreadsheet peserta resmi.
+5. Admin mengisi alasan, mengetik `RESET SUARA VOTING`, dan mengirim idempotency key baru.
+6. Untuk Preview/production-like deployment, akun admin kedua yang berbeda menyetujui permintaan. Local development boleh memakai satu admin, tetapi audit tetap wajib.
+
+Jika satu guard tidak lolos, endpoint mengembalikan `simulation_reset_not_allowed` tanpa mengubah baris mana pun. `DELETE FROM votes` generik atau akses reset lewat URL/API tanpa guard tidak boleh ada.
+
+### Urutan transaksi reset suara voting
+
+Server menghitung ringkasan tanpa PII lebih dahulu (`total_vote`, `total_voter`, `total_session`), menyimpannya pada audit, lalu melakukan satu transaction dengan urutan:
+
+1. nonaktifkan event secara atomik dan hapus `voting_sessions` event;
+2. hapus `votes` event beserta receipt uji yang melekat pada baris tersebut;
+3. hapus rate-limit dengan scope `vote.verify` dan `vote.submit` pada database test;
+4. set event menjadi `scheduled`, hasil `hidden`, perbarui waktu; dan
+5. tambahkan audit `simulation.vote_reset` berisi actor, approver bila ada, reason, request ID, dan hitungan suara sebelum/hasil akhir tanpa NIM atau pilihan per orang.
+
+Peserta, kandidat, dan akun admin tidak boleh ikut terhapus. Setelah transaction selesai, UI menampilkan `0 suara` dan tombol `Reset peserta` menjadi aktif; browser tidak menyimpan receipt lama sebagai bukti event baru.
+
+### Urutan transaksi reset peserta
+
+Server memeriksa ulang bahwa event tidak `open` dan jumlah vote adalah `0`, lalu melakukan satu transaction:
+
+1. hapus `voting_sessions` event yang tersisa;
+2. hapus `voters` event;
+3. set event tetap `scheduled`, hasil `hidden`, dan perbarui waktu; lalu
+4. tambahkan audit `simulation.voters_reset` atau `election.voters_reset` sesuai environment, dengan actor, reason, request ID, dan hitungan peserta sebelum/hasil akhir tanpa NIM.
+
+Jika query hitung vote menemukan satu suara pun, transaction dibatalkan dengan `event_has_votes`. Kandidat dan akun admin tetap tidak berubah.
 
 ## Aturan state dan izin
 
@@ -107,22 +154,42 @@ Sebelum tombol final aktif, UI wajib menampilkan:
 
 Tidak memakai tombol merah tunggal tanpa konfirmasi, animasi glamor, atau copy seperti `hapus semua`.
 
+### Susunan Danger Zone yang direkomendasikan
+
+```text
+┌ 1. Reset suara voting (hanya Preview/local) ─────────────────┐
+│ PREVIEW · test data · 1 suara uji · 437 peserta uji          │
+│ Akan menghapus suara, receipt, sesi, dan rate limit voting.  │
+│ [Alasan] [Ketik RESET SUARA VOTING] [Reset suara voting]      │
+│ Menunggu persetujuan admin kedua / selesai di local.          │
+├ 2. Reset peserta ────────────────────────────────────────────┤
+│ Terkunci sampai jumlah suara menjadi 0.                        │
+│ Akan menghapus daftar peserta dan sisa sesi verifikasi.       │
+│ [Alasan] [Ketik RESET PESERTA] [Reset peserta]                │
+├ Pemilihan resmi ─────────────────────────────────────────────┤
+│ Tidak ada tombol hapus suara atau peserta. Gunakan SOP ulang.│
+└──────────────────────────────────────────────────────────────┘
+```
+
+Jumlah pada contoh hanya ilustrasi UI; aplikasi harus mengambil hitungan aktual. Tombol yang tidak memenuhi guard tetap tampil sebagai disabled **dengan alasan spesifik** dan tautan SOP, bukan sekadar disabled tanpa penjelasan.
+
 ## Kontrak API dan data
 
 | Endpoint konseptual | Kondisi | Hasil |
 | --- | --- | --- |
-| `POST /admin/elections/{id}/reset-draft-request` | `draft`/`scheduled`, `total_cast = 0`, re-auth. | Membuat permintaan reset pending. |
+| `POST /admin/elections/{id}/simulation-vote-reset-request` | Environment test lulus, event `is_test`, reason, re-auth, idempotency key. | Membuat permintaan reset suara pending. |
+| `POST /admin/elections/{id}/voters-reset-request` | Event tidak `open`, `total_cast = 0`, reason, re-auth, idempotency key. | Membuat permintaan reset peserta pending. |
 | `POST /admin/reset-requests/{id}/approve` | Admin penyetuju berbeda, state masih valid. | Menjalankan reset transaction dan audit. |
 | `POST /admin/elections/{id}/create-replacement-request` | Event lama ditutup/diarsipkan, reason wajib. | Membuat permintaan event pengganti. |
 | `POST /admin/replacement-requests/{id}/approve` | Admin penyetuju berbeda. | Membuat draft event baru dengan lineage. |
 
-Kode kesalahan yang wajib dipahami UI: `reset_not_allowed`, `event_has_votes`, `event_state_changed`, `second_admin_required`, `reauth_required`, `replacement_not_ready`, dan `idempotency_conflict`.
+Kode kesalahan yang wajib dipahami UI: `reset_not_allowed`, `simulation_reset_not_allowed`, `event_has_votes`, `event_state_changed`, `second_admin_required`, `reauth_required`, `replacement_not_ready`, dan `idempotency_conflict`.
 
 Audit minimum memuat ID event lama/baru, tipe tindakan, actor pengaju/penyetuju, alasan, state dan jumlah vote sebelum tindakan, baseline/config snapshot yang dipakai, request ID, serta waktu. Audit tidak memuat pilihan calon individual atau token mentah.
 
 ## Khusus simulasi
 
-`Reset data simulasi` hanya diaktifkan jika environment secara eksplisit `local` atau `staging` dan event diberi flag `is_test = true`. Endpoint/button ini tidak dibundle atau tidak dapat dipanggil pada production. Ia tidak boleh menerima file spreadsheet peserta asli.
+`Reset suara voting` hanya diaktifkan jika environment secara eksplisit `local` atau `staging` dan event diberi flag `is_test = true`. Endpoint/button ini tidak dibundle atau tidak dapat dipanggil pada production. Ia tidak boleh menerima file spreadsheet peserta asli.
 
 Sebelum reset simulasi, sistem memastikan database dan host bukan production. Jika pemeriksaan environment tidak pasti, tindakan harus fail-closed dan ditolak.
 
@@ -135,6 +202,11 @@ Sebelum reset simulasi, sistem memastikan database dan host bukan production. Ji
 | RST-03 | Pengaju mencoba menyetujui reset sendiri. | Ditolak `second_admin_required`. |
 | RST-04 | Dua klik/permintaan reset dengan idempotency key sama. | Hanya satu tindakan/audit final. |
 | RST-05 | Pemilihan ulang event closed. | Event baru memiliki ID/slug baru, lineage benar, dan 0 vote; event lama tetap utuh. |
-| RST-06 | Endpoint reset simulasi dipanggil pada production. | Ditolak/fail-closed dan tercatat alert. |
+| RST-06 | Endpoint reset suara voting dipanggil pada production. | Ditolak/fail-closed dan tercatat alert. |
+| RST-07 | Admin meminta reset suara voting di Preview dengan semua guard terpenuhi. | Vote/receipt/sesi dan rate limit voting hilang dalam satu transaction, peserta tetap ada, count suara menjadi 0, audit memuat hitungan tersensor. |
+| RST-08 | Admin mencoba reset peserta saat masih ada satu suara. | Tombol menjelaskan alasan penguncian dan server menolak request langsung tanpa mengubah peserta. |
+| RST-09 | Admin mereset peserta setelah reset suara menghasilkan 0 vote. | Peserta dan sesi hilang, calon/audit tetap ada, event `scheduled`. |
+| RST-10 | Admin mencoba reset suara voting saat `APP_ENV=production`, flag/marker hilang, atau event bukan test. | Server menolak tanpa mengubah data, sekalipun tombol dipaksa dari request langsung. |
+| RST-11 | Setelah reset suara, receipt test lama dibuka dan vote baru dikirim dari NIM sama. | Receipt lama tidak ditemukan; NIM dapat diverifikasi dan memberi satu vote baru pada data test yang bersih. |
 
 Lihat juga `08-kontrak-api-dan-realtime.md`, `09-sop-panitia.md`, dan `10-quality-gate-dan-pengujian.md` untuk integrasi API, SOP, serta pengujian.

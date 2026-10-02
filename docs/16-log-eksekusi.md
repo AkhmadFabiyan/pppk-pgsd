@@ -33,6 +33,7 @@ File ini adalah register kerja aktif. Setiap proses material wajib memiliki entr
 | EXE-20261002-16 | T5/T9 | Implementasi layar hasil live satu viewport | In review | Pelaksana teknis | Panitia (review UX dan kebijakan hasil) | 2026-10-02 | Panitia meninjau `/live` dengan database Preview dan menyetujui layar operasional sebelum memakainya pada event. |
 | EXE-20261002-17 | T5/T7 | Sederhanakan inisialisasi akun admin | In review | Pelaksana teknis | Panitia (keamanan dan setup) | 2026-10-02 | Pasang environment Preview, uji login awal dengan secret baru, lalu setujui konfigurasi Production. |
 | EXE-20261002-18 | T9 | Rancang ulang motion beranda publik | In review | Pelaksana teknis | Panitia (review visual dan aksesibilitas) | 2026-10-02 | Review landing pada Preview dengan database aman dan cek mobile/reduced-motion sebelum menyetujui rilis. |
+| EXE-20261002-19 | T5/T7 | Rancang reset peserta dan data simulasi | In review | Pelaksana teknis | Panitia (operasional dan integritas) | 2026-10-02 | Pasang guard Preview/local pada database test, lalu UAT urutan reset suara → reset peserta sebelum rilis. |
 
 ## Detail entry aktif
 
@@ -376,6 +377,78 @@ File ini adalah register kerja aktif. Setiap proses material wajib memiliki entr
 | Alasan perubahan | User meminta redesign landing, copy, dan pedoman UI/UX didorong ke GitHub. |
 | Dampak | Commit mencakup komponen motion, CSS, copy, dan dokumen visual; tidak mencakup poster, PII, `.env.local`, atau secret. |
 | Persetujuan | User. |
+| Keputusan | Lanjutkan commit dan push branch `main` setelah staged diff diperiksa. |
+
+### EXE-20261002-19 — Rancang reset peserta dan data simulasi
+
+| Field | Catatan |
+| --- | --- |
+| Status | `In progress` — rancangan operasional sedang diperbarui; tidak ada database, peserta, atau suara yang diubah. |
+| Tahap runbook | T5/T7 / administrasi event dan integritas vote. |
+| Tujuan | Menyediakan cara jelas untuk mengosongkan peserta sebelum event serta memulai ulang data uji tanpa menciptakan tombol hapus suara pada production. |
+| Scope | Perilaku, pembatas environment, UX Danger Zone, konfirmasi, audit, dan acceptance test untuk reset peserta serta reset simulasi. |
+| Out of scope | Menjalankan reset pada database yang ada, menghapus vote production, mengubah database/schema/API, atau membuka voting. |
+| Dokumen wajib dibaca | `13-reset-dan-pengulangan-event.md`, `19-operasional-aplikasi.md`, `09-sop-panitia.md`, `10-quality-gate-dan-pengujian.md`, dan `workflow/reset-rerun.md`. |
+| Entry condition | User meminta rancangan reset peserta dan suara setelah satu suara uji membuat tombol reset pra-voting terkunci. |
+| Owner | Pelaksana teknis. |
+| Reviewer/approver | Panitia penanggung jawab event dan admin kedua untuk prosedur production. |
+| Risiko dan mitigasi | Tombol reset suara tanpa konteks dapat menghapus bukti election. Reset suara hanya dirancang bagi environment non-production yang diverifikasi; production memakai event pengganti dan arsip. |
+| Keputusan sementara | Gunakan tiga aksi eksplisit: `Reset peserta`, `Reset data simulasi`, dan `Buat pemilihan ulang`; jangan gunakan istilah ambigu `Reset voting` pada production. |
+| Waktu | Mulai 2026-10-02 WIB. |
+
+#### Amendment A1 — Rancangan guard dan alur selesai
+
+| Field | Catatan |
+| --- | --- |
+| Tanggal/WIB | 2026-10-02 WIB |
+| Aksi yang dilakukan | Mendokumentasikan pemisahan tiga aksi reset, guard server-only untuk data simulasi, urutan transaction, copy Danger Zone, serta acceptance test. |
+| Dokumen diperbarui | `13-reset-dan-pengulangan-event.md`, `19-operasional-aplikasi.md`, dan `workflow/reset-rerun.md`. |
+| Bukti | `git diff --check` akan dijalankan untuk memastikan perubahan dokumentasi bersih; tidak ada source atau database yang diubah. |
+| Keputusan | Siap direview panitia. Implementasi hanya dapat dimulai setelah target environment simulasi dan kebijakan admin kedua disetujui. |
+
+#### Amendment A2 — Scope reset disederhanakan
+
+| Field | Catatan |
+| --- | --- |
+| Tanggal/WIB | 2026-10-02 WIB |
+| Keputusan user | Scope reset dibatasi pada data suara voting dan peserta saja. |
+| Dampak rancangan | Panel target memakai reset suara voting terlebih dahulu, kemudian reset peserta; calon, akun admin, konfigurasi kandidat, dan audit tetap dipertahankan. |
+| Batas | Aksi hanya untuk local/Vercel Preview test; production tidak menawarkan penghapusan suara. |
+
+#### Amendment A3 — Urutan reset diwajibkan
+
+| Field | Catatan |
+| --- | --- |
+| Tanggal/WIB | 2026-10-02 WIB |
+| Keputusan user | Suara harus dikosongkan lebih dahulu; reset peserta hanya tersedia setelah jumlah suara nol. |
+| Dampak rancangan | Ada dua aksi berurutan, masing-masing server-validated dan memiliki audit sendiri. UI menjelaskan penyebab tombol reset peserta terkunci bila masih ada suara. |
+
+#### Amendment A4 — Implementasi disetujui
+
+| Field | Catatan |
+| --- | --- |
+| Tanggal/WIB | 2026-10-02 WIB |
+| Persetujuan | User meminta proses implementasi. |
+| Scope implementasi | Schema marker event test, server action reset suara dengan guard environment, server action reset peserta dengan cek jumlah vote, UI admin, template environment, dan pengujian. |
+| Batas | Tidak menjalankan reset pada database mana pun; tidak menyediakan endpoint hapus suara pada Production. |
+
+#### Amendment A5 — Implementasi dan quality gate lokal
+
+| Field | Catatan |
+| --- | --- |
+| Tanggal/WIB | 2026-10-02 WIB |
+| Aksi yang dilakukan | Menambah marker `is_test` pada event, guard `APP_ENV`/`VERCEL_ENV`/`ALLOW_SIMULATION_RESET`, reset suara test yang mengembalikan status ke `scheduled`, reset peserta yang menolak bila vote tidak nol, audit, copy Danger Zone berurutan, dan lock event saat verifikasi/submit vote. |
+| Bukti | `npm run typecheck`, `npm run lint`, dan `npm run build` lulus. `git diff --check` lulus. |
+| Batas pengujian | UAT database tidak dijalankan karena tidak ada database local/Preview yang secara eksplisit dipilih untuk diuji; tidak ada vote/peserta yang diakses atau diubah. |
+| Keputusan | Siap direview. Sebelum memakai reset suara, buat database Preview terpisah, set tiga environment variable test, lalu jalankan RST-07 sampai RST-11 dengan data dummy. |
+
+#### Amendment A6 — Commit dan push implementasi reset
+
+| Field | Catatan |
+| --- | --- |
+| Tanggal/WIB | 2026-10-02 WIB |
+| Persetujuan | User meminta perubahan di-push ke GitHub. |
+| Dampak | Commit memuat source reset test/peserta, migration marker test, template environment, dan dokumentasi; tidak memuat `.env.local`, database URL, PII, atau secret. |
 | Keputusan | Lanjutkan commit dan push branch `main` setelah staged diff diperiksa. |
 
 ### Template untuk entry baru
