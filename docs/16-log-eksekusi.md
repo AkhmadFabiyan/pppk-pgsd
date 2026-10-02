@@ -36,6 +36,7 @@ File ini adalah register kerja aktif. Setiap proses material wajib memiliki entr
 | EXE-20261002-19 | T5/T7 | Rancang reset peserta dan data simulasi | In review | Pelaksana teknis | Panitia (operasional dan integritas) | 2026-10-02 | Jalankan UAT admin untuk urutan reset suara → reset peserta pada database yang dipilih panitia. |
 | EXE-20261002-20 | T9 | Tambahkan signature branding konsol | In review | Pelaksana teknis | User | 2026-10-02 | Tinjau pesan konsol sekali per sesi pada browser biasa dan pastikan tanpa PII, request, atau gangguan UI. |
 | EXE-20261002-21 | T9 | Implementasi ulang workspace admin responsif | In review | Pelaksana teknis | User | 2026-10-02 | User meninjau panel autentik pada Preview/local; feedback UI atau UAT menentukan perubahan berikutnya. |
+| EXE-20261002-22 | T3/T5 | Selaraskan visi–misi katalog dengan poster calon | In review | Pelaksana teknis | User | 2026-10-02 | Deploy perubahan, sinkronkan record lewat admin sebelum event dibuka, lalu panitia meninjau teks publik. |
 
 ## Detail entry aktif
 
@@ -561,6 +562,41 @@ File ini adalah register kerja aktif. Setiap proses material wajib memiliki entr
 | Tanggal/WIB | 2026-10-02 WIB |
 | Persetujuan | User meminta perubahan di-push ke GitHub. |
 | Dampak | Commit hanya memuat markup, CSS, dan dokumentasi redesign admin; tidak memuat `.env.local`, credential, database URL, PII, atau data event. |
+| Keputusan | Lanjutkan commit serta push branch `main` setelah staged diff diperiksa. |
+
+### EXE-20261002-22 — Selaraskan visi–misi katalog dengan poster calon
+
+| Field | Catatan |
+| --- | --- |
+| Status | `In review` — katalog source sudah diselaraskan; record deployment menunggu sinkronisasi admin. |
+| Tahap runbook | T3/T5 / materi kandidat dan katalog aplikasi. |
+| Tujuan | Menampilkan visi dan misi lengkap yang sesuai dengan poster sumber setiap calon pada detail kandidat dan voting. |
+| Scope | Perbaikan transkripsi `vision` dan `missions` pada `src/lib/site.ts`, catatan sumber, serta quality gate kode. |
+| Out of scope | Mengubah nama, nomor urut, foto/poster, status publish, vote, database secara langsung, atau menjalankan sinkronisasi kandidat pada event. |
+| Dokumen wajib dibaca | `14-inventaris-materi-calon.md`, `11-setup-calon-individu.md`, `19-operasional-aplikasi.md`, `10-quality-gate-dan-pengujian.md`, dan `16-log-eksekusi.md`. |
+| Entry condition | User melaporkan teks visi-misi yang tampil tidak sama dengan materi pada foto/poster calon. |
+| Risiko dan mitigasi | Katalog database yang sudah ada dapat menyimpan teks lama. Source diselaraskan dengan transkripsi inventaris; record deployment hanya diperbarui melalui aksi admin `Sinkronkan materi calon` sebelum event open/tanpa suara. |
+| Owner | Pelaksana teknis. |
+| Reviewer/approver | User/panitia untuk pemeriksaan akhir transkripsi poster. |
+| Waktu | Mulai 2026-10-02 WIB. |
+
+#### Amendment A1 — Katalog dan quality gate lokal
+
+| Field | Catatan |
+| --- | --- |
+| Tanggal/WIB | 2026-10-02 WIB |
+| Aksi yang dilakukan | Mengganti visi/misi ringkas pada `src/lib/site.ts` dengan transkripsi lengkap dari sembilan materi poster di `14-inventaris-materi-calon.md`. Nama, nomor ballot, kelas, dan path poster tidak diubah. |
+| Bukti | Satu poster sumber ditinjau langsung untuk memastikan transkripsi inventaris memang materi yang dirender. `npm run typecheck`, `npm run lint`, `npm run build`, dan `git diff --check` lulus. |
+| Batas deployment | `getPublishedCandidates()` membaca record database. Setelah deploy, admin harus menekan `Sinkronkan materi calon` saat event belum `open` dan belum ada suara agar catalog lama diperbarui. Tidak ada database yang diubah selama pekerjaan ini. |
+| Keputusan | Siap direview dan di-deploy; pemeriksaan akhir transkripsi seluruh poster tetap menjadi approval panitia. |
+
+#### Amendment A2 — Commit dan push sinkronisasi materi calon
+
+| Field | Catatan |
+| --- | --- |
+| Tanggal/WIB | 2026-10-02 WIB |
+| Persetujuan | User meminta perubahan di-push ke GitHub. |
+| Dampak | Commit memuat transkripsi visi-misi katalog dan log eksekusi; tidak memuat database URL, `.env.local`, PII, foto baru, atau data voting. |
 | Keputusan | Lanjutkan commit serta push branch `main` setelah staged diff diperiksa. |
 
 ### Template untuk entry baru
