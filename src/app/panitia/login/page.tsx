@@ -21,16 +21,16 @@ export default async function AdminLoginPage({ searchParams }: { searchParams: S
         <article className="admin-auth-card">
           <LockKeyhole aria-hidden="true" />
           <p className="eyebrow eyebrow-green">Area terbatas</p>
-          <h1>{setupRequired ? "Aktifkan akses panitia." : "Masuk ke panel panitia."}</h1>
-          <p>{setupRequired ? "Masukkan akun admin awal yang telah dikonfigurasi pada server. Akun dibuat otomatis setelah kredensial cocok." : "Gunakan akun panitia yang telah didaftarkan. Aktivitas penting dicatat di audit internal."}</p>
+          <h1>{setupRequired ? "Siapkan akses panitia." : "Masuk ke panel panitia."}</h1>
+          <p>{setupRequired ? "Gunakan kredensial awal dari konfigurasi server. Akun dibuat setelah kredensial cocok." : "Gunakan akun panitia. Aktivitas penting dicatat di audit internal."}</p>
           {params.error && <p className="form-error" role="alert">{params.error}</p>}
           {admin ? (
-            <Link className="button" href="/panitia">Buka panel panitia</Link>
+            <Link className="button" href="/panitia">Buka panel</Link>
           ) : (
             <form className="admin-form" action={loginAction}>
               <label>Username<input name="username" autoComplete="username" defaultValue={setupRequired ? initialAdminUsername() : undefined} required /></label>
               <label>Kata sandi<input name="password" type="password" autoComplete="current-password" required /></label>
-              <button className="button" type="submit">{setupRequired ? "Aktifkan akun admin" : "Masuk"}</button>
+              <button className="button" type="submit">{setupRequired ? "Buat akun admin" : "Masuk"}</button>
             </form>
           )}
           <Link className="text-link" href="/">Kembali ke beranda</Link>

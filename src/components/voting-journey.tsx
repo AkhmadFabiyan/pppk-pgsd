@@ -4,10 +4,10 @@ import { Check, ChevronRight, Fingerprint, Send, Sparkles } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 
 const steps = [
-  { icon: Fingerprint, title: "Verifikasi NIM", body: "Masukkan NIM sendiri saat voting sudah dibuka." },
-  { icon: Sparkles, title: "Pilih calon", body: "Baca gagasannya, lalu pilih satu calon." },
-  { icon: Send, title: "Periksa pilihan", body: "Konfirmasi hanya saat pilihanmu sudah yakin." },
-  { icon: Check, title: "Simpan kode bukti", body: "Catat receipt setelah server menerima suaramu." }
+  { icon: Fingerprint, title: "Verifikasi NIM", body: "Masukkan NIM-mu saat voting dibuka." },
+  { icon: Sparkles, title: "Pilih calon", body: "Pilih satu calon." },
+  { icon: Send, title: "Cek pilihan", body: "Pastikan pilihanmu sebelum mengirim." },
+  { icon: Check, title: "Simpan kode bukti", body: "Simpan receipt setelah suara diterima." }
 ] as const;
 
 export function VotingJourney() {

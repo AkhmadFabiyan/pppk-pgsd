@@ -6,7 +6,7 @@ import { useState } from "react";
 
 const navigation = [
   { href: "/#kandidat", label: "Kandidat" },
-  { href: "/#panduan", label: "Cara memilih" },
+  { href: "/#panduan", label: "Cara voting" },
   { href: "/#hasil", label: "Hasil" },
   { href: "/#bantuan", label: "Bantuan" }
 ];
@@ -31,7 +31,7 @@ export function SiteHeader() {
             </Link>
           ))}
           <Link className="button button-small" href="/vote" onClick={() => setMenuOpen(false)}>
-            Ke bilik suara
+            Buka bilik suara
           </Link>
         </nav>
         <button

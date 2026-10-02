@@ -44,6 +44,7 @@ File ini adalah register kerja aktif. Setiap proses material wajib memiliki entr
 | EXE-20261003-27 | T9 | Urutkan papan hasil live berdasarkan jumlah suara | In review | Pelaksana teknis | User | 2026-10-03 | Ranking, tie-break, motion layout, dan quality check selesai; UAT vote database masih wajib. |
 | EXE-20261003-28 | T9 | Redesign UI/UX Civic Forest yang ringan dan animatif | In review | Pelaksana teknis | User/panitia | 2026-10-03 | Build dan pemeriksaan bundle lulus; review visual memakai database sah masih diperlukan. |
 | EXE-20261003-29 | T9 | Tampilkan tanggal snapshot pada hasil publik | In review | Pelaksana teknis | User | 2026-10-03 | Source dan quality check selesai; user dapat meninjau label tanggal pada data snapshot sah. |
+| EXE-20261003-30 | T9 | Terapkan microcopy pada antarmuka | In progress | Pelaksana teknis | User | 2026-10-03 | Pedoman nada bahasa dibuat; audit dan penerapan copy visitor/admin sedang berlangsung. |
 
 ## Detail entry aktif
 
@@ -741,6 +742,26 @@ File ini adalah register kerja aktif. Setiap proses material wajib memiliki entr
 | Bukti | `npm run typecheck`, `npm run lint`, `npm run build`, dan `git diff --check` lulus pada 2026-10-03 WIB. Tidak ada API/database/payload baru. |
 | Exit condition | User meninjau kedua label pada data snapshot sah. Tidak diperlukan perubahan data atau deployment baru sebelum commit bila diminta. |
 | Keputusan | Lanjut implementasi; tidak ada perubahan kontrak data. |
+| Owner | Pelaksana teknis. |
+| Reviewer/approver | User. |
+| Waktu | Mulai 2026-10-03 WIB. |
+
+### EXE-20261003-30 — Terapkan microcopy pada antarmuka
+
+| Field | Catatan |
+| --- | --- |
+| Status | `In review` — copy sumber, dokumentasi, dan quality check selesai; menunggu tinjauan wording pada state event nyata. |
+| Tahap runbook | T9 / UX, aksesibilitas, dan pemulihan error. |
+| Tujuan | Menjadikan teks antarmuka ringkas, jelas, kontekstual, dan dapat ditindak bagi visitor serta admin. |
+| Scope | Status/CTA publik, hero, panduan, bilik suara, receipt, hasil, login/admin operational copy, error UI aman, serta dokumentasi microcopy. |
+| Dokumen terdampak | `04-ui-ux-dan-visual.md`, `10-quality-gate-dan-pengujian.md`, `22-microcopy-dan-nada-bahasa.md`, `ui/landing-page.md`, dan `ui/vote.md` untuk kontrak copy serta acceptance. |
+| Out of scope | Teks resmi calon, visi-misi, data spreadsheet, audit log, kontrak API, kode error internal, kebijakan voting, dan data pribadi. |
+| Dokumen wajib dibaca | `02-alur-voting.md`, `04-ui-ux-dan-visual.md`, `09-sop-panitia.md`, `10-quality-gate-dan-pengujian.md`, spesifikasi `ui/`, dan `22-microcopy-dan-nada-bahasa.md`. |
+| Risiko dan mitigasi | Copy terlalu pendek dapat menyembunyikan konsekuensi atau membuat klaim keamanan berlebihan. Pertahankan konteks penting, gunakan state server yang jujur, dan tidak mengubah pesan internal/data sensitif. |
+| Aksi yang dilakukan | Membuat kontrak microcopy; menerapkan CTA dan state ringkas pada beranda, header/footer, hero, panduan, bilik suara, receipt, hasil, login, dan panel panitia; mengganti jargon publik `eligible` menjadi `pemilih berhak`; mempertahankan teks resmi calon, log audit, kontrak API, dan perilaku voting. |
+| Bukti | `npm run typecheck`, `npm run lint`, `git diff --check`, dan `npm run build` lulus pada 2026-10-03 WIB. Build Next.js 16.3.8 menghasilkan seluruh rute yang diharapkan tanpa error. |
+| Exit condition | User meninjau wording pada state event nyata. Tidak diperlukan perubahan data, API, atau deployment baru sebelum commit bila diminta. |
+| Keputusan | Implementasi siap ditinjau; tidak ada perubahan perilaku voting atau data. |
 | Owner | Pelaksana teknis. |
 | Reviewer/approver | User. |
 | Waktu | Mulai 2026-10-03 WIB. |

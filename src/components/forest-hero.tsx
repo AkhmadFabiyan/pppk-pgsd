@@ -85,20 +85,20 @@ export function ForestHero({ statusLabel, scheduleLabel, isOpen }: ForestHeroPro
             <span data-forest-layer="title-line">2026</span>
           </h1>
           <div data-forest-layer="hero-detail"><TypewriterPhrase /></div>
-          <p className="hero-lead forest-lead" data-forest-layer="hero-detail">Kenali seluruh calon, pertimbangkan pilihanmu, lalu gunakan satu suara untuk arah angkatan.</p>
+          <p className="hero-lead forest-lead" data-forest-layer="hero-detail">Kenali calon. Tentukan pilihan. Kirim satu suara untuk angkatan.</p>
           <div className="hero-actions" data-forest-layer="hero-detail">
-            <Link className="button button-light forest-cta" href={isOpen ? "/vote" : "#kandidat"}>{isOpen ? "Masuk ke bilik suara" : "Lihat semua calon"} <ArrowRight aria-hidden="true" size={18} /></Link>
-            <Link className="forest-text-cta" href="#panduan">Lihat cara memilih <ArrowDownRight aria-hidden="true" size={18} /></Link>
+            <Link className="button button-light forest-cta" href={isOpen ? "/vote" : "#kandidat"}>{isOpen ? "Mulai voting" : "Lihat calon"} <ArrowRight aria-hidden="true" size={18} /></Link>
+            <Link className="forest-text-cta" href="#panduan">Cara voting <ArrowDownRight aria-hidden="true" size={18} /></Link>
           </div>
         </div>
 
-        <motion.aside className="event-panel forest-event-panel" data-forest-layer="event-panel" whileHover={reduceMotion ? undefined : { y: -5, rotate: -0.6 }} transition={{ type: "spring", stiffness: 310, damping: 22 }} aria-label="Status pemilihan">
-          <div className="event-panel-topline"><span>Status saat ini</span><i aria-hidden="true" /></div>
+        <motion.aside className="event-panel forest-event-panel" data-forest-layer="event-panel" whileHover={reduceMotion ? undefined : { y: -5, rotate: -0.6 }} transition={{ type: "spring", stiffness: 310, damping: 22 }} aria-label="Status voting">
+          <div className="event-panel-topline"><span>Status voting</span><i aria-hidden="true" /></div>
           <p className="panel-label">Periode pemilihan</p>
           <strong>{statusLabel}</strong>
           <p>{scheduleLabel}</p>
           <div className="event-panel-rule" />
-          <span>Gunakan NIM sendiri. Voting hanya tersedia pada jadwal resmi.</span>
+          <span>Gunakan NIM sendiri. Voting mengikuti jadwal panitia.</span>
           <div className="event-panel-stamp" aria-hidden="true">SATU NIM<br />SATU SUARA</div>
         </motion.aside>
       </div>

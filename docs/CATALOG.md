@@ -4,7 +4,7 @@ Katalog ini adalah peta seluruh dokumentasi. Mulai dari sini bila perlu mencari 
 
 | Area | Folder/dokumen | Pertanyaan yang dijawab |
 | --- | --- | --- |
-| Awal proyek | `start-here.md`, `00-*`, `01-*`–`21-*` | Apa yang dibangun, siapa yang memutuskan, tahap aktif, cara mengoperasikan build, rancangan integritas perangkat, dan arah redesign visual? |
+| Awal proyek | `start-here.md`, `00-*`, `01-*`–`22-*` | Apa yang dibangun, siapa yang memutuskan, tahap aktif, cara mengoperasikan build, rancangan integritas perangkat, arah redesign visual, dan microcopy? |
 | Engineering | `engineering/` | Bagaimana sistem aman, cepat, realtime, dan dapat diuji? |
 | Data | `database/` | Apa arti setiap entitas dan constraint-nya? |
 | Antarmuka | `ui/` | Apa isi, state, dan acceptance setiap layar? |

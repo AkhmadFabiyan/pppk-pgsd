@@ -45,13 +45,20 @@ Gunakan satu keluarga sans-serif yang cepat dimuat (system/Geist) dengan berat `
 ### Komponen dan layout
 
 - Container publik: lebar maksimum 1200 px, gutter 16 px pada mobile, 24 px tablet, dan 32 px desktop.
-- Header: tinggi 64 px mobile dan 72 px desktop; logo/nama event, navigasi penting, dan CTA `Gunakan suara` hanya saat event `open`.
+- Header: tinggi 64 px mobile dan 72 px desktop; logo/nama event, navigasi penting, dan CTA `Buka bilik suara`. Route tersebut selalu menampilkan status server aktual; hero memakai `Mulai voting` hanya saat event `open`.
 - Tombol: tinggi minimum 44 px, radius 10 px, satu tombol primer per section. State hover, focus, disabled, loading, dan error harus tersedia.
 - Input: label selalu terlihat di atas field; petunjuk dan error berada tepat di bawahnya; NIM tidak ditulis ke URL, localStorage, analytics, atau log browser.
 - Card kandidat: poster asli dengan rasio sumber utuh, nomor urut, nama, dan kelas. Card bersifat informatif, bukan tombol; tidak membuka detail visi-misi maupun memulai vote.
 - Ballot option: radio native/aksesibel dengan border, label `Dipilih`, dan ringkasan calon. State terpilih dapat dipahami tanpa warna.
 - Dialog konfirmasi: ringkasan pilihan, tindakan `Kembali` dan `Kirim suara`, focus trap, Escape, serta focus return ke pemicu.
 - Hasil: tabel angka adalah sumber utama; bar hanya membantu membaca. Pada layar live, urutan mengikuti jumlah suara menurun; suara sama memakai nomor ballot menaik supaya urutannya deterministik.
+
+### Bahasa antarmuka
+
+- Microcopy mengikuti [`22-microcopy-dan-nada-bahasa.md`](22-microcopy-dan-nada-bahasa.md): hangat, ringkas, dan tegas; selalu menyebut keadaan aktual serta tindakan berikutnya.
+- Visitor memakai kepemilikan yang jelas seperti `NIM-mu`, `pilihanmu`, dan `suaramu`. Admin memakai pola kondisi → dampak → tindakan.
+- CTA menggunakan kata kerja yang spesifik: `Mulai voting`, `Cek NIM`, `Ke konfirmasi`, `Kirim suara`, dan `Reset suara voting`. Jangan memakai `Lanjutkan` atau `Klik di sini` tanpa konteks.
+- Copy keamanan cukup menjelaskan tujuan pemrosesan. Jangan menjanjikan anonimitas absolut, fingerprint fisik, atau suara diterima sebelum receipt server tersedia.
 
 ## Rute dan perilaku layar
 
@@ -67,7 +74,7 @@ Tidak ada route informasi visitor lain selain `/`; kandidat, panduan, hasil, ban
 
 ### Landing
 
-Viewport pertama memuat status event, judul `Pemilihan Ketua Angkatan PGSD 2026`, periode WIB, dan satu CTA yang sesuai state. Saat `open`, CTA adalah `Gunakan suara`; saat belum buka/ditutup, CTA mengarah ke section kandidat atau panduan. Di bawahnya, beranda menyusun kandidat, proses voting, hasil, bantuan, dan privasi dalam section pendek dengan anchor yang jelas. Tampilan hasil hanya muncul bila kebijakan hasil mengizinkannya.
+Viewport pertama memuat status event, judul `Pemilihan Ketua Angkatan PGSD 2026`, periode WIB, dan satu CTA yang sesuai state. Saat `open`, CTA adalah `Mulai voting`; saat belum buka/ditutup, CTA mengarah ke section kandidat atau panduan. Di bawahnya, beranda menyusun kandidat, proses voting, hasil, bantuan, dan privasi dalam section pendek dengan anchor yang jelas. Tampilan hasil hanya muncul bila kebijakan hasil mengizinkannya.
 
 ### Kandidat
 
@@ -131,5 +138,6 @@ Pada `prefers-reduced-motion`, semua motion non-fungsional dihapus; typewriter m
 - [ ] Motion memenuhi kontrak di atas, menghormati reduced motion, dan tidak membuat CLS atau input delay yang terlihat.
 - [ ] Semua layar memakai poster calon asli yang telah disetujui; tidak ada foto calon buatan AI atau aset placeholder pada production.
 - [ ] Review visual panitia membuktikan hierarki informasi, kontras, dan copy profesional sebelum event dibuka.
+- [ ] Copy status, CTA, hint, error aman, receipt, hasil, dan reset mengikuti `22-microcopy-dan-nada-bahasa.md` tanpa mengubah teks resmi calon atau membocorkan data pribadi.
 
 Spesifikasi per layar yang lebih operasional ada pada folder `ui/`; arsitektur dan urutan delivery ada pada `05-rencana-implementasi.md` serta `phases/`.

@@ -15,7 +15,7 @@ export default async function ReceiptPage({ params }: { params: ReceiptParams })
   const castAt = receipt ? new Intl.DateTimeFormat("id-ID", { dateStyle: "full", timeStyle: "short", timeZone: "Asia/Jakarta" }).format(new Date(receipt.cast_at)) : null;
   return (
     <PageTransition>
-      <section className="status-screen"><article className="status-card"><FileCheck2 aria-hidden="true" /><p className="eyebrow eyebrow-green">Bukti suara</p>{receipt ? <><h1>Suara telah diterima.</h1><p>Kode receipt ini hanya membuktikan penerimaan suara. Kode tidak menampilkan NIM maupun pilihan calon.</p><p className="receipt-code">{receipt.receipt_code}</p><p>Dicatat pada {castAt} WIB.</p></> : <><h1>Bukti tidak tersedia.</h1><p>Periksa kembali kode receipt. Halaman ini tidak menampilkan data pemilih atau pilihan calon.</p></>}<Link className="button" href="/">Kembali ke beranda</Link></article></section>
+      <section className="status-screen"><article className="status-card"><FileCheck2 aria-hidden="true" /><p className="eyebrow eyebrow-green">Bukti suara</p>{receipt ? <><h1>Suaramu diterima.</h1><p>Simpan kode bukti ini. Kode tidak menampilkan NIM atau pilihanmu.</p><p className="receipt-code">{receipt.receipt_code}</p><p>Diterima · {castAt} WIB.</p></> : <><h1>Kode bukti tidak ditemukan.</h1><p>Cek kembali kodenya. Halaman ini tidak menampilkan data pemilih atau pilihan.</p></>}<Link className="button" href="/">Kembali ke beranda</Link></article></section>
     </PageTransition>
   );
 }

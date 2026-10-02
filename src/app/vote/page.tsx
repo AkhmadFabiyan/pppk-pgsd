@@ -12,19 +12,19 @@ const steps = [
   {
     number: "01",
     title: "Verifikasi NIM",
-    description: "Masukkan NIM milik sendiri. Server memeriksa hak pilih dan status suara secara aman.",
+    description: "Masukkan NIM-mu. Kami cek hak pilih dan status suaramu.",
     icon: ShieldCheck
   },
   {
     number: "02",
     title: "Pilih calon",
-    description: "Pilih satu calon pada surat suara berdasarkan nomor, nama, dan kelas.",
+    description: "Pilih satu calon dari nomor, nama, dan kelas.",
     icon: CircleUserRound
   },
   {
     number: "03",
     title: "Konfirmasi & kirim",
-    description: "Periksa pilihan sekali lagi, lalu kirim suara. Receipt dibuat otomatis bila server menerima suara.",
+    description: "Cek sekali lagi. Receipt dibuat setelah suara diterima.",
     icon: Vote
   }
 ];
@@ -42,8 +42,8 @@ export default async function VotePage() {
           <header className="vote-header">
             <StatusBadge label={election.statusLabel} />
             <p className="eyebrow eyebrow-green">Ruang voting</p>
-            <h1>Satu proses. Tiga tahap.</h1>
-            <p>Voting hanya dapat dimulai saat panitia membuka event. Tidak ada data atau suara yang dikirim sebelum itu.</p>
+            <h1>Gunakan satu suaramu.</h1>
+            <p>Voting tersedia saat panitia membukanya. Tidak ada suara dikirim sebelum konfirmasi.</p>
           </header>
           {election.status === "open" ? <VotingWizard candidates={ballotCandidates} /> : <><ol className="vote-steps">
               {steps.map((step) => {
@@ -53,7 +53,7 @@ export default async function VotePage() {
             </ol>
             <div className="vote-closed-notice">
               <CheckCircle2 aria-hidden="true" />
-              <div><strong>{election.statusLabel}</strong><p>{election.scheduleLabel} Halaman ini akan menampilkan tahap pertama setelah voting resmi dibuka.</p></div>
+              <div><strong>{election.statusLabel}</strong><p>{election.scheduleLabel} Tahap pertama muncul saat voting dibuka.</p></div>
             </div></>}
         </div>
       </section>

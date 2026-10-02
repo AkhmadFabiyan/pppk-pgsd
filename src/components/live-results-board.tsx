@@ -118,7 +118,7 @@ export function LiveResultsBoard({
 
       <footer className="live-results-footer">
         <span>{connection === "stale" ? "Menampilkan snapshot terakhir · " : "Pembaruan terakhir · "}<time dateTime={result.updatedAt}>{formatUpdatedAt(result.updatedAt)}</time></span>
-        <span>{result.totalEligible} pemilih eligible</span>
+        <span>{result.totalEligible} pemilih berhak</span>
       </footer>
       <p className="sr-only" aria-live="polite">{connection === "stale" ? "Pembaruan hasil tertunda." : `Rekap terbaru: ${result.totalCast} suara.`}</p>
     </section>

@@ -21,9 +21,9 @@ export default async function HomePage() {
         <SectionReveal className="container split-heading">
           <div>
             <p className="eyebrow eyebrow-green">Mulai dari sini</p>
-            <h2 id="overview-heading">Pilih dengan arah yang jelas.</h2>
+            <h2 id="overview-heading">Siapkan pilihanmu.</h2>
           </div>
-          <p>Semua yang kamu perlukan untuk menentukan pilihan ada di sini—tanpa membuka data peserta atau pilihan siapa pun.</p>
+          <p>Kenali calon dan alur voting dalam satu tempat. Data pemilih dan pilihan suara tetap pribadi.</p>
         </SectionReveal>
         <FeatureHighlights />
       </section>
@@ -32,9 +32,9 @@ export default async function HomePage() {
         <SectionReveal className="container section-heading">
           <div>
             <p className="eyebrow eyebrow-red">Ketua angkatan 2026</p>
-            <h2 id="candidate-heading">Daftar calon yang ikut pemilihan.</h2>
+            <h2 id="candidate-heading">Kenali setiap calon.</h2>
           </div>
-          <p className="section-note">Kenali nomor, nama, kelas, dan poster resmi setiap calon. Kamu belum memilih apa pun di sini.</p>
+          <p className="section-note">Cek nomor, nama, kelas, dan poster resmi. Kamu belum memilih di sini.</p>
         </SectionReveal>
         <div className="container">
           <CandidateShowcase candidates={election.candidates} />
@@ -45,9 +45,9 @@ export default async function HomePage() {
         <SectionReveal className="container process-grid">
           <div>
             <p className="eyebrow eyebrow-green">Saat voting dibuka</p>
-            <h2 id="process-heading">Empat langkah. Satu keputusan.</h2>
-            <p>Saat panitia membuka voting, gunakan perangkatmu sendiri untuk memilih dengan tenang dan mandiri.</p>
-            <p className="process-note">NIM, pilihan, dan kode receipt bersifat pribadi. Hubungi panitia lewat kanal resmi jika ada kendala.</p>
+            <h2 id="process-heading">Empat langkah. Satu suara.</h2>
+            <p>Saat voting dibuka, siapkan NIM dan pilih secara mandiri dari perangkatmu sendiri.</p>
+            <p className="process-note">NIM, pilihan, dan kode bukti bersifat pribadi. Ada kendala? Hubungi panitia lewat kanal resmi.</p>
           </div>
           <VotingJourney />
         </SectionReveal>
@@ -67,12 +67,12 @@ export default async function HomePage() {
         <SectionReveal className="container callout-content">
           <CircleHelp aria-hidden="true" />
           <div>
-            <h2 id="support-heading">Perlu bantuan? Tenang, kami bantu.</h2>
-            <p>Ikuti jadwal dan kanal resmi dari panitia. Jangan kirim NIM, pilihan calon, atau kode receipt ke kanal publik.</p>
+            <h2 id="support-heading">Butuh bantuan?</h2>
+            <p>Gunakan kanal resmi panitia. Jangan kirim NIM, pilihan, atau kode bukti ke ruang publik.</p>
           </div>
-          <a className="button" href="#panduan">Lihat langkah voting</a>
+          <a className="button" href="#panduan">Lihat caranya</a>
         </SectionReveal>
-        <SectionReveal className="container privacy-strip" id="privasi" delay={0.08}><ShieldCheck aria-hidden="true" /><p><strong>Privasi:</strong> NIM, pilihan suara, sinyal perangkat, dan data audit tidak pernah ditampilkan di halaman publik.</p></SectionReveal>
+        <SectionReveal className="container privacy-strip" id="privasi" delay={0.08}><ShieldCheck aria-hidden="true" /><p><strong>Privasi:</strong> NIM, pilihan suara, data perangkat, dan audit tidak ditampilkan di halaman publik.</p></SectionReveal>
       </section>
     </PageTransition>
   );

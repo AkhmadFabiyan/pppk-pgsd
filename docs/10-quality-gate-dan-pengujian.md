@@ -28,6 +28,7 @@ Implementasi hanya dimulai setelah panitia memberikan daftar calon individu, keb
 | IMP-01 | Spreadsheet punya NIM duplikat | Preview gagal/menandai baris sebelum commit. |
 | SEC-01 | PII pada respons/event/log publik | Test snapshot memastikan tidak ada NIM, nama, IP, token, atau pilihan calon personal. |
 | A11Y-01 | Keyboard dan reduced motion | Semua form/konfirmasi dapat selesai tanpa mouse dan animasi esensial mati. |
+| COPY-01 | Microcopy semua state utama | Status, CTA, hint, error aman, receipt, hasil, dan reset menjelaskan keadaan serta tindakan berikutnya; tidak ada PII, klaim keamanan berlebihan, atau perubahan teks resmi calon. |
 | VIS-02 | Isolasi motion dan GSAP | GSAP hanya termuat/berjalan pada hero beranda; route vote, admin, dan live tidak memiliki GSAP atau loop dekoratif. |
 | VIS-03 | Redesign responsif | Hierarki dan poster asli tetap terbaca pada lebar 320, 768, 1024, dan 1440 px; tidak ada crop poster atau horizontal overflow. |
 

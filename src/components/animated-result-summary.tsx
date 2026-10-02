@@ -61,7 +61,7 @@ export function AnimatedResultSummary({ result, candidates }: { result: PublicRe
 
   return (
     <div className="result-summary result-summary-animated">
-      <p className="result-total"><strong><AnimatedNumber value={result.totalCast} /></strong> suara sah tercatat dari {result.totalEligible.toLocaleString("id-ID")} pemilih yang berhak ({result.turnoutPercent}%).</p>
+      <p className="result-total"><strong><AnimatedNumber value={result.totalCast} /></strong> suara sah · {result.totalEligible.toLocaleString("id-ID")} pemilih berhak · {result.turnoutPercent}% partisipasi.</p>
       <ul>
         {candidates.map((candidate, index) => {
           const item = resultsByCandidate.get(candidate.id ?? "");

@@ -28,9 +28,10 @@ Dokumentasi ini adalah sumber acuan sebelum implementasi website voting. Ruang l
 21. [19-operasional-aplikasi.md](19-operasional-aplikasi.md) — cara setup dan batas fitur yang benar-benar telah dibangun.
 22. [20-integritas-perangkat-dan-anti-duplikasi.md](20-integritas-perangkat-dan-anti-duplikasi.md) — implementasi in-review dua claim browser tanpa OTP, Wi-Fi bersama, reset, dan privasi.
 23. [21-redesign-civic-forest.md](21-redesign-civic-forest.md) — arah visual, batas GSAP/Motion, responsivitas, dan acceptance redesign UI/UX.
-24. [engineering/README.md](engineering/README.md), [database/README.md](database/README.md), [ui/README.md](ui/README.md), [workflow/README.md](workflow/README.md), dan [phases/README.md](phases/README.md) — indeks domain granular.
-25. [data/daftar-nim-master.md](data/daftar-nim-master.md) - internal admin, jangan dipublikasikan
-26. [data/mapping-calon-nim-internal.md](data/mapping-calon-nim-internal.md) - internal admin/restricted, jangan dipublikasikan
+24. [22-microcopy-dan-nada-bahasa.md](22-microcopy-dan-nada-bahasa.md) — suara produk, pola copy per state, dan batas teks publik/admin.
+25. [engineering/README.md](engineering/README.md), [database/README.md](database/README.md), [ui/README.md](ui/README.md), [workflow/README.md](workflow/README.md), dan [phases/README.md](phases/README.md) — indeks domain granular.
+26. [data/daftar-nim-master.md](data/daftar-nim-master.md) - internal admin, jangan dipublikasikan
+27. [data/mapping-calon-nim-internal.md](data/mapping-calon-nim-internal.md) - internal admin/restricted, jangan dipublikasikan
 
 ## Status keputusan
 

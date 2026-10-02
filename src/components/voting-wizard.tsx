@@ -36,7 +36,7 @@ function getDeviceToken() {
 async function requestJson(path: string, body: Record<string, string>) {
   const response = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), cache: "no-store" });
   const payload = await response.json() as ApiResponse;
-  if (!response.ok) throw new Error(payload.error?.message || "Permintaan tidak dapat diproses.");
+  if (!response.ok) throw new Error(payload.error?.message || "Permintaan belum dapat diproses. Coba lagi.");
   return payload;
 }
 
@@ -75,11 +75,11 @@ export function VotingWizard({ candidates }: { candidates: CandidateSummary[] })
     try {
       const nextDeviceToken = getDeviceToken();
       const payload = await requestJson("/api/vote/verify", { nim, deviceToken: nextDeviceToken });
-      if (!payload.data?.sessionToken) throw new Error("Sesi voting tidak tersedia.");
+      if (!payload.data?.sessionToken) throw new Error("Sesi voting belum tersedia. Coba lagi.");
       setSessionToken(payload.data.sessionToken);
       setStep("choose");
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "NIM tidak dapat diverifikasi.");
+      setError(reason instanceof Error ? reason.message : "NIM belum dapat diverifikasi. Coba lagi.");
     } finally {
       setPending(false);
     }
@@ -92,10 +92,10 @@ export function VotingWizard({ candidates }: { candidates: CandidateSummary[] })
     try {
       const idempotencyKey = typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
       const payload = await requestJson("/api/vote/submit", { sessionToken, candidateId: selected.id ?? "", idempotencyKey });
-      if (!payload.data?.receiptCode) throw new Error("Receipt tidak dapat dibuat.");
+      if (!payload.data?.receiptCode) throw new Error("Kode bukti belum dapat dibuat. Coba lagi.");
       router.replace(`/bukti/${encodeURIComponent(payload.data.receiptCode)}`);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Suara tidak dapat dikirim.");
+      setError(reason instanceof Error ? reason.message : "Suara belum dapat dikirim. Coba lagi.");
     } finally {
       setPending(false);
     }
@@ -111,21 +111,21 @@ export function VotingWizard({ candidates }: { candidates: CandidateSummary[] })
 
       {step === "verify" && <motion.form className="nim-form" onSubmit={verifyNim} {...stepMotion}>
         <ShieldCheck aria-hidden="true" className="wizard-icon" />
-        <p className="eyebrow eyebrow-green">Tahap 1 dari 3</p><h2 ref={headingRef} tabIndex={-1}>Verifikasi NIM</h2>
-        <p>Masukkan NIM milik sendiri. Hanya pemilih dalam daftar resmi yang dapat melanjutkan.</p>
-        <p className="form-hint">Browser dan jaringan diproses secara terbatas untuk mencegah suara ganda. Data ini tidak ditampilkan publik.</p>
+        <p className="eyebrow eyebrow-green">Tahap 1 dari 3</p><h2 ref={headingRef} tabIndex={-1}>Masukkan NIM</h2>
+        <p>Gunakan NIM-mu sendiri untuk lanjut.</p>
+        <p className="form-hint">Browser dan jaringan diperiksa secara terbatas untuk mencegah suara ganda. Data ini tidak tampil publik.</p>
         <ul className="verification-help">
-          <li>Sudah memilih? Sistem akan memberi tahu bahwa suara NIM-mu telah tercatat.</li>
-          <li>NIM belum terdaftar atau belum eligible? Periksa kembali lalu hubungi panitia bila perlu.</li>
-          <li>Perangkat sudah dipakai? Gunakan perangkat pribadi lain atau hubungi panitia.</li>
+          <li>Sudah memilih? Kamu akan melihat status suaramu.</li>
+          <li>NIM belum terdaftar? Periksa lagi atau hubungi panitia.</li>
+          <li>Perangkat ini pernah dipakai? Hubungi panitia.</li>
         </ul>
         <label>NIM<input name="nim" inputMode="numeric" autoComplete="off" value={nim} onChange={(event) => setNim(event.target.value.replace(/\D/g, ""))} minLength={8} maxLength={20} required disabled={pending} /></label>
-        <button className="button" type="submit" disabled={pending}>{pending ? <><LoaderCircle className="spin" aria-hidden="true" size={18} /> Memeriksa</> : <>Lanjut pilih calon <ChevronRight aria-hidden="true" size={18} /></>}</button>
+        <button className="button" type="submit" disabled={pending}>{pending ? <><LoaderCircle className="spin" aria-hidden="true" size={18} /> Mengecek</> : <>Cek NIM <ChevronRight aria-hidden="true" size={18} /></>}</button>
       </motion.form>}
 
-      {step === "choose" && <motion.div className="ballot-step" {...stepMotion}><div><p className="eyebrow eyebrow-green">Tahap 2 dari 3</p><h2 ref={headingRef} tabIndex={-1}>Pilih satu calon</h2><p>Pilihan belum dikirim. Kamu masih bisa kembali ke beranda untuk memeriksa daftar calon.</p></div><div className="ballot-list" role="radiogroup" aria-label="Pilihan calon">{candidates.map((candidate) => <motion.button className={candidateId === candidate.id ? "ballot-option is-selected" : "ballot-option"} type="button" role="radio" aria-checked={candidateId === candidate.id} key={candidate.id} onClick={() => setCandidateId(candidate.id ?? "")} whileTap={reduceMotion ? undefined : { scale: 0.985 }}><span className="ballot-number">{formatBallotNumber(candidate.number)}</span><span><strong>{candidate.name}</strong><small>{candidate.className}</small></span>{candidateId === candidate.id && <Check aria-hidden="true" />}</motion.button>)}</div><div className="wizard-actions"><button className="button button-outline" type="button" onClick={() => { setStep("verify"); setError(""); }}><ChevronLeft aria-hidden="true" size={18} /> Kembali</button><button className="button" type="button" disabled={!selected} onClick={() => setStep("confirm")}>Lanjut konfirmasi <ChevronRight aria-hidden="true" size={18} /></button></div></motion.div>}
+      {step === "choose" && <motion.div className="ballot-step" {...stepMotion}><div><p className="eyebrow eyebrow-green">Tahap 2 dari 3</p><h2 ref={headingRef} tabIndex={-1}>Pilih satu calon</h2><p>Pilihan belum dikirim. Kamu masih bisa mengubahnya sebelum mengirim.</p></div><div className="ballot-list" role="radiogroup" aria-label="Pilihan calon">{candidates.map((candidate) => <motion.button className={candidateId === candidate.id ? "ballot-option is-selected" : "ballot-option"} type="button" role="radio" aria-checked={candidateId === candidate.id} key={candidate.id} onClick={() => setCandidateId(candidate.id ?? "")} whileTap={reduceMotion ? undefined : { scale: 0.985 }}><span className="ballot-number">{formatBallotNumber(candidate.number)}</span><span><strong>{candidate.name}</strong><small>{candidate.className}</small></span>{candidateId === candidate.id && <Check aria-hidden="true" />}</motion.button>)}</div><div className="wizard-actions"><button className="button button-outline" type="button" onClick={() => { setStep("verify"); setError(""); }}><ChevronLeft aria-hidden="true" size={18} /> Kembali</button><button className="button" type="button" disabled={!selected} onClick={() => setStep("confirm")}>Ke konfirmasi <ChevronRight aria-hidden="true" size={18} /></button></div></motion.div>}
 
-      {step === "confirm" && selected && <motion.div className="confirm-step" {...stepMotion}><Vote aria-hidden="true" className="wizard-icon" /><p className="eyebrow eyebrow-red">Tahap 3 dari 3</p><h2 ref={headingRef} tabIndex={-1}>Periksa pilihanmu.</h2><p>Kamu memilih:</p><div className="confirmation-choice"><span>{formatBallotNumber(selected.number)}</span><div><strong>{selected.name}</strong><p>{selected.className}</p></div></div><p className="confirmation-note">Setelah dikirim, pilihan tidak dapat diubah. Sistem hanya menyimpan satu suara final untuk setiap NIM.</p><div className="wizard-actions"><button className="button button-outline" type="button" onClick={() => setStep("choose")} disabled={pending}><ChevronLeft aria-hidden="true" size={18} /> Ubah pilihan</button><button className="button" type="button" onClick={submitVote} disabled={pending}>{pending ? <><LoaderCircle className="spin" aria-hidden="true" size={18} /> Mengirim suara</> : <><Check aria-hidden="true" size={18} /> Kirim suara</>}</button></div></motion.div>}
+      {step === "confirm" && selected && <motion.div className="confirm-step" {...stepMotion}><Vote aria-hidden="true" className="wizard-icon" /><p className="eyebrow eyebrow-red">Tahap 3 dari 3</p><h2 ref={headingRef} tabIndex={-1}>Cek pilihanmu</h2><p>Suara belum dikirim.</p><div className="confirmation-choice"><span>{formatBallotNumber(selected.number)}</span><div><strong>{selected.name}</strong><p>{selected.className}</p></div></div><p className="confirmation-note">Setelah dikirim, pilihan tidak bisa diubah. Setiap NIM hanya menyimpan satu suara final.</p><div className="wizard-actions"><button className="button button-outline" type="button" onClick={() => setStep("choose")} disabled={pending}><ChevronLeft aria-hidden="true" size={18} /> Ubah pilihan</button><button className="button" type="button" onClick={submitVote} disabled={pending}>{pending ? <><LoaderCircle className="spin" aria-hidden="true" size={18} /> Mengirim</> : <><Check aria-hidden="true" size={18} /> Kirim suara</>}</button></div></motion.div>}
     </section>
   );
 }
