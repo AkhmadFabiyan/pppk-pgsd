@@ -57,7 +57,7 @@ State yang wajib dirender:
 | 768–1023 px | 3 × 3 rapat | Kelas disembunyikan; nama maksimum dua baris; jumlah tetap dominan. |
 | 480–767 px | 3 × 3 ringkas | Header dua baris; hanya nomor, nama maksimum dua baris, dan jumlah. |
 | 320–479 px | 3 × 3 ultra-ringkas | Nomor, nama singkat yang dapat dibaca, dan jumlah; persen serta kelas disembunyikan. |
-| Tinggi ekstrem rendah atau zoom ≥200% | Konten boleh scroll | Aksesibilitas lebih penting daripada memotong teks atau menyembunyikan calon. |
+| Tinggi <700 px atau zoom ≥200% | Konten boleh scroll | Aksesibilitas lebih penting daripada memotong teks atau menyembunyikan calon. |
 
 Tidak ada poster pada `/live`: sembilan poster tidak dapat dibaca pada satu layar tanpa membuat angka hasil kecil, dan poster bukan data yang dibutuhkan operator layar. Poster tetap tersedia di beranda.
 

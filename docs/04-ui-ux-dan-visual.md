@@ -53,6 +53,12 @@ Gunakan satu keluarga sans-serif yang cepat dimuat (system/Geist) dengan berat `
 - Dialog konfirmasi: ringkasan pilihan, tindakan `Kembali` dan `Kirim suara`, focus trap, Escape, serta focus return ke pemicu.
 - Hasil: tabel angka adalah sumber utama; bar hanya membantu membaca. Pada layar live, urutan mengikuti jumlah suara menurun; suara sama memakai nomor ballot menaik supaya urutannya deterministik.
 
+### Chrome per rute
+
+- Header dan footer publik dipakai pada beranda, `/vote`, dan receipt. `ScrollProgress` hanya aktif pada beranda; ia tidak muncul pada bilik suara, receipt, admin, atau layar hasil live.
+- `/panitia/*` adalah workspace mandiri: tidak merender header, navigasi, footer, atau dekorasi visitor. Ia tetap mempunyai skip link dan landmark `main`.
+- `/live` tetap tanpa chrome publik. Bila tinggi viewport kurang dari 700 px atau zoom membuat konten tidak muat, layout beralih ke scroll normal; tidak ada tile atau timestamp yang dipotong demi mempertahankan satu viewport.
+
 ### Bahasa antarmuka
 
 - Microcopy mengikuti [`22-microcopy-dan-nada-bahasa.md`](22-microcopy-dan-nada-bahasa.md): hangat, ringkas, dan tegas; selalu menyebut keadaan aktual serta tindakan berikutnya.
@@ -82,7 +88,7 @@ Kandidat ditampilkan sebagai galeri informatif dengan poster dari folder aset ya
 
 ### Bilik suara
 
-Bilik suara adalah layar paling tenang: tanpa countdown animatif, skor live, parallax, atau iklan kandidat. Ia selalu memakai satu route `/vote` dengan tiga tahap linear:
+Bilik suara adalah layar paling tenang: tanpa countdown animatif, skor live, scroll-progress, parallax, atau iklan kandidat. Ia selalu memakai satu route `/vote` dengan tiga tahap linear:
 
 1. **Verifikasi NIM** — sistem memeriksa event, eligibility, status suara, rate limit, serta faktor kedua bila kebijakan meminta.
 2. **Pilih calon** — pemilih memilih satu radio ballot berdasarkan nomor, nama, kelas, dan poster resmi tanpa meninggalkan route.

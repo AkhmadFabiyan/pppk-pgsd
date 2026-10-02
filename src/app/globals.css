@@ -201,6 +201,10 @@ h3 { font-size: 1.25rem; line-height: 1.15; }
   .hero-grid { grid-template-columns: minmax(0, 1fr) 280px; gap: 36px; }
 }
 
+@media (min-width: 640px) and (max-width: 767px) {
+  .candidate-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }
@@ -256,13 +260,13 @@ textarea { font: inherit; }
 .spin { animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-.admin-auth-page { display: grid; place-items: center; min-height: calc(100vh - 64px); padding: 42px 16px; background: #edf1e9; }
+.admin-auth-page { display: grid; place-items: center; min-height: 100dvh; padding: 42px 16px; background: #edf1e9; }
 .admin-auth-card { width: min(100%, 510px); padding: clamp(26px, 5vw, 44px); border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper); box-shadow: var(--shadow); }
 .admin-auth-card > svg { width: 34px; height: 34px; margin-bottom: 18px; color: var(--forest-700); }
 .admin-auth-card h1 { margin-bottom: 13px; color: var(--forest-950); font-size: clamp(2rem, 5vw, 3.3rem); }
 .admin-auth-card > p:not(.eyebrow) { color: var(--ink-700); }
 .admin-auth-card .text-link { margin-top: 20px; }
-.admin-page { min-height: calc(100vh - 64px); padding-block: 42px 84px; background: #edf1e9; }
+.admin-page { min-height: 100dvh; padding-block: 42px 84px; background: #edf1e9; }
 .admin-shell { max-width: 1200px; }
 .admin-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; margin-bottom: 28px; }
 .admin-header h1 { margin-bottom: 10px; color: var(--forest-950); font-size: clamp(2.1rem, 5vw, 4.1rem); }
@@ -328,7 +332,7 @@ textarea { font: inherit; }
 }
 
 /* Admin workspace: a task-led operations view, intentionally separate from the public forest scene. */
-.admin-page { min-height: calc(100vh - 64px); padding-block: 28px 80px; background: linear-gradient(180deg, #e8efe6 0, #f7f6f1 380px); }
+.admin-page { min-height: 100dvh; padding-block: 28px 80px; background: linear-gradient(180deg, #e8efe6 0, #f7f6f1 380px); }
 .admin-shell { max-width: 1280px; }
 .admin-topbar { display: flex; align-items: flex-start; justify-content: space-between; gap: 28px; padding: 8px 0 24px; }
 .admin-brand { max-width: 760px; }
@@ -342,7 +346,7 @@ textarea { font: inherit; }
 .admin-status-open { border-color: #90c7a2; color: #12633d; background: #dff3e5; }
 .admin-status-closed { border-color: #d8c691; color: #705a13; background: #fff5d4; }
 .admin-status-scheduled { border-color: #cfd7d0; color: #465349; background: #f2f4f0; }
-.admin-local-nav { position: sticky; z-index: 12; top: 72px; display: flex; align-items: center; gap: 2px; width: max-content; max-width: 100%; margin-bottom: 22px; padding: 5px; overflow-x: auto; border: 1px solid #d2ddd0; border-radius: 12px; background: rgba(255, 255, 255, 0.88); box-shadow: 0 8px 18px rgba(16, 47, 30, 0.06); backdrop-filter: blur(10px); scrollbar-width: none; }
+.admin-local-nav { position: sticky; z-index: 12; top: 16px; display: flex; align-items: center; gap: 2px; width: max-content; max-width: 100%; margin-bottom: 22px; padding: 5px; overflow-x: auto; border: 1px solid #d2ddd0; border-radius: 12px; background: rgba(255, 255, 255, 0.88); box-shadow: 0 8px 18px rgba(16, 47, 30, 0.06); backdrop-filter: blur(10px); scrollbar-width: none; }
 .admin-local-nav::-webkit-scrollbar { display: none; }
 .admin-local-nav a { flex: 0 0 auto; padding: 8px 10px; border-radius: 8px; color: var(--ink-700); font-size: 0.8rem; font-weight: 760; transition: color 150ms ease, background-color 150ms ease, transform 150ms ease; }
 .admin-local-nav a:hover, .admin-local-nav a:focus-visible { color: var(--forest-950); background: #eaf3e8; outline: none; }
@@ -371,7 +375,7 @@ textarea { font: inherit; }
 .admin-metric-strip svg { grid-area: icon; width: 20px; height: 20px; color: var(--forest-700); }
 .admin-metric-strip span { grid-area: label; color: var(--ink-700); font-size: 0.72rem; font-weight: 750; }
 .admin-metric-strip strong { grid-area: value; overflow: hidden; color: var(--forest-950); font-size: 1.08rem; letter-spacing: -0.025em; text-overflow: ellipsis; white-space: nowrap; }
-.admin-work-panel, .admin-danger-zone { scroll-margin-top: 130px; }
+.admin-work-panel, .admin-danger-zone { scroll-margin-top: 76px; }
 .admin-work-panel { padding: clamp(22px, 3vw, 32px); border: 1px solid #d2ddd0; border-radius: 16px; background: rgba(255, 255, 255, 0.96); box-shadow: 0 10px 26px rgba(16, 47, 30, 0.045); }
 .admin-work-panel > p { color: var(--ink-700); }
 .admin-section-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 15px; }
@@ -465,7 +469,7 @@ textarea { font: inherit; }
   .admin-brand h1 { font-size: clamp(2.1rem, 11vw, 3.25rem); }
   .admin-session { justify-content: flex-start; width: 100%; padding-top: 0; }
   .admin-session form, .admin-session form .button { width: 100%; }
-  .admin-local-nav { top: 68px; width: calc(100% + 4px); margin-left: -2px; margin-bottom: 14px; border-radius: 10px; }
+  .admin-local-nav { top: 8px; width: calc(100% + 4px); margin-left: -2px; margin-bottom: 14px; border-radius: 10px; }
   .admin-next-action { align-items: flex-start; flex-direction: column; gap: 22px; padding: 24px; }
   .admin-next-action h2 { font-size: 1.9rem; }
   .admin-next-action .button { width: 100%; }
@@ -558,8 +562,8 @@ textarea { font: inherit; }
 @keyframes pulse { 50% { transform: scale(0.72); box-shadow: 0 0 0 11px rgba(241,122,104,0.02); } }
 
 @media (max-width: 767px) {
-  .forest-hero { min-height: 740px; }
-  .forest-hero-grid { min-height: 730px; padding-top: 106px; padding-bottom: 78px; }
+  .forest-hero { min-height: 0; }
+  .forest-hero-grid { min-height: 0; padding-top: clamp(92px, 23vw, 106px); padding-bottom: 64px; }
   .forest-copy { max-width: 100%; }
   .forest-title { font-size: clamp(4.25rem, 22vw, 7.3rem); line-height: 0.8; }
   .forest-title span:nth-child(2) { padding-left: 13vw; }
@@ -629,7 +633,7 @@ textarea { font: inherit; }
   .live-results-footer { font-size: 0.61rem; }
 }
 
-@media (max-height: 620px), (max-width: 360px) {
+@media (max-height: 699px), (max-width: 360px) {
   .live-results-page { min-height: 100dvh; height: auto; overflow: visible; }
   .live-candidate-grid { grid-template-rows: none; }
   .live-candidate-tile { min-height: 124px; }

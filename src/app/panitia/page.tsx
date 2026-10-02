@@ -71,7 +71,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Search
 
   return (
     <PageTransition>
-      <main className="admin-page">
+      <div className="admin-page">
         <div className="container admin-shell">
           <header className="admin-topbar" id="ringkasan">
             <div className="admin-brand">
@@ -222,7 +222,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Search
             </details>
           </section>
         </div>
-      </main>
+      </div>
     </PageTransition>
   );
 }

@@ -766,6 +766,26 @@ File ini adalah register kerja aktif. Setiap proses material wajib memiliki entr
 | Reviewer/approver | User. |
 | Waktu | Mulai 2026-10-03 WIB. |
 
+### EXE-20261003-31 — Stabilkan shell rute dan responsivitas UI
+
+| Field | Catatan |
+| --- | --- |
+| Status | `In review` — implementasi shell dan responsivitas selesai; menunggu UAT visual dengan environment database yang valid. |
+| Tahap runbook | T9 / visual, responsivitas, aksesibilitas, dan motion. |
+| Tujuan | Menghilangkan chrome visitor yang mengganggu workspace admin, membatasi motion global pada konteks yang tepat, serta mencegah layout kandidat/live terpotong pada viewport kecil. |
+| Scope | `SiteChrome`, breakpoints kandidat, fallback overflow `/live`, tinggi hero mobile, affordance card, dan dokumentasi/quality gate terkait. |
+| Out of scope | Database dan environment, data calon/peserta, poster, alur/verifikasi vote, API, auth, reset, hasil, konfigurasi Vercel, serta refactor penuh stylesheet legacy. |
+| Dokumen wajib dibaca | `00-pedoman-eksekusi-berbasis-md.md`, `04-ui-ux-dan-visual.md`, `05-rencana-implementasi.md`, `10-quality-gate-dan-pengujian.md`, `12-rute-dan-seo.md`, `15-runbook-eksekusi-proyek.md`, dan spesifikasi `ui/admin-event.md`, `ui/live-results-display.md`, `ui/vote.md`. |
+| Dokumen terdampak | `04-ui-ux-dan-visual.md`, `10-quality-gate-dan-pengujian.md`, tiga spesifikasi `ui/`, dan log ini agar kontrak shell serta fallback responsif sejalan dengan kode. |
+| Risiko dan mitigasi | Mengubah shell dapat menghilangkan landmark atau menggeser tinggi halaman. Pertahankan skip link dan `main`; tidak mengubah rute/metadata. Fallback `/live` hanya aktif di bawah tinggi yang tidak dijanjikan satu viewport. |
+| Aksi yang dilakukan | Menghapus chrome visitor dari `/panitia/*`, mempertahankan skip link/main tunggal pada admin, membatasi `ScrollProgress` pada beranda, menyelaraskan kandidat dua kolom mulai 640 px, memberi fallback scroll `/live` di viewport rendah, mengurangi tinggi minimum hero mobile, dan menyesuaikan offset sticky admin setelah header publik dihilangkan. |
+| Bukti | `npm run typecheck`, `npm run lint`, `git diff --check`, dan `npm run build` lulus pada 2026-10-03 WIB. Build Next.js 16.3.8 menghasilkan seluruh rute yang diharapkan tanpa error. Audit runtime localhost tetap melaporkan URL database tidak tersedia, sehingga tidak ada screenshot data nyata yang dihasilkan. |
+| Exit condition | User meninjau UAT visual pada database lokal/staging yang valid. Tidak ada perubahan data, API, rute, metadata, atau konfigurasi deployment pada pekerjaan ini. |
+| Keputusan | Implementasi siap ditinjau; masalah environment lokal hanya memblokir UAT runtime, bukan build maupun pemeriksaan source. |
+| Owner | Pelaksana teknis. |
+| Reviewer/approver | User. |
+| Waktu | Mulai 2026-10-03 WIB. |
+
 ### Template untuk entry baru
 
 Salin blok ini ke bawah untuk setiap pekerjaan baru. Jangan menghapus entry terdahulu.

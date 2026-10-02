@@ -1,6 +1,6 @@
 # UI — Admin Event Workspace
 
-`/panitia` adalah workspace operasional, bukan versi dekoratif dari landing page publik. Panel mengutamakan status event, tindakan paling relevan, data persiapan, monitoring, lalu tindakan sensitif. Semua angka berasal dari server; tidak ada metrik, status, atau hasil demo.
+`/panitia` adalah workspace operasional, bukan versi dekoratif dari landing page publik. Ia tidak merender header, navigasi, footer, atau scroll-progress visitor. Panel mengutamakan status event, tindakan paling relevan, data persiapan, monitoring, lalu tindakan sensitif. Semua angka berasal dari server; tidak ada metrik, status, atau hasil demo.
 
 ## Struktur layar
 
