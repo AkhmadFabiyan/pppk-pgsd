@@ -232,6 +232,7 @@ textarea { font: inherit; }
 .wizard-icon { width: 32px; height: 32px; margin-bottom: 18px; color: var(--forest-700); }
 .nim-form h2, .ballot-step h2, .confirm-step h2 { margin-bottom: 11px; color: var(--forest-950); font-size: clamp(2rem, 4vw, 3rem); }
 .nim-form > p:not(.eyebrow), .ballot-step > div > p:not(.eyebrow), .confirm-step > p:not(.eyebrow) { color: var(--ink-700); }
+.verification-help { display: grid; gap: 7px; margin: 18px 0 0; padding: 13px 16px 13px 31px; border-left: 3px solid var(--forest-700); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; color: var(--ink-700); background: #f1f6ed; font-size: 0.86rem; line-height: 1.5; }
 .nim-form label, .admin-form label { display: grid; gap: 7px; margin: 26px 0 16px; color: var(--forest-950); font-size: 0.88rem; font-weight: 750; }
 .nim-form input, .admin-form input, .admin-form textarea { width: 100%; min-height: 46px; padding: 10px 12px; border: 1px solid #afc0b1; border-radius: 9px; color: var(--ink-950); background: var(--paper); font-size: 1rem; outline: none; transition: border-color 150ms ease, box-shadow 150ms ease; }
 .nim-form input:focus, .admin-form input:focus, .admin-form textarea:focus { border-color: var(--forest-700); box-shadow: 0 0 0 3px rgba(22, 101, 52, 0.14); }

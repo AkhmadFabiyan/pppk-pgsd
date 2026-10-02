@@ -57,6 +57,10 @@ export type VotingSecurityContext = {
   hashVersion: number;
 };
 
+export type VotingSessionIssueResult =
+  | { status: "accepted" }
+  | { status: "election_not_open" | "nim_not_registered" | "not_eligible" | "already_voted" | "device_already_used" | "verification_failed" };
+
 type ElectionRow = { id: string; title: string; status: ElectionStatus; result_visibility: ResultVisibility; updated_at: string };
 type CandidateRow = { id: string; ballot_number: number; slug: string; display_name: string; class_name: string; poster: string; vision: string; missions_json: string; is_published: boolean };
 type CountRow = { count: number | string };
@@ -481,7 +485,7 @@ export async function consumeRateLimit(scope: string, keyHash: string, limit: nu
   return rows.length === 1;
 }
 
-export async function issueVotingSession(nim: string, tokenHash: string, expiresAt: string, security: VotingSecurityContext) {
+export async function issueVotingSession(nim: string, tokenHash: string, expiresAt: string, security: VotingSecurityContext): Promise<VotingSessionIssueResult> {
   await ensureSchema();
   const rows = await query<{ id: string }>`WITH active_event AS (
       SELECT id FROM elections WHERE id = ${ELECTION_ID} AND status = 'open' FOR UPDATE
@@ -497,7 +501,27 @@ export async function issueVotingSession(nim: string, tokenHash: string, expires
       AND NOT EXISTS (SELECT 1 FROM votes WHERE votes.election_id = ${ELECTION_ID} AND votes.device_installation_hash = ${security.deviceInstallationHash})
     ON CONFLICT (token_hash) DO NOTHING
     RETURNING id`;
-  return rows.length === 1;
+  if (rows.length === 1) return { status: "accepted" };
+
+  const event = await eventRow();
+  if (event.status !== "open") return { status: "election_not_open" };
+
+  const voter = await query<{ id: string; is_eligible: boolean }>`SELECT id, is_eligible FROM voters
+    WHERE election_id = ${ELECTION_ID} AND nim = ${nim}`;
+  if (!voter[0]) return { status: "nim_not_registered" };
+  if (!voter[0].is_eligible) return { status: "not_eligible" };
+
+  const priorVote = await query<{ id: string }>`SELECT id FROM votes
+    WHERE election_id = ${ELECTION_ID} AND voter_id = ${voter[0].id}`;
+  if (priorVote[0]) return { status: "already_voted" };
+
+  const priorDeviceVote = await query<{ id: string }>`SELECT id FROM votes
+    WHERE election_id = ${ELECTION_ID}
+      AND (device_binding_hash = ${security.deviceBindingHash}
+        OR device_installation_hash = ${security.deviceInstallationHash})`;
+  if (priorDeviceVote[0]) return { status: "device_already_used" };
+
+  return { status: "verification_failed" };
 }
 
 export async function submitVote(tokenHash: string, candidateId: string, idempotencyHash: string, receiptCode: string, deviceBindingHash: string): Promise<VoteSubmitResult> {

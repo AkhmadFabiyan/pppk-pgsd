@@ -39,6 +39,7 @@ File ini adalah register kerja aktif. Setiap proses material wajib memiliki entr
 | EXE-20261002-22 | T3/T5 | Selaraskan visi–misi katalog dengan poster calon | In review | Pelaksana teknis | User | 2026-10-02 | Deploy perubahan, sinkronkan record lewat admin sebelum event dibuka, lalu panitia meninjau teks publik. |
 | EXE-20261002-23 | T9 | Sederhanakan galeri kandidat menjadi poster-only | In review | Pelaksana teknis | User | 2026-10-02 | Review galeri desktop/mobile setelah build lulus; keputusan user menentukan release. |
 | EXE-20261003-24 | T3/T7 | Implementasi integritas perangkat tanpa memblokir Wi-Fi bersama | In review | Pelaksana teknis | User + reviewer teknis | 2026-10-03 | Source, migration kompatibel, API, reset, dan quality check selesai; UAT database non-production masih wajib. |
+| EXE-20261003-25 | T7/T9 | Perjelas status verifikasi NIM untuk pemilih | In review | Pelaksana teknis | User | 2026-10-03 | Kode/pesan dan bantuan UI selesai; user meninjau copy pada halaman voting. |
 
 ## Detail entry aktif
 
@@ -662,6 +663,19 @@ File ini adalah register kerja aktif. Setiap proses material wajib memiliki entr
 | Dampak | `DEC-04` berstatus disetujui user; scope bertambah ke migration database, Route Handler, client device token, reset binding, dan test tanpa data production. |
 | Persetujuan | User, 2026-10-03. |
 | Keputusan | Lanjut implementasi; event tidak boleh dibuka sebelum quality gate dan UAT terpenuhi. |
+
+### EXE-20261003-25 — Perjelas status verifikasi NIM untuk pemilih
+
+| Field | Catatan |
+| --- | --- |
+| Status | `In review` — kontrak API, copy UI, typecheck, lint, dan build selesai. |
+| Tujuan | Mengganti satu pesan verifikasi generik dengan keterangan yang dapat ditindak pemilih. |
+| Scope | Status event, NIM belum terdaftar, belum eligible, sudah memberi suara, dan perangkat/browser telah dipakai. |
+| Pengaman | Pesan tidak memuat nama, kelas, pilihan calon, receipt, atau NIM lain. Rate limit NIM/IP/browser tetap berjalan sebelum lookup status. |
+| Trade-off | Pesan NIM terdaftar/tidak terdaftar sedikit meningkatkan risiko enumerasi; mitigasinya limit ketat per NIM, limit longgar namun terbatas per IP, dan tidak ada data identitas lain pada respons. |
+| Aksi yang dilakukan | `issueVotingSession` kini membedakan status event, NIM tidak terdaftar, tidak eligible, sudah memilih, dan claim browser yang telah dipakai. Route verify memetakan status ke pesan Bahasa Indonesia; form voting menambahkan bantuan ringkas sebelum input NIM. |
+| Bukti | `npm run typecheck`, `npm run lint`, `npm run build`, dan `git diff --check` lulus pada 2026-10-03 WIB. Database tidak tersedia pada lingkungan kerja ini, sehingga respons status perlu UAT pada fixture staging. |
+| Exit condition | User meninjau copy pada halaman voting; UAT staging memeriksa seluruh status sebelum event dibuka. |
 
 ### Template untuk entry baru
 

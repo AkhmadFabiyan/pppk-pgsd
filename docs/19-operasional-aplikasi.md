@@ -50,6 +50,8 @@ Jangan commit `.env.local`, URL database, kata sandi, atau hasil ekspor. File in
 
 IP digunakan hanya untuk rate limit dalam bentuk HMAC. Sistem tidak mengumpulkan fingerprint biometrik/perangkat. Dua token browser bukan bukti perangkat fisik maupun kepemilikan NIM: orang yang sengaja menghapus cookie dan local storage, memakai mode privat, atau berganti browser dapat menghindari pengikat browser. Detail batas, notice, dan gate UAT ada pada `20-integritas-perangkat-dan-anti-duplikasi.md`.
 
+Saat verifikasi tidak dapat dilanjutkan, UI membedakan event belum dibuka/ditutup, NIM belum terdaftar, NIM belum eligible, NIM sudah memberi suara, dan browser/perangkat telah dipakai. Tidak ada nama, kelas, calon, receipt, atau NIM lain dalam pesan tersebut. Copy spesifik ini dilindungi oleh rate limit dan harus dievaluasi panitia bila risiko enumerasi NIM meningkat.
+
 ## Pengalaman visual publik
 
 Beranda memakai satu scene hutan CSS/Motion yang ringan: progress scroll, horizon berlapis, glow pointer desktop, tujuh daun animatif, reveal section, dan tilt ringan pada kartu kandidat. Elemen dekoratif yang tidak mendukung orientasi (ticker, grain, dan orbit) dihilangkan. Efek ini berada di `/` saja; `/vote`, receipt, dan panel admin tidak memakai dekorasi yang dapat mengganggu proses. Route `/live` adalah layar TV/proyektor khusus tanpa header/footer: ia menampilkan grid jumlah suara semua calon published, polling agregat tiap 10 detik saat event open, serta snapshot final ketika diizinkan. Semua efek dimatikan atau disederhanakan oleh `prefers-reduced-motion` dan tidak menyimpan input pointer.

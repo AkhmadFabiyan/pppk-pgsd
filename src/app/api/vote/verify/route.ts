@@ -10,6 +10,15 @@ const DEVICE_COOKIE = "pgsd_vote_device";
 const DEVICE_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
 const HASH_VERSION = 1;
 
+const verificationMessages = {
+  election_not_open: "Voting belum dibuka atau sudah ditutup oleh panitia.",
+  nim_not_registered: "NIM yang kamu masukkan belum terdaftar sebagai pemilih. Periksa kembali NIM atau hubungi panitia.",
+  not_eligible: "NIM ini terdaftar, tetapi belum mendapat hak pilih. Hubungi panitia bila ini keliru.",
+  already_voted: "Kamu sudah memberikan suara dengan NIM ini. Satu NIM hanya dapat memilih satu kali.",
+  device_already_used: "Perangkat ini sudah digunakan untuk menyelesaikan voting. Gunakan perangkat pribadi lain atau hubungi panitia bila ini keliru.",
+  verification_failed: "Verifikasi tidak dapat diproses. Coba lagi beberapa saat.",
+} as const;
+
 function clientAddress(request: Request) {
   return request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("x-real-ip") || "unknown";
 }
@@ -48,13 +57,16 @@ export async function POST(request: Request) {
   if (!ipAllowed || !nimAllowed || !deviceAllowed) return NextResponse.json({ error: { code: "rate_limited", message: "Terlalu banyak percobaan. Coba lagi beberapa menit." } }, { status: 429 });
 
   const sessionToken = randomToken();
-  const accepted = await issueVotingSession(
+  const result = await issueVotingSession(
     nim,
     hmacSha256(secret, "vote-session:v1", sessionToken),
     new Date(Date.now() + 10 * 60 * 1000).toISOString(),
     { deviceBindingHash, deviceInstallationHash, ipHash, hashVersion: HASH_VERSION }
   );
-  if (!accepted) return NextResponse.json({ error: { code: "verification_failed", message: "NIM tidak dapat diverifikasi." } }, { status: 403 });
+  if (result.status !== "accepted") {
+    const status = result.status === "election_not_open" || result.status === "already_voted" || result.status === "device_already_used" ? 409 : 403;
+    return NextResponse.json({ error: { code: result.status, message: verificationMessages[result.status] } }, { status });
+  }
   const response = NextResponse.json({ data: { sessionToken, expiresInSeconds: 600 } }, { headers: { "Cache-Control": "no-store" } });
   if (deviceCookie !== storedDeviceCookie) response.cookies.set(DEVICE_COOKIE, deviceCookie, {
     httpOnly: true,

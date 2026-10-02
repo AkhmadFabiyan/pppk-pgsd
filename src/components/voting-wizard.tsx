@@ -9,7 +9,7 @@ type Step = "verify" | "choose" | "confirm";
 
 type ApiResponse = {
   data?: { sessionToken?: string; receiptCode?: string };
-  error?: { message?: string };
+  error?: { code?: string; message?: string };
 };
 
 const DEVICE_TOKEN_STORAGE_KEY = "pgsd_vote_device_installation";
@@ -95,6 +95,11 @@ export function VotingWizard({ candidates }: { candidates: CandidateSummary[] })
         <p className="eyebrow eyebrow-green">Tahap 1 dari 3</p><h2>Verifikasi NIM</h2>
         <p>Masukkan NIM milik sendiri. Hanya pemilih dalam daftar resmi yang dapat melanjutkan.</p>
         <p className="form-hint">Browser dan jaringan diproses secara terbatas untuk mencegah suara ganda. Data ini tidak ditampilkan publik.</p>
+        <ul className="verification-help">
+          <li>Sudah memilih? Sistem akan memberi tahu bahwa suara NIM-mu telah tercatat.</li>
+          <li>NIM belum terdaftar atau belum eligible? Periksa kembali lalu hubungi panitia bila perlu.</li>
+          <li>Perangkat sudah dipakai? Gunakan perangkat pribadi lain atau hubungi panitia.</li>
+        </ul>
         <label>NIM<input name="nim" inputMode="numeric" autoComplete="off" value={nim} onChange={(event) => setNim(event.target.value.replace(/\D/g, ""))} minLength={8} maxLength={20} required disabled={pending} /></label>
         <button className="button" type="submit" disabled={pending}>{pending ? <><LoaderCircle className="spin" aria-hidden="true" size={18} /> Memeriksa</> : <>Lanjut pilih calon <ChevronRight aria-hidden="true" size={18} /></>}</button>
       </form>}

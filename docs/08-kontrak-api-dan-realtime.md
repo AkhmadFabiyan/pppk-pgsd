@@ -41,9 +41,9 @@ Respons sukses:
 }
 ```
 
-Kode aplikasi yang perlu ditangani UI: `election_not_open`, `invalid_or_expired_session`, `candidate_unavailable`, `already_voted`, `rate_limited`, `verification_required`, dan `temporarily_unavailable`. Untuk `invalid_nim` dan `already_voted`, tampilan publik dapat memakai pesan sama bila panitia ingin mengurangi enumerasi NIM.
+Kode aplikasi yang perlu ditangani UI: `election_not_open`, `nim_not_registered`, `not_eligible`, `already_voted`, `device_already_used`, `invalid_or_expired_session`, `candidate_unavailable`, `rate_limited`, dan `temporarily_unavailable`. Sesuai keputusan copy saat ini, `/api/vote/verify` memberi keterangan yang dapat ditindak untuk lima status pertama. Respons tidak memuat nama, kelas, pilihan calon, receipt, atau NIM lain. Ini sedikit meningkatkan risiko enumerasi NIM; rate limit NIM/IP/browser wajib tetap aktif. Panitia dapat kembali ke pesan generik lewat perubahan keputusan baru.
 
-Pada mode device-integrity, `device_already_used` dicatat sebagai kode internal tetapi UI memakai pesan netral dan kanal bantuan; ia tidak boleh menyebut NIM atau pemilih lain. Verify menerima token instalasi hanya untuk membentuk HMAC server-side; submit tidak mengirim kembali token tersebut karena cookie `HttpOnly` yang sama wajib ikut dalam request same-origin. Kontrak lengkap cookie, mode tanpa OTP, serta batas browser ada pada `20-integritas-perangkat-dan-anti-duplikasi.md`. Source perlu UAT database sebelum event dibuka.
+Pada mode device-integrity, `device_already_used` memberi pesan bahwa browser/perangkat telah dipakai, tanpa menyebut NIM atau pemilih lain. Verify menerima token instalasi hanya untuk membentuk HMAC server-side; submit tidak mengirim kembali token tersebut karena cookie `HttpOnly` yang sama wajib ikut dalam request same-origin. Kontrak lengkap cookie, mode tanpa OTP, serta batas browser ada pada `20-integritas-perangkat-dan-anti-duplikasi.md`. Source perlu UAT database sebelum event dibuka.
 
 ## Endpoint admin
 
@@ -87,7 +87,7 @@ Channel publik: `election:{slug}:public`. Pesan memuat agregat hasil live: total
 | Endpoint | Kunci limit | Respons |
 | --- | --- | --- |
 | View publik | IP/session | Longgar; cache CDN bila aman. |
-| Verify NIM | IP hash + NIM hash + device/session bila high-security mode | Kecil; setelah threshold gunakan CAPTCHA/adaptive delay, bukan blokir Wi-Fi secara massal. |
+| Verify NIM | IP hash + NIM hash + cookie/instalasi browser | Kecil; respons 429 tanpa memblokir seluruh Wi-Fi. CAPTCHA tidak aktif pada rilis ini. |
 | Submit vote | session + voter + device binding + IP hash | Sangat kecil; idempotency retry diizinkan. |
 | Login panitia | identifier + IP | Ketat, lockout sementara, alert. |
 | Ekspor | admin user | Kecil; job asynchronous untuk file besar. |
@@ -112,10 +112,13 @@ Semua respons error mengikuti bentuk yang konsisten agar UI dapat memulihkan kon
 
 | Kode | HTTP | UI publik | Detail audit internal |
 | --- | --- | --- | --- |
-| `validation_failed` | 400 | Tandai field tanpa membocorkan master. | Field rule yang gagal. |
+| `validation_failed` | 400 | Tandai format input tanpa membocorkan master. | Field rule yang gagal. |
 | `election_not_open` | 409 | Tampilkan status/jadwal. | State dan server time. |
+| `nim_not_registered` | 403 | “NIM yang kamu masukkan belum terdaftar sebagai pemilih.” | Tidak ada detail tambahan. |
+| `not_eligible` | 403 | “NIM ini terdaftar, tetapi belum mendapat hak pilih.” | Eligibility boolean, restricted. |
 | `invalid_or_expired_session` | 401/409 | Minta verifikasi ulang. | Session status/reason code. |
-| `already_voted` | 409 | Pesan netral dan tautan bantuan/receipt. | Voter ID/receipt reference, restricted. |
+| `already_voted` | 409 | “Kamu sudah memberikan suara dengan NIM ini.” | Voter ID/receipt reference, restricted. |
+| `device_already_used` | 409 | “Perangkat ini sudah digunakan untuk menyelesaikan voting.” | Tidak menyebut NIM/pemilih lain. |
 | `candidate_unavailable` | 409 | Refresh calon dan pilih ulang. | Candidate/event state. |
 | `rate_limited` | 429 | Tunggu/coba kembali atau challenge. | Rule bucket dan correlation ID. |
 | `forbidden` | 403 | Akses admin ditolak. | Admin policy result. |
