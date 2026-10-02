@@ -12,6 +12,8 @@ export type Candidate = {
   missions: string[];
 };
 
+export type CandidateSummary = Pick<Candidate, "id" | "number" | "name" | "className">;
+
 export const candidates: Candidate[] = [
   {
     number: 1,

@@ -3,7 +3,7 @@
 import { Wifi, WifiOff } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
-import type { Candidate, ElectionStatus } from "@/lib/site";
+import type { CandidateSummary, ElectionStatus } from "@/lib/site";
 import type { PublicResult } from "@/lib/db";
 import { formatBallotNumber } from "@/lib/site";
 
@@ -39,7 +39,7 @@ export function LiveResultsBoard({
   initialResult,
   initialStatus
 }: {
-  candidates: Candidate[];
+  candidates: CandidateSummary[];
   initialResult: PublicResult | null;
   initialStatus: ElectionStatus;
 }) {
@@ -144,7 +144,7 @@ export function LiveResultsBoard({
           const item = resultByCandidate.get(candidate.id ?? "");
           const changed = changedCandidateIds.has(candidate.id ?? "");
           return (
-            <article className="live-candidate-tile" key={candidate.id ?? candidate.slug} aria-label={`${formatBallotNumber(candidate.number)} ${candidate.name}: ${item?.voteCount ?? 0} suara, ${item?.votePercent ?? 0} persen`}>
+            <article className="live-candidate-tile" key={candidate.id ?? candidate.number} aria-label={`${formatBallotNumber(candidate.number)} ${candidate.name}: ${item?.voteCount ?? 0} suara, ${item?.votePercent ?? 0} persen`}>
               <div className="live-candidate-title">
                 <span>{formatBallotNumber(candidate.number)}</span>
                 <h2>{candidate.name}</h2>

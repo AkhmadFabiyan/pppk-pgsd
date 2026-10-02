@@ -37,6 +37,7 @@ File ini adalah register kerja aktif. Setiap proses material wajib memiliki entr
 | EXE-20261002-20 | T9 | Tambahkan signature branding konsol | In review | Pelaksana teknis | User | 2026-10-02 | Tinjau pesan konsol sekali per sesi pada browser biasa dan pastikan tanpa PII, request, atau gangguan UI. |
 | EXE-20261002-21 | T9 | Implementasi ulang workspace admin responsif | In review | Pelaksana teknis | User | 2026-10-02 | User meninjau panel autentik pada Preview/local; feedback UI atau UAT menentukan perubahan berikutnya. |
 | EXE-20261002-22 | T3/T5 | Selaraskan visi–misi katalog dengan poster calon | In review | Pelaksana teknis | User | 2026-10-02 | Deploy perubahan, sinkronkan record lewat admin sebelum event dibuka, lalu panitia meninjau teks publik. |
+| EXE-20261002-23 | T9 | Sederhanakan galeri kandidat menjadi poster-only | In review | Pelaksana teknis | User | 2026-10-02 | Review galeri desktop/mobile setelah build lulus; keputusan user menentukan release. |
 
 ## Detail entry aktif
 
@@ -598,6 +599,27 @@ File ini adalah register kerja aktif. Setiap proses material wajib memiliki entr
 | Persetujuan | User meminta perubahan di-push ke GitHub. |
 | Dampak | Commit memuat transkripsi visi-misi katalog dan log eksekusi; tidak memuat database URL, `.env.local`, PII, foto baru, atau data voting. |
 | Keputusan | Lanjutkan commit serta push branch `main` setelah staged diff diperiksa. |
+
+### EXE-20261002-23 — Sederhanakan galeri kandidat menjadi poster-only
+
+| Field | Catatan |
+| --- | --- |
+| Status | `In review` — implementasi dan pemeriksaan otomatis selesai; menunggu review visual user. |
+| Tahap runbook | T9 / UI publik, responsivitas, motion, dan performa. |
+| Tujuan | Menghapus tombol serta panel visi-misi publik supaya galeri calon lebih ringkas, non-clickable, dan fokus pada poster asli, nomor, nama, serta kelas. |
+| Scope | Komponen galeri kandidat, copy publik yang mengarahkan ke visi-misi, CSS detail/trigger yang tidak lagi digunakan, serta spesifikasi UI terkait. |
+| Out of scope | Menghapus data `vision`/`missions` dari katalog/database, mengubah poster, nama, nomor ballot, kandidat di voting, admin, data suara, atau hasil. |
+| Dokumen wajib dibaca | `04-ui-ux-dan-visual.md`, `14-design-system.md`, `ui/candidates.md`, `ui/candidate-detail.md`, `10-quality-gate-dan-pengujian.md`, dan `16-log-eksekusi.md`. |
+| Dokumen yang terdampak | `04-ui-ux-dan-visual.md`, `11-setup-calon-individu.md`, `12-rute-dan-seo.md`, `14-design-system.md`, `14-inventaris-materi-calon.md`, dan spesifikasi `ui/*` kandidat/landing. Semua menjelaskan galeri poster-only dan katalog visi-misi internal. |
+| Entry condition | User meminta tombol visi-misi dan seluruh interaksi/detail publik terkait dihapus setelah rancangan disetujui. |
+| Risiko dan mitigasi | Penghapusan detail dapat meninggalkan copy/CSS/dependency client stale. Komponen dibuat server-rendered, poster mempertahankan rasio asli, motion dipindah ke CSS ringan, dan katalog tetap dipertahankan untuk arsip/sinkronisasi internal. |
+| Aksi yang dilakukan | Mengganti galeri menjadi `article` statis tanpa kontrol/detail, menghapus state Motion dan CSS trigger/detail yang tidak dipakai, memperbarui copy, serta membatasi props komponen client pada ID/nomor/nama/kelas tanpa visi-misi. |
+| Bukti | `npm run typecheck`, `npm run lint`, `npm run build`, dan `git diff --check` lulus pada 2026-10-02 WIB. |
+| Exit condition | User menyetujui galeri pada desktop/mobile dan reduced-motion; sesudah itu perubahan dapat dicommit/push bila diminta. |
+| Keputusan | Go ke review visual; tidak ada perubahan database, data suara, materi poster, atau konfigurasi event. |
+| Owner | Pelaksana teknis. |
+| Reviewer/approver | User. |
+| Waktu | Mulai 2026-10-02 WIB. |
 
 ### Template untuk entry baru
 

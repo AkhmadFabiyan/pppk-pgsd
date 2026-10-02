@@ -2,15 +2,15 @@
 
 Dokumen internal ini mendaftarkan sembilan poster pada folder `paslon/` sebagai sumber materi calon individu. Setiap poster memuat satu orang, foto, visi, dan misi; tidak ada poster yang menyatakan pasangan Ketua–Wakil.
 
-Poster adalah referensi visual. Teks di bawah adalah transkripsi kerja untuk di-render sebagai HTML aksesibel pada website dan harus dicocokkan kembali oleh admin kedua sebelum calon dipublikasikan. Prefix angka pada nama file dan badge angka di poster **bukan nomor urut ballot**.
+Poster adalah referensi visual. Teks di bawah adalah transkripsi kerja katalog yang harus dicocokkan kembali oleh admin kedua sebelum calon dipublikasikan; pada rilis ini teks tersebut tidak dirender pada website visitor. Prefix angka pada nama file dan badge angka di poster **bukan nomor urut ballot**.
 
 ## Aturan penggunaan aset
 
 - Simpan file sumber sebagai restricted asset sampai panitia menyetujui hak publikasi foto, logo, serta visi-misi.
-- Untuk website, buat `poster_key` dari file asli dan `photo_key` berupa crop portrait yang disetujui; jangan mengubah wajah/identitas calon secara sintetis.
+- Untuk website, gunakan `poster_key` dari file asli dengan rasio sumber utuh; jangan membuat crop atau mengubah wajah/identitas calon secara sintetis.
 - Nama file, kelas poster, dan teks visi-misi tidak menggantikan verifikasi NIM internal terhadap Master Pemilih.
 - Setiap calon dimasukkan sebagai `draft`; nomor urut baru ditentukan panitia pada setup event.
-- Halaman publik hanya menampilkan nama, nomor urut, foto/poster, visi, dan misi. NIM kandidat tidak boleh dipublikasikan.
+- Halaman publik hanya menampilkan nama, nomor urut, kelas, dan foto/poster. Visi, misi, dan NIM kandidat tidak boleh dipublikasikan.
 
 ## Daftar aset
 

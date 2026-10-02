@@ -5,7 +5,7 @@ import { motion, useReducedMotion } from "motion/react";
 
 const features = [
   { icon: ShieldCheck, title: "Suara terjaga", body: "Server menerima satu suara final dari setiap NIM yang berhasil diverifikasi.", accent: "leaf" },
-  { icon: UsersRound, title: "Kenali calon", body: "Buka visi dan misi setiap calon sebelum kamu menentukan pilihan.", accent: "sun" },
+  { icon: UsersRound, title: "Kenali calon", body: "Periksa nomor, nama, kelas, dan poster resmi setiap calon sebelum menentukan pilihan.", accent: "sun" },
   { icon: CheckCircle2, title: "Informasi resmi", body: "Status pemilihan dan rekap selalu mengikuti data yang disetujui panitia.", accent: "brick" }
 ] as const;
 

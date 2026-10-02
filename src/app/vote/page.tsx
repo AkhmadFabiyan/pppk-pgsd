@@ -18,7 +18,7 @@ const steps = [
   {
     number: "02",
     title: "Pilih calon",
-    description: "Pilih satu calon pada surat suara. Kamu dapat membaca ringkasan visi dan misi sebelum lanjut.",
+    description: "Pilih satu calon pada surat suara berdasarkan nomor, nama, dan kelas.",
     icon: CircleUserRound
   },
   {
@@ -33,6 +33,7 @@ export const dynamic = "force-dynamic";
 
 export default async function VotePage() {
   const election = await getElectionSnapshot();
+  const ballotCandidates = election.candidates.map(({ id, number, name, className }) => ({ id, number, name, className }));
   return (
     <PageTransition>
       <section className="vote-page">
@@ -44,7 +45,7 @@ export default async function VotePage() {
             <h1>Satu proses. Tiga tahap.</h1>
             <p>Voting hanya dapat dimulai saat panitia membuka event. Tidak ada data atau suara yang dikirim sebelum itu.</p>
           </header>
-          {election.status === "open" ? <VotingWizard candidates={election.candidates} /> : <><ol className="vote-steps">
+          {election.status === "open" ? <VotingWizard candidates={ballotCandidates} /> : <><ol className="vote-steps">
               {steps.map((step) => {
                 const Icon = step.icon;
                 return <li key={step.number}><span className="vote-step-number">{step.number}</span><Icon aria-hidden="true" /><h2>{step.title}</h2><p>{step.description}</p></li>;

@@ -31,7 +31,7 @@ Setiap primitive memiliki state default, hover (pointer saja), focus-visible, di
 
 ## Responsif
 
-Container publik maksimum 1200 px dengan gutter 16/24/32 px. Beranda publik memakai anchor navigation; grid kandidat 1/2/3 kolom dan panel visi-misi inline sesuai breakpoint dalam spesifikasi UI. Form voting maksimum 640 px supaya fokus dan mudah dibaca. Sidebar admin menjadi sheet pada layar di bawah 1024 px.
+Container publik maksimum 1200 px dengan gutter 16/24/32 px. Beranda publik memakai anchor navigation; grid kandidat informatif 1/2/3 kolom sesuai breakpoint dalam spesifikasi UI, tanpa panel detail visi-misi. Form voting maksimum 640 px supaya fokus dan mudah dibaca. Sidebar admin menjadi sheet pada layar di bawah 1024 px.
 
 ## Motion
 

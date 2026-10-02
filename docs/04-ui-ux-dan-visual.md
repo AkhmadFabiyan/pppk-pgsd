@@ -48,7 +48,7 @@ Gunakan satu keluarga sans-serif yang cepat dimuat (system/Geist) dengan berat `
 - Header: tinggi 64 px mobile dan 72 px desktop; logo/nama event, navigasi penting, dan CTA `Gunakan suara` hanya saat event `open`.
 - Tombol: tinggi minimum 44 px, radius 10 px, satu tombol primer per section. State hover, focus, disabled, loading, dan error harus tersedia.
 - Input: label selalu terlihat di atas field; petunjuk dan error berada tepat di bawahnya; NIM tidak ditulis ke URL, localStorage, analytics, atau log browser.
-- Card kandidat: poster asli dengan rasio sumber utuh, nomor urut, nama, kelas bila disetujui, serta tombol `Lihat visi dan misi` yang membuka detail inline pada beranda. Seluruh card tidak boleh menjadi tombol vote.
+- Card kandidat: poster asli dengan rasio sumber utuh, nomor urut, nama, dan kelas. Card bersifat informatif, bukan tombol; tidak membuka detail visi-misi maupun memulai vote.
 - Ballot option: radio native/aksesibel dengan border, label `Dipilih`, dan ringkasan calon. State terpilih dapat dipahami tanpa warna.
 - Dialog konfirmasi: ringkasan pilihan, tindakan `Kembali` dan `Kirim suara`, focus trap, Escape, serta focus return ke pemicu.
 - Hasil: tabel angka adalah sumber utama; bar hanya membantu membaca. Urutan calon mengikuti nomor ballot dan tidak bergeser ketika angka berubah.
@@ -57,7 +57,7 @@ Gunakan satu keluarga sans-serif yang cepat dimuat (system/Geist) dengan berat `
 
 | Rute | Tujuan dan tindakan utama | State aktual yang wajib ditangani |
 | --- | --- | --- |
-| `/` | Satu beranda visitor: status, kandidat, visi-misi inline, panduan, hasil, bantuan, dan privasi ringkas. | Terjadwal, open, closed, maintenance, hasil disembunyikan. |
+| `/` | Satu beranda visitor: status, galeri kandidat, panduan, hasil, bantuan, dan privasi ringkas. | Terjadwal, open, closed, maintenance, hasil disembunyikan. |
 | `/vote` | Verifikasi → pilih → konfirmasi → receipt. | Belum buka, validasi gagal, sudah memilih, koneksi gagal, sukses. |
 | `/bukti/[receiptCode]` | Menyimpan kode bukti dan arah bantuan. | Valid, kadaluwarsa/tidak valid tanpa membocorkan data. |
 | `/live` | Layar presentasi hasil untuk TV/proyektor; sembilan count calon dalam satu viewport normal. | Memuat, live, final, hasil disembunyikan, dan koneksi tertunda. |
@@ -71,14 +71,14 @@ Viewport pertama memuat status event, judul `Pemilihan Ketua Angkatan PGSD 2026`
 
 ### Kandidat
 
-Kandidat ditampilkan dengan poster dari folder aset yang sudah disetujui panitia. Tombol pada card membuka panel detail inline berisi transkrip visi-misi; tidak ada perpindahan halaman. Grid: satu kolom sampai 639 px, dua kolom pada 640–1023 px, dan tiga kolom dari 1024 px. Bila sembilan kandidat tetap digunakan, baris terakhir tidak dipaksa melebar atau diberi dekorasi filler.
+Kandidat ditampilkan sebagai galeri informatif dengan poster dari folder aset yang sudah disetujui panitia, nomor urut, nama, dan kelas. Tidak ada tombol atau panel detail visi-misi pada beranda; data tersebut tetap berada di katalog internal dan tidak dirender untuk visitor. Grid: satu kolom sampai 639 px, dua kolom pada 640–1023 px, dan tiga kolom dari 1024 px. Bila sembilan kandidat tetap digunakan, baris terakhir tidak dipaksa melebar atau diberi dekorasi filler.
 
 ### Bilik suara
 
 Bilik suara adalah layar paling tenang: tanpa countdown animatif, skor live, parallax, atau iklan kandidat. Ia selalu memakai satu route `/vote` dengan tiga tahap linear:
 
 1. **Verifikasi NIM** — sistem memeriksa event, eligibility, status suara, rate limit, serta faktor kedua bila kebijakan meminta.
-2. **Pilih calon** — pemilih memilih satu radio ballot dan dapat membaca ringkasan visi-misi tanpa meninggalkan route.
+2. **Pilih calon** — pemilih memilih satu radio ballot berdasarkan nomor, nama, kelas, dan poster resmi tanpa meninggalkan route.
 3. **Konfirmasi & kirim** — ringkasan akhir, satu aksi `Kirim suara`, loading server, lalu redirect otomatis ke receipt jika diterima.
 
 Receipt bukan tahap halaman tambahan bagi pemilih; ia adalah output server setelah tahap ketiga sukses. Pada mobile, tombol tahap aktif tetap mudah dijangkau dengan sticky action bar yang tidak menutup field, error, atau navigation browser. Pengguna dapat kembali sebelum konfirmasi final; sesudah server menerima suara, aksi kirim tidak boleh dapat diulang.

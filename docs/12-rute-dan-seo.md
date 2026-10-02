@@ -8,8 +8,8 @@ Website visitor memakai satu URL utama agar proses pemilihan mudah dipahami dan 
 
 | URL | Fungsi | Index | Catatan |
 | --- | --- | --- | --- |
-| `/` | Satu beranda visitor: status, kandidat, visi-misi inline, panduan, hasil, bantuan, dan ringkasan privasi. | Ya | Satu `h1`; section memiliki anchor semantik. |
-| `/#kandidat` | Section kandidat dan panel visi-misi inline. | Bagian dari `/` | Tidak memiliki halaman/detail URL sendiri. |
+| `/` | Satu beranda visitor: status, galeri kandidat, panduan, hasil, bantuan, dan ringkasan privasi. | Ya | Satu `h1`; section memiliki anchor semantik. |
+| `/#kandidat` | Section galeri kandidat. | Bagian dari `/` | Tidak memiliki halaman/detail URL maupun panel detail. |
 | `/#panduan` | Section langkah voting dan bantuan dasar. | Bagian dari `/` | Konten tetap terbaca tanpa JavaScript. |
 | `/#hasil` | Section hasil sesuai kebijakan event. | Bagian dari `/` | Saat hasil belum boleh tampil, gunakan status jujur tanpa angka fiktif. |
 | `/#bantuan` dan `/#privasi` | Section bantuan dan ringkasan privasi. | Bagian dari `/` | Tidak meminta atau menampilkan NIM. |
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
 };
 ```
 
-Halaman `/` memiliki satu `h1`, title dan deskripsi unik, landmark `<header>`, `<nav>`, `<main>`, `<section>`, `<footer>`, serta teks HTML untuk informasi inti. Poster kandidat bukan satu-satunya sumber visi/misi; teks detail inline wajib ikut dirender untuk aksesibilitas dan crawler.
+Halaman `/` memiliki satu `h1`, title dan deskripsi unik, landmark `<header>`, `<nav>`, `<main>`, `<section>`, `<footer>`, serta teks HTML untuk informasi inti. Galeri kandidat memberi nama, nomor urut, dan kelas sebagai teks HTML; visi-misi tidak menjadi konten publik maupun target indexing.
 
 ## `robots.txt` dan sitemap
 

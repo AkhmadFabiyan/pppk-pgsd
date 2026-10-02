@@ -13,7 +13,7 @@ Mapping NIM restricted untuk setup tersedia pada `data/mapping-calon-nim-interna
 | --- | --- |
 | Calon | Satu individu pada satu pilihan ballot. |
 | Nomor urut | Integer positif unik per event, ditetapkan admin dan tidak diambil otomatis dari prefix nama file poster. |
-| Materi publik | Nama, foto/poster, visi, dan misi yang sudah direview. Tidak memuat NIM. |
+| Materi publik | Nomor urut, nama, kelas, dan foto/poster yang sudah direview. Tidak memuat NIM. |
 | Relasi internal | Setiap calon harus dipetakan ke satu `Voter` pada master berdasarkan NIM yang diverifikasi admin. |
 | Status | `draft`, `ready`, `published`, atau `archived`. Hanya `published` terlihat dan dapat dipilih saat event `open`. |
 
@@ -45,7 +45,7 @@ flowchart TD
 | --- | --- | --- | --- |
 | Nomor urut | Ya | Integer positif dan unik per event; terkunci setelah open. | Ya. |
 | Nama tampilan | Ya | Maks. 80 karakter; harus cocok dengan materi yang disetujui. | Ya. |
-| Slug | Ya | URL-safe dan unik per event; dibuat otomatis, boleh disesuaikan saat draft. | Ya, pada URL. |
+| Slug | Ya | URL-safe dan unik per event; dibuat otomatis, boleh disesuaikan saat draft. | Tidak; identifier katalog internal. |
 | Kelas sumber | Ya | Cocok dengan poster dan master peserta setelah diverifikasi. | Boleh ditampilkan bila panitia menyetujui. |
 | NIM internal | Ya sebelum publish | String digit yang cocok dengan satu voter master; tidak tampil publik. | Tidak. |
 | Aksen visual | Ya | Token warna aksesibel; tidak menjadi satu-satunya pembeda calon. | Ya. |
@@ -55,12 +55,12 @@ flowchart TD
 | Field | Batas | Aturan |
 | --- | --- | --- |
 | Foto/poster sumber | Wajib sebelum publish | Hanya file yang disetujui panitia; MIME, ukuran, dan hak penggunaan tervalidasi. |
-| Foto crop opsional | Disarankan | Gunakan untuk thumbnail/card; jangan memotong wajah atau mengubah identitas. |
-| Visi | 1 paragraf | Ditampilkan sebagai teks HTML aman agar dapat dibaca browser, screen reader, dan crawler. |
+| Turunan/crop poster | Tidak digunakan | Card selalu memakai file poster sumber dengan rasio asli; jangan memotong atau mengubah identitas. |
+| Visi | 1 paragraf | Disimpan sebagai transkripsi katalog internal yang diverifikasi terhadap poster; tidak dirender pada UI visitor. |
 | Misi | 3–5 poin | Plain text/rich text allowlist; urutan mengikuti materi yang disetujui. |
 | Bio/tagline | Opsional | Maks. 240/120 karakter; tidak memuat kontak pribadi atau NIM. |
 
-Poster bukan satu-satunya sumber tampilan. Visi dan misi harus disimpan sebagai teks di database agar tetap aksesibel, dapat ditelusuri mesin pencari pada halaman profil, dan tidak bergantung pada OCR gambar.
+Visi dan misi tetap disimpan sebagai teks di database untuk review, audit, dan sinkronisasi katalog. Pada rilis ini keduanya tidak dirender atau diindeks di UI visitor; galeri publik hanya memakai nomor, nama, kelas, dan poster yang telah disetujui.
 
 ## Status calon dan aturan perubahan
 
@@ -88,10 +88,10 @@ Tidak ada default. Keputusan dicatat pada konfigurasi event, bukan ditentukan ol
 
 Admin kedua memastikan:
 
-- nomor urut tampil konsisten pada landing, detail, ballot, hasil live, dan ekspor;
+- nomor urut tampil konsisten pada landing, ballot, hasil live, dan ekspor;
 - nama, kelas sumber, serta NIM internal terverifikasi terhadap poster dan master pemilih secara independen; mapping awal bukan pengganti pemeriksaan;
 - foto/poster tidak terpotong pada 320 px, tablet, dan desktop;
-- visi/misi dalam HTML sama dengan materi yang disetujui dan aman dari HTML/script;
+- transkripsi visi/misi sama dengan materi yang disetujui, aman dari HTML/script, dan tidak ikut dirender pada UI visitor;
 - pilihan calon dapat dibedakan oleh nomor/nama, bukan warna saja;
 - modal konfirmasi menampilkan ringkasan calon, sementara receipt tidak menyebut calon pilihan.
 

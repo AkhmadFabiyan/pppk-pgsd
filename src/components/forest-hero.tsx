@@ -64,7 +64,7 @@ export function ForestHero({ statusLabel, scheduleLabel, isOpen }: ForestHeroPro
             <motion.span initial={reduceMotion ? false : { y: "120%" }} animate={{ y: 0 }} transition={{ duration: 0.75, delay: 0.17, ease: [0.16, 1, 0.3, 1] }}>2026</motion.span>
           </h1>
           <TypewriterPhrase />
-          <motion.p className="hero-lead forest-lead" initial={reduceMotion ? false : { opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.28, ease: "easeOut" }}>Baca visi dan misi, bandingkan gagasan, lalu gunakan satu suara untuk arah angkatan.</motion.p>
+          <motion.p className="hero-lead forest-lead" initial={reduceMotion ? false : { opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.28, ease: "easeOut" }}>Kenali seluruh calon, pertimbangkan pilihanmu, lalu gunakan satu suara untuk arah angkatan.</motion.p>
           <motion.div className="hero-actions" initial={reduceMotion ? false : { opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, delay: 0.36, ease: "easeOut" }}>
             <Link className="button button-light forest-cta" href={isOpen ? "/vote" : "#kandidat"}>{isOpen ? "Masuk ke bilik suara" : "Lihat semua calon"} <ArrowRight aria-hidden="true" size={18} /></Link>
             <Link className="forest-text-cta" href="#panduan">Lihat cara memilih <ArrowDownRight aria-hidden="true" size={18} /></Link>

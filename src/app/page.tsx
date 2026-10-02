@@ -12,6 +12,7 @@ export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   const election = await getElectionSnapshot();
+  const resultCandidates = election.candidates.map(({ id, number, name, className }) => ({ id, number, name, className }));
   return (
     <PageTransition>
       <ForestHero statusLabel={election.statusLabel} scheduleLabel={election.scheduleLabel} isOpen={election.status === "open"} />
@@ -31,9 +32,9 @@ export default async function HomePage() {
         <SectionReveal className="container section-heading">
           <div>
             <p className="eyebrow eyebrow-red">Ketua angkatan 2026</p>
-            <h2 id="candidate-heading">Cari gagasan yang paling sejalan.</h2>
+            <h2 id="candidate-heading">Daftar calon yang ikut pemilihan.</h2>
           </div>
-          <p className="section-note">Buka kartu untuk membaca visi dan misi. Kamu belum memilih apa pun di sini.</p>
+          <p className="section-note">Kenali nomor, nama, kelas, dan poster resmi setiap calon. Kamu belum memilih apa pun di sini.</p>
         </SectionReveal>
         <div className="container">
           <CandidateShowcase candidates={election.candidates} />
@@ -58,7 +59,7 @@ export default async function HomePage() {
           <div>
             <p className="eyebrow eyebrow-green">Rekap pemilihan</p>
             <h2 id="results-heading">{election.result ? "Suara yang sudah masuk." : "Hasil belum bisa ditampilkan."}</h2>
-            {election.result ? <AnimatedResultSummary result={election.result} candidates={election.candidates} /> : <p>Panitia akan membuka rekap sesuai kebijakan hasil dan status pemilihan. Tidak ada angka contoh atau simulasi.</p>}
+            {election.result ? <AnimatedResultSummary result={election.result} candidates={resultCandidates} /> : <p>Panitia akan membuka rekap sesuai kebijakan hasil dan status pemilihan. Tidak ada angka contoh atau simulasi.</p>}
           </div>
         </SectionReveal>
       </section>

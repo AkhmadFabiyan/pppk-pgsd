@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type CSSProperties } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import type { Candidate } from "@/lib/site";
+import type { CandidateSummary } from "@/lib/site";
 
 type PublicResult = {
   totalEligible: number;
@@ -35,7 +35,7 @@ function AnimatedNumber({ value }: { value: number }) {
   return <span>{(reduceMotion ? value : number).toLocaleString("id-ID")}</span>;
 }
 
-export function AnimatedResultSummary({ result, candidates }: { result: PublicResult; candidates: Candidate[] }) {
+export function AnimatedResultSummary({ result, candidates }: { result: PublicResult; candidates: CandidateSummary[] }) {
   const reduceMotion = useReducedMotion();
   const resultsByCandidate = new Map(result.candidates.map((item) => [item.candidateId, item]));
   const updatedAt = new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Jakarta" }).format(new Date(result.updatedAt));

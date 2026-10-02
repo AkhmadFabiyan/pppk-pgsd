@@ -12,5 +12,6 @@ export const metadata: Metadata = {
 
 export default async function LiveResultsPage() {
   const election = await getElectionSnapshot();
-  return <LiveResultsBoard candidates={election.candidates} initialResult={election.result} initialStatus={election.status} />;
+  const candidateSummaries = election.candidates.map(({ id, number, name, className }) => ({ id, number, name, className }));
+  return <LiveResultsBoard candidates={candidateSummaries} initialResult={election.result} initialStatus={election.status} />;
 }

@@ -3,7 +3,7 @@
 import { Check, ChevronLeft, ChevronRight, LoaderCircle, ShieldCheck, Vote } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { formatBallotNumber, type Candidate } from "@/lib/site";
+import { formatBallotNumber, type CandidateSummary } from "@/lib/site";
 
 type Step = "verify" | "choose" | "confirm";
 
@@ -19,7 +19,7 @@ async function requestJson(path: string, body: Record<string, string>) {
   return payload;
 }
 
-export function VotingWizard({ candidates }: { candidates: Candidate[] }) {
+export function VotingWizard({ candidates }: { candidates: CandidateSummary[] }) {
   const router = useRouter();
   const [step, setStep] = useState<Step>("verify");
   const [nim, setNim] = useState("");
@@ -77,7 +77,7 @@ export function VotingWizard({ candidates }: { candidates: Candidate[] }) {
         <button className="button" type="submit" disabled={pending}>{pending ? <><LoaderCircle className="spin" aria-hidden="true" size={18} /> Memeriksa</> : <>Lanjut pilih calon <ChevronRight aria-hidden="true" size={18} /></>}</button>
       </form>}
 
-      {step === "choose" && <div className="ballot-step"><div><p className="eyebrow eyebrow-green">Tahap 2 dari 3</p><h2>Pilih satu calon</h2><p>Pilihan belum dikirim. Kamu masih bisa kembali ke beranda untuk membaca visi dan misi.</p></div><div className="ballot-list" role="radiogroup" aria-label="Pilihan calon">{candidates.map((candidate) => <button className={candidateId === candidate.id ? "ballot-option is-selected" : "ballot-option"} type="button" role="radio" aria-checked={candidateId === candidate.id} key={candidate.id} onClick={() => setCandidateId(candidate.id ?? "")}><span className="ballot-number">{formatBallotNumber(candidate.number)}</span><span><strong>{candidate.name}</strong><small>{candidate.className}</small></span>{candidateId === candidate.id && <Check aria-hidden="true" />}</button>)}</div><div className="wizard-actions"><button className="button button-outline" type="button" onClick={() => { setStep("verify"); setError(""); }}><ChevronLeft aria-hidden="true" size={18} /> Kembali</button><button className="button" type="button" disabled={!selected} onClick={() => setStep("confirm")}>Lanjut konfirmasi <ChevronRight aria-hidden="true" size={18} /></button></div></div>}
+      {step === "choose" && <div className="ballot-step"><div><p className="eyebrow eyebrow-green">Tahap 2 dari 3</p><h2>Pilih satu calon</h2><p>Pilihan belum dikirim. Kamu masih bisa kembali ke beranda untuk memeriksa daftar calon.</p></div><div className="ballot-list" role="radiogroup" aria-label="Pilihan calon">{candidates.map((candidate) => <button className={candidateId === candidate.id ? "ballot-option is-selected" : "ballot-option"} type="button" role="radio" aria-checked={candidateId === candidate.id} key={candidate.id} onClick={() => setCandidateId(candidate.id ?? "")}><span className="ballot-number">{formatBallotNumber(candidate.number)}</span><span><strong>{candidate.name}</strong><small>{candidate.className}</small></span>{candidateId === candidate.id && <Check aria-hidden="true" />}</button>)}</div><div className="wizard-actions"><button className="button button-outline" type="button" onClick={() => { setStep("verify"); setError(""); }}><ChevronLeft aria-hidden="true" size={18} /> Kembali</button><button className="button" type="button" disabled={!selected} onClick={() => setStep("confirm")}>Lanjut konfirmasi <ChevronRight aria-hidden="true" size={18} /></button></div></div>}
 
       {step === "confirm" && selected && <div className="confirm-step"><Vote aria-hidden="true" className="wizard-icon" /><p className="eyebrow eyebrow-red">Tahap 3 dari 3</p><h2>Periksa pilihanmu.</h2><p>Kamu memilih:</p><div className="confirmation-choice"><span>{formatBallotNumber(selected.number)}</span><div><strong>{selected.name}</strong><p>{selected.className}</p></div></div><p className="confirmation-note">Setelah dikirim, pilihan tidak dapat diubah. Sistem hanya menyimpan satu suara final untuk setiap NIM.</p><div className="wizard-actions"><button className="button button-outline" type="button" onClick={() => setStep("choose")} disabled={pending}><ChevronLeft aria-hidden="true" size={18} /> Ubah pilihan</button><button className="button" type="button" onClick={submitVote} disabled={pending}>{pending ? <><LoaderCircle className="spin" aria-hidden="true" size={18} /> Mengirim suara</> : <><Check aria-hidden="true" size={18} /> Kirim suara</>}</button></div></div>}
     </section>

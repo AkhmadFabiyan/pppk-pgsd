@@ -1,5 +1,7 @@
-# UI — Detail Kandidat Inline `/#kandidat`
+# UI — Detail Kandidat Publik
 
-Panel inline memuat data publik satu kandidat: nomor, nama, foto, visi, misi, dan CTA vote bila event open. HTML visi/misi disanitasi; poster bukan satu-satunya sumber teks untuk accessibility/SEO. Pengguna menutup panel untuk kembali ke grid tanpa membuat halaman baru.
+## Status: tidak digunakan
 
-Hanya kandidat `published` boleh muncul. Kandidat archived/draft tidak ditampilkan dan tidak membocorkan status internal. Tidak ada NIM, kontak, atau voter relation.
+Tidak ada route, modal, maupun panel inline detail kandidat untuk visitor. Beranda hanya menampilkan galeri poster informatif dengan nomor, nama, dan kelas; card tidak dapat diklik untuk membuka materi tambahan.
+
+Kolom `vision` dan `missions` tetap ada di katalog kandidat untuk operasi admin dan sinkronisasi materi, tetapi tidak dirender pada UI publik. Tidak ada NIM, kontak, atau relasi pemilih pada galeri.
